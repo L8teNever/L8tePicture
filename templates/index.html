@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>L8tePicture - iOS 26 Light Glass Gallery</title>
+    <title>L8tePicture - Clean iOS 26 Gallery</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600&display=swap"
         rel="stylesheet" />
@@ -72,13 +72,13 @@
                     <div class="flex flex-col gap-4">
                         <div class="flex flex-col gap-2">
                             <div class="flex justify-between items-center">
-                                <span class="text-xs font-medium text-slate-600">Grid Columns</span>
+                                <span class="text-xs font-medium text-slate-600">Columns</span>
                                 <span id="zoom-label"
-                                    class="text-[10px] font-bold text-ios-accent bg-ios-accent/10 px-2 py-0.5 rounded-full">3</span>
+                                    class="text-[10px] font-bold text-ios-accent bg-ios-accent/10 px-2 py-0.5 rounded-full">2</span>
                             </div>
                             <div class="flex items-center gap-3">
                                 <span class="material-symbols-outlined text-slate-400 text-sm">zoom_out</span>
-                                <input type="range" id="zoom-slider" min="1" max="8" value="3"
+                                <input type="range" id="zoom-slider" min="1" max="8" value="2"
                                     class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-ios-accent"
                                     oninput="updateZoom(this.value)">
                                 <span class="material-symbols-outlined text-slate-400 text-sm">zoom_in</span>
@@ -111,7 +111,7 @@
                             class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4">
                             <div class="flex gap-2">
                                 <button
-                                    class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30"
+                                    class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30 favorite-btn"
                                     onclick="event.stopPropagation(); toggleFavorite({{ image.id }}, this)">
                                     <span
                                         class="material-symbols-outlined text-white text-[18px] font-extralight {% if image.is_favorite %}fill-1{% endif %}">favorite</span>
@@ -131,8 +131,6 @@
         </div>
     </main>
 
-    </main>
-
     <!-- Modal for Slideshow -->
     <div id="slideshow-modal" class="modal" onclick="if(event.target === this) closeSlideshow()">
         <span class="close-modal" onclick="closeSlideshow()">
@@ -150,7 +148,6 @@
                 <span class="material-symbols-outlined">chevron_right</span>
             </button>
         </div>
-        <!-- Modal Loading Spinner -->
         <div id="modal-spinner" class="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div class="spinner" style="width: 48px; height: 48px; border-width: 4px;"></div>
         </div>
