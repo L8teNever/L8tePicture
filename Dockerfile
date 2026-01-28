@@ -33,7 +33,7 @@ COPY --from=builder /install /usr/local
 COPY . .
 
 # Create persistent directories
-RUN mkdir -p uploads thumbnails && chmod 777 uploads thumbnails
+RUN mkdir -p uploads thumbnails data && chmod 777 uploads thumbnails data
 
 EXPOSE 8000
 
