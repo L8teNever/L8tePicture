@@ -6,7 +6,8 @@ function updateImageList() {
     const cards = document.querySelectorAll('.image-card');
     currentImages = Array.from(cards).map(card => ({
         id: card.dataset.id,
-        filename: card.dataset.filename
+        filename: card.dataset.filename,
+        name: card.dataset.name
     }));
 }
 
@@ -14,20 +15,18 @@ document.addEventListener('DOMContentLoaded', () => {
     updateImageList();
 
     const fileInput = document.getElementById('file-input');
-    fileInput.addEventListener('change', handleUpload);
+    if (fileInput) fileInput.addEventListener('change', handleUpload);
 
     // Initial zoom trigger based on screen width
     const slider = document.getElementById('zoom-slider');
-    if (window.innerWidth < 768) {
-        slider.value = 2; // Default 2 columns on mobile
+    if (slider) {
+        if (window.innerWidth < 768) {
+            slider.value = 2; // Default 2 columns on mobile
+        } else {
+            slider.value = 3;
+        }
+        updateZoom(slider.value);
     }
-    updateZoom(slider.value);
-
-    // Enable transitions after initial set to avoid flickering
-    setTimeout(() => {
-        const gallery = document.getElementById('image-gallery');
-        if (gallery) gallery.style.transition = 'all 0.4s ease';
-    }, 100);
 
     // Pinch to Zoom implementation for mobile
     initPinchToZoom();
@@ -38,7 +37,7 @@ let initialPinchDistance = null;
 function initPinchToZoom() {
     const gallery = document.getElementById('image-gallery');
     const slider = document.getElementById('zoom-slider');
-    if (!gallery) return;
+    if (!gallery || !slider) return;
 
     gallery.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
@@ -51,7 +50,7 @@ function initPinchToZoom() {
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
             const diff = currentDistance - initialPinchDistance;
 
-            if (Math.abs(diff) > 50) {
+            if (Math.abs(diff) > 40) {
                 let currentValue = parseInt(slider.value);
                 if (diff > 0 && currentValue > 1) {
                     currentValue--;
@@ -83,34 +82,44 @@ function setViewMode(mode) {
     const gridBtn = document.getElementById('grid-mode-btn');
     const masonryBtn = document.getElementById('masonry-mode-btn');
 
+    if (!gallery || !gridBtn || !masonryBtn) return;
+
     if (mode === 'grid') {
         gallery.classList.remove('masonry-view');
         gallery.classList.add('grid-view');
-        gridBtn.classList.add('active');
-        masonryBtn.classList.remove('active');
+        gridBtn.classList.add('bg-white/60', 'shadow-sm');
+        masonryBtn.classList.remove('bg-white/60', 'shadow-sm');
     } else {
         gallery.classList.remove('grid-view');
         gallery.classList.add('masonry-view');
-        masonryBtn.classList.add('active');
-        gridBtn.classList.remove('active');
+        masonryBtn.classList.add('bg-white/60', 'shadow-sm');
+        gridBtn.classList.remove('bg-white/60', 'shadow-sm');
     }
     updateZoom(document.getElementById('zoom-slider').value);
 }
 
 function updateZoom(value) {
     const gallery = document.getElementById('image-gallery');
-    const label = document.getElementById('zoom-label');
-    if (!gallery || !label) return;
-
-    label.innerText = `${value} ${value == 1 ? 'Column' : 'Columns'}`;
+    if (!gallery) return;
 
     if (gallery.classList.contains('grid-view')) {
         gallery.style.setProperty('--grid-cols', value);
-        const minSize = Math.max(100, 1000 / value - 20);
-        gallery.style.setProperty('--grid-size', `${minSize}px`);
     } else {
         gallery.style.setProperty('--masonry-cols', value);
     }
+}
+
+function filterImages(query) {
+    const q = query.toLowerCase();
+    const cards = document.querySelectorAll('.image-card');
+    cards.forEach(card => {
+        const name = card.dataset.name.toLowerCase();
+        if (name.includes(q)) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
 }
 
 // PREMIUM UPLOAD LOGIC with Progress Tracking
@@ -125,14 +134,14 @@ function uploadFile(file, index, total) {
         const fileNameLabel = document.getElementById('current-file-name');
         const countLabel = document.getElementById('file-count');
 
-        fileNameLabel.innerText = file.name;
-        countLabel.innerText = `${index + 1} of ${total} images`;
+        if (fileNameLabel) fileNameLabel.innerText = file.name;
+        if (countLabel) countLabel.innerText = `${index + 1} of ${total} images`;
 
         xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
                 const percent = Math.round((event.loaded / event.total) * 100);
-                fill.style.width = `${percent}%`;
-                percentLabel.innerText = `${percent}%`;
+                if (fill) fill.style.width = `${percent}%`;
+                if (percentLabel) percentLabel.innerText = `${percent}%`;
             }
         };
 
@@ -159,41 +168,31 @@ async function handleUpload(event) {
     const dotsContainer = document.getElementById('overall-progress-dots');
     const overallStatus = document.getElementById('overall-status');
 
-    modal.style.display = 'flex';
-    dotsContainer.innerHTML = '';
-    overallStatus.innerText = 'Uploading...';
+    if (modal) modal.style.display = 'flex';
+    if (dotsContainer) dotsContainer.innerHTML = '';
+    if (overallStatus) overallStatus.innerText = 'Uploading...';
 
-    // Create dots for overall progress
     for (let i = 0; i < files.length; i++) {
         const dot = document.createElement('div');
-        dot.style.width = '8px';
-        dot.style.height = '8px';
-        dot.style.borderRadius = '50%';
-        dot.style.background = 'rgba(255,255,255,0.2)';
-        dot.style.transition = 'all 0.3s';
+        dot.className = "h-1.5 w-1.5 rounded-full bg-slate-200 transition-all duration-300";
         dot.id = `dot-${i}`;
-        dotsContainer.appendChild(dot);
+        if (dotsContainer) dotsContainer.appendChild(dot);
     }
 
-    let successCount = 0;
     for (let i = 0; i < files.length; i++) {
         const dot = document.getElementById(`dot-${i}`);
-        dot.style.background = 'var(--ios-accent)';
-        dot.style.transform = 'scale(1.2)';
+        if (dot) dot.classList.replace('bg-slate-200', 'bg-ios-accent');
 
         try {
             await uploadFile(files[i], i, files.length);
-            successCount++;
-            dot.style.background = '#34C759'; // Apple Success Green
-            dot.style.transform = 'scale(1)';
+            if (dot) dot.classList.replace('bg-ios-accent', 'bg-emerald-500');
         } catch (error) {
             console.error(error);
-            dot.style.background = '#FF3B30'; // Apple Error Red
-            dot.style.transform = 'scale(1)';
+            if (dot) dot.classList.replace('bg-ios-accent', 'bg-red-500');
         }
     }
 
-    overallStatus.innerText = 'Success!';
+    if (overallStatus) overallStatus.innerText = 'Success!';
     setTimeout(() => {
         location.reload();
     }, 1000);
@@ -203,10 +202,11 @@ async function toggleFavorite(id, btn) {
     try {
         const response = await fetch(`/favorite/${id}`, { method: 'POST' });
         const data = await response.json();
+        const icon = btn.querySelector('.material-symbols-outlined');
         if (data.is_favorite) {
-            btn.classList.add('active');
+            icon.style.fontVariationSettings = "'FILL' 1";
         } else {
-            btn.classList.remove('active');
+            icon.style.fontVariationSettings = "'FILL' 0";
         }
     } catch (error) {
         console.error('Error toggling favorite:', error);
@@ -214,36 +214,42 @@ async function toggleFavorite(id, btn) {
 }
 
 async function deleteImage(id) {
-    if (!confirm('Bist du sicher, dass du dieses Bild löschen möchtest?')) return;
+    if (!confirm('Bist du sicher?')) return;
 
     try {
         const response = await fetch(`/delete/${id}`, { method: 'DELETE' });
         if (response.ok) {
             const card = document.querySelector(`.image-card[data-id="${id}"]`);
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.8)';
-            setTimeout(() => {
-                card.remove();
-                updateImageList();
-            }, 300);
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    card.remove();
+                    updateImageList();
+                }, 300);
+            }
         }
     } catch (error) {
         console.error('Error deleting image:', error);
     }
 }
 
-// Slideshow Functions
 function openSlideshow(index) {
     currentIndex = index;
     const modal = document.getElementById('slideshow-modal');
     updateModalImage();
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
 }
 
 function closeSlideshow() {
-    document.getElementById('slideshow-modal').style.display = 'none';
-    document.body.style.overflow = 'auto';
+    const modal = document.getElementById('slideshow-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
 }
 
 function changeSlide(direction) {
@@ -256,15 +262,7 @@ function changeSlide(direction) {
 function updateModalImage() {
     const modalImg = document.getElementById('modal-img');
     if (modalImg && currentImages[currentIndex]) {
-        // Use optimized preview instead of original for lightning fast loading
         modalImg.src = `/previews/${currentImages[currentIndex].filename}.webp`;
-    }
-}
-
-window.onclick = function (event) {
-    const modal = document.getElementById('slideshow-modal');
-    if (event.target == modal) {
-        closeSlideshow();
     }
 }
 

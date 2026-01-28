@@ -2,64 +2,97 @@
 <html lang="de">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L8tePicture - Deine Premium Bildergalerie</title>
-    <meta name="description"
-        content="L8tePicture ist eine schnelle und effiziente Plattform zum Hochladen, Verwalten und Anschauen deiner Bilder.">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>L8tePicture - iOS 26 Light Glass Gallery</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "glass-primary": "rgba(255, 255, 255, 0.4)",
+                        "ios-accent": "#007AFF",
+                    },
+                    fontFamily: {
+                        "display": ["'Plus Jakarta Sans'", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
 </head>
 
-<body>
-    <div class="bg-blob blob-1"></div>
-    <div class="bg-blob blob-2"></div>
-
-    <header>
-        <div class="logo">L8tePicture</div>
-        <div class="header-actions">
-            <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
-            <button class="upload-btn" onclick="document.getElementById('file-input').click()">
-                <i class="fas fa-cloud-upload-alt"></i> Upload
-            </button>
+<body class="text-slate-800 antialiased font-display">
+    <header class="sticky top-0 z-50 pt-12 pb-6 px-4 light-glass rounded-b-[42px]">
+        <div class="flex items-center justify-between mb-5 px-2">
+            <div class="flex flex-col">
+                <h1 class="text-xl font-light tracking-tight text-slate-900 leading-none">L8tePicture</h1>
+                <p class="text-[9px] font-semibold opacity-40 uppercase tracking-[0.2em] mt-1">Clean Gallery</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex bg-white/40 p-1 rounded-full border border-white/60">
+                    <button id="grid-mode-btn" class="px-4 py-1.5 rounded-full text-xs font-medium transition-all"
+                        onclick="setViewMode('grid')">Grid</button>
+                    <button id="masonry-mode-btn"
+                        class="px-4 py-1.5 rounded-full text-xs font-medium transition-all bg-white/60 shadow-sm"
+                        onclick="setViewMode('masonry')">Masonry</button>
+                </div>
+                <button
+                    class="h-10 w-10 flex items-center justify-center rounded-full bg-white/50 border border-white/70 shadow-sm active:scale-95 transition-transform"
+                    onclick="document.getElementById('file-input').click()">
+                    <span class="material-symbols-outlined text-ios-accent font-light text-2xl">add</span>
+                </button>
+            </div>
+        </div>
+        <div class="px-2">
+            <div
+                class="relative flex items-center h-12 w-full rounded-2xl bg-white/40 border border-white/60 px-4 shadow-sm backdrop-blur-md">
+                <span class="material-symbols-outlined text-slate-400 font-extralight mr-2">search</span>
+                <input id="search-input"
+                    class="w-full bg-transparent border-none focus:ring-0 text-slate-800 placeholder:text-slate-400 font-light text-sm"
+                    placeholder="Search your memories..." type="text" oninput="filterImages(this.value)" />
+                <button class="flex items-center justify-center">
+                    <span class="material-symbols-outlined text-slate-400 font-extralight">more_vert</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <main class="container">
-        <div class="view-controls">
-            <button id="grid-mode-btn" class="view-btn active" onclick="setViewMode('grid')">Grid</button>
-            <button id="masonry-mode-btn" class="view-btn" onclick="setViewMode('masonry')">Masonry</button>
-        </div>
+    <main class="p-3 pt-6 pb-24">
+        <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
 
-        <div class="zoom-control">
-            <i class="fas fa-minus" style="font-size: 0.7rem;"></i>
-            <input type="range" id="zoom-slider" min="1" max="10" value="3" oninput="updateZoom(this.value)">
-            <i class="fas fa-plus" style="font-size: 0.7rem;"></i>
-            <span id="zoom-label">3 Columns</span>
-        </div>
-
-        <div class="gallery grid-view" id="image-gallery">
+        <div class="gallery masonry-view" id="image-gallery">
             {% for image in images %}
-            <div class="image-card" data-id="{{ image.id }}" data-filename="{{ image.filename }}"
-                onclick="openSlideshow({{ loop.index0 }})">
-                <img src="/thumbnails/{{ image.filename }}.webp" alt="{{ image.original_name }}" loading="lazy">
-                <div class="image-overlay">
-                    <div class="image-actions">
-                        <button class="action-btn favorite-btn {% if image.is_favorite %}active{% endif %}"
-                            onclick="event.stopPropagation(); toggleFavorite({{ image.id }}, this)">
-                            <i class="fas fa-heart"></i>
-                        </button>
-                        <a href="/uploads/{{ image.filename }}" download="{{ image.original_name }}" class="action-btn"
-                            onclick="event.stopPropagation()">
-                            <i class="fas fa-download"></i>
-                        </a>
-                        <button class="action-btn delete-btn"
-                            onclick="event.stopPropagation(); deleteImage({{ image.id }})">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+            <div class="masonry-item image-card" data-id="{{ image.id }}" data-filename="{{ image.filename }}"
+                data-name="{{ image.original_name }}" onclick="openSlideshow({{ loop.index0 }})">
+                <div class="glass-card rounded-[28px] overflow-hidden p-1">
+                    <div class="relative rounded-[24px] overflow-hidden">
+                        <img src="/thumbnails/{{ image.filename }}.webp" alt="{{ image.original_name }}"
+                            class="w-full h-full object-cover" loading="lazy">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4">
+                            <div class="flex gap-2">
+                                <button
+                                    class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30"
+                                    onclick="event.stopPropagation(); toggleFavorite({{ image.id }}, this)">
+                                    <span
+                                        class="material-symbols-outlined text-white text-[18px] font-extralight {% if image.is_favorite %}fill-1{% endif %}">favorite</span>
+                                </button>
+                                <button
+                                    class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30"
+                                    onclick="event.stopPropagation(); deleteImage({{ image.id }})">
+                                    <span
+                                        class="material-symbols-outlined text-white text-[18px] font-extralight">delete</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -67,48 +100,52 @@
         </div>
     </main>
 
-    <!-- Floating Action Button for Mobile -->
-    <button class="fab" onclick="document.getElementById('file-input').click()">
-        <i class="fas fa-plus"></i>
-    </button>
+    <!-- Floating Zoom Control -->
+    <div class="zoom-control-floating">
+        <span class="material-symbols-outlined text-slate-400 text-sm">zoom_out</span>
+        <input type="range" id="zoom-slider" min="1" max="6" value="2" oninput="updateZoom(this.value)">
+        <span class="material-symbols-outlined text-slate-400 text-sm">zoom_in</span>
+    </div>
 
     <!-- Modal for Slideshow -->
-    <div id="slideshow-modal" class="modal">
-        <span class="close-modal" onclick="closeSlideshow()"><i class="fas fa-times"></i></span>
-        <div class="modal-nav">
-            <button onclick="changeSlide(-1)"><i class="fas fa-chevron-left"></i></button>
-            <button onclick="changeSlide(1)"><i class="fas fa-chevron-right"></i></button>
+    <div id="slideshow-modal" class="modal" onclick="if(event.target === this) closeSlideshow()">
+        <span class="close-modal" onclick="closeSlideshow()">
+            <span class="material-symbols-outlined text-slate-600">close</span>
+        </span>
+        <div class="absolute left-4 top-1/2 -translate-y-1/2">
+            <button class="h-12 w-12 flex items-center justify-center rounded-full bg-white/80 shadow-lg"
+                onclick="changeSlide(-1)">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+        </div>
+        <div class="absolute right-4 top-1/2 -translate-y-1/2">
+            <button class="h-12 w-12 flex items-center justify-center rounded-full bg-white/80 shadow-lg"
+                onclick="changeSlide(1)">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
         </div>
         <img id="modal-img" class="modal-img" src="" alt="">
     </div>
 
     <!-- Upload Progress Modal -->
-    <div id="upload-modal" class="modal"
-        style="display: none; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px);">
-        <div class="modal-content"
-            style="background: var(--ios-glass); padding: 2.5rem; border-radius: 30px; border: 0.5px solid var(--ios-border); width: 90%; max-width: 450px; text-align: center;">
-            <div id="upload-icon" style="font-size: 3rem; margin-bottom: 1.5rem; color: var(--ios-accent);">
-                <i class="fas fa-cloud-upload-alt"></i>
+    <div id="upload-modal" class="modal" style="display: none;">
+        <div class="glass-card p-8 rounded-[40px] max-w-sm w-full text-center">
+            <div class="h-16 w-16 bg-ios-accent/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="material-symbols-outlined text-ios-accent text-3xl">cloud_upload</span>
             </div>
-            <h2 id="overall-status" style="margin-bottom: 0.5rem; font-weight: 700;">Uploading...</h2>
-            <p id="file-count" style="color: var(--ios-text-muted); margin-bottom: 2rem; font-size: 0.9rem;">0 of 0
-                images</p>
+            <h2 id="overall-status" class="text-xl font-medium mb-1">Uploading...</h2>
+            <p id="file-count" class="text-sm text-slate-400 mb-6">0 of 0 images</p>
 
-            <div
-                style="text-align: left; margin-bottom: 0.5rem; display: flex; justify-content: space-between; font-size: 0.8rem;">
-                <span id="current-file-name"
-                    style="color: var(--ios-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70%;">Preparing...</span>
+            <div class="flex justify-between text-[10px] uppercase tracking-wider text-slate-400 mb-2">
+                <span id="current-file-name" class="truncate max-w-[150px]">Preparing...</span>
                 <span id="current-percent">0%</span>
             </div>
-            <div class="progress-bar"
-                style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-bottom: 2rem;">
-                <div id="progress-fill" class="progress-fill"
-                    style="height: 100%; background: #fff; width: 0%; transition: width 0.2s;"></div>
+            <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-6">
+                <div id="progress-fill" class="h-full bg-ios-accent transition-all duration-300" style="width: 0%;">
+                </div>
             </div>
 
-            <div id="overall-progress-dots" style="display: flex; justify-content: center; gap: 8px;">
-                <!-- Dots will be added via JS -->
-            </div>
+            <div id="overall-progress-dots" class="flex justify-center gap-1.5"></div>
         </div>
     </div>
 
