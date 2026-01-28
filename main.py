@@ -7,7 +7,7 @@ from typing import List
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from PIL import Image as PILImage
 import models
@@ -79,6 +79,14 @@ async def startup_event():
         logger.info("Folder observer started in background thread.")
     except Exception as e:
         logger.error(f"Failed to start folder observer: {e}")
+
+@app.get("/manifest.json")
+async def manifest():
+    return FileResponse("static/manifest.json")
+
+@app.get("/sw.js")
+async def service_worker():
+    return FileResponse("static/sw.js", media_type="application/javascript")
 
 @app.get("/")
 async def read_root(request: Request, db: Session = Depends(get_db), search: str = ""):
