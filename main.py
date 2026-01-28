@@ -37,6 +37,12 @@ def create_thumbnail(image_path: str, thumb_path: str, size=(400, 400)):
             img = img.convert("RGB")
         img.save(thumb_path, "JPEG", quality=85)
 
+@app.on_event("startup")
+async def startup_event():
+    # Start the folder observer
+    from folder_observer import start_observer
+    start_observer()
+
 @app.get("/")
 async def read_root(request: Request, db: Session = Depends(get_db)):
     images = db.query(models.Image).order_by(models.Image.upload_date.desc()).all()
