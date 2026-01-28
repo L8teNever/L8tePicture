@@ -80,12 +80,33 @@
         </div>
     </div>
 
-    <!-- Upload Progress -->
-    <div id="upload-progress-container">
-        <h3>Lade Bilder hoch...</h3>
-        <p id="upload-status">0 / 0 abgeschlossen</p>
-        <div class="progress-bar">
-            <div id="progress-fill" class="progress-fill"></div>
+    <!-- Upload Progress Modal -->
+    <div id="upload-modal" class="modal"
+        style="display: none; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px);">
+        <div class="modal-content"
+            style="background: var(--ios-glass); padding: 2.5rem; border-radius: 30px; border: 0.5px solid var(--ios-border); width: 90%; max-width: 450px; text-align: center;">
+            <div id="upload-icon" style="font-size: 3rem; margin-bottom: 1.5rem; color: var(--ios-accent);">
+                <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <h2 id="overall-status" style="margin-bottom: 0.5rem; font-weight: 700;">Uploading...</h2>
+            <p id="file-count" style="color: var(--ios-text-muted); margin-bottom: 2rem; font-size: 0.9rem;">0 of 0
+                images</p>
+
+            <div
+                style="text-align: left; margin-bottom: 0.5rem; display: flex; justify-content: space-between; font-size: 0.8rem;">
+                <span id="current-file-name"
+                    style="color: var(--ios-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70%;">Preparing...</span>
+                <span id="current-percent">0%</span>
+            </div>
+            <div class="progress-bar"
+                style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-bottom: 2rem;">
+                <div id="progress-fill" class="progress-fill"
+                    style="height: 100%; background: #fff; width: 0%; transition: width 0.2s;"></div>
+            </div>
+
+            <div id="overall-progress-dots" style="display: flex; justify-content: center; gap: 8px;">
+                <!-- Dots will be added via JS -->
+            </div>
         </div>
     </div>
 

@@ -32,6 +32,7 @@ let initialPinchDistance = null;
 function initPinchToZoom() {
     const gallery = document.getElementById('image-gallery');
     const slider = document.getElementById('zoom-slider');
+    if (!gallery) return;
 
     gallery.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
@@ -44,15 +45,12 @@ function initPinchToZoom() {
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
             const diff = currentDistance - initialPinchDistance;
 
-            // Threshold for zoom change
             if (Math.abs(diff) > 50) {
                 let currentValue = parseInt(slider.value);
                 if (diff > 0 && currentValue > 1) {
-                    // Pinch out -> Zoom in (fewer columns)
                     currentValue--;
                     initialPinchDistance = currentDistance;
                 } else if (diff < 0 && currentValue < 10) {
-                    // Pinch in -> Zoom out (more columns)
                     currentValue++;
                     initialPinchDistance = currentDistance;
                 }
@@ -65,7 +63,7 @@ function initPinchToZoom() {
         }
     }, { passive: true });
 
-    gallery.addEventListener('touchend', (e) => {
+    gallery.addEventListener('touchend', () => {
         initialPinchDistance = null;
     }, { passive: true });
 }
@@ -96,62 +94,103 @@ function setViewMode(mode) {
 function updateZoom(value) {
     const gallery = document.getElementById('image-gallery');
     const label = document.getElementById('zoom-label');
+    if (!gallery || !label) return;
 
     label.innerText = `${value} ${value == 1 ? 'Column' : 'Columns'}`;
 
     if (gallery.classList.contains('grid-view')) {
-        // In grid view we translate the slider value to column count
         gallery.style.setProperty('--grid-cols', value);
-        // Also adjust minmax size to prevent too small items or too large ones
         const minSize = Math.max(100, 1000 / value - 20);
         gallery.style.setProperty('--grid-size', `${minSize}px`);
     } else {
-        // In masonry view we use columns property
         gallery.style.setProperty('--masonry-cols', value);
     }
+}
+
+// PREMIUM UPLOAD LOGIC with Progress Tracking
+function uploadFile(file, index, total) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData();
+        formData.append('files', file);
+
+        const fill = document.getElementById('progress-fill');
+        const percentLabel = document.getElementById('current-percent');
+        const fileNameLabel = document.getElementById('current-file-name');
+        const countLabel = document.getElementById('file-count');
+
+        fileNameLabel.innerText = file.name;
+        countLabel.innerText = `${index + 1} of ${total} images`;
+
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                fill.style.width = `${percent}%`;
+                percentLabel.innerText = `${percent}%`;
+            }
+        };
+
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(JSON.parse(xhr.responseText));
+            } else {
+                reject(new Error(`Upload failed for ${file.name}`));
+            }
+        };
+
+        xhr.onerror = () => reject(new Error(`Network error for ${file.name}`));
+
+        xhr.open('POST', '/upload');
+        xhr.send(formData);
+    });
 }
 
 async function handleUpload(event) {
     const files = event.target.files;
     if (files.length === 0) return;
 
-    const container = document.getElementById('upload-progress-container');
-    const status = document.getElementById('upload-status');
-    const fill = document.getElementById('progress-fill');
+    const modal = document.getElementById('upload-modal');
+    const dotsContainer = document.getElementById('overall-progress-dots');
+    const overallStatus = document.getElementById('overall-status');
 
-    container.style.display = 'block';
+    modal.style.display = 'flex';
+    dotsContainer.innerHTML = '';
+    overallStatus.innerText = 'Uploading...';
 
-    const total = files.length;
+    // Create dots for overall progress
+    for (let i = 0; i < files.length; i++) {
+        const dot = document.createElement('div');
+        dot.style.width = '8px';
+        dot.style.height = '8px';
+        dot.style.borderRadius = '50%';
+        dot.style.background = 'rgba(255,255,255,0.2)';
+        dot.style.transition = 'all 0.3s';
+        dot.id = `dot-${i}`;
+        dotsContainer.appendChild(dot);
+    }
+
     let successCount = 0;
-
-    // We process images one by one as requested for "nacheinander abgearbeitet"
-    // even though browsers can handle concurrent uploads, serial processing 
-    // satisfies the "nacheinander" requirement and can be more predictable for server load.
-
-    for (let i = 0; i < total; i++) {
-        const formData = new FormData();
-        formData.append('files', files[i]);
+    for (let i = 0; i < files.length; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        dot.style.background = 'var(--ios-accent)';
+        dot.style.transform = 'scale(1.2)';
 
         try {
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (response.ok) {
-                successCount++;
-                const progress = (successCount / total) * 100;
-                fill.style.width = `${progress}%`;
-                status.innerText = `${successCount} / ${total} abgeschlossen`;
-            }
+            await uploadFile(files[i], i, files.length);
+            successCount++;
+            dot.style.background = '#34C759'; // Apple Success Green
+            dot.style.transform = 'scale(1)';
         } catch (error) {
-            console.error('Error uploading file:', error);
+            console.error(error);
+            dot.style.background = '#FF3B30'; // Apple Error Red
+            dot.style.transform = 'scale(1)';
         }
     }
 
-    // Refresh page or inject elements
-    status.innerText = 'Fertig! Lade Seite neu...';
-    setTimeout(() => location.reload(), 1000);
+    overallStatus.innerText = 'Success!';
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
 }
 
 async function toggleFavorite(id, btn) {
@@ -191,8 +230,6 @@ async function deleteImage(id) {
 function openSlideshow(index) {
     currentIndex = index;
     const modal = document.getElementById('slideshow-modal');
-    const modalImg = document.getElementById('modal-img');
-
     updateModalImage();
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -212,10 +249,11 @@ function changeSlide(direction) {
 
 function updateModalImage() {
     const modalImg = document.getElementById('modal-img');
-    modalImg.src = `/uploads/${currentImages[currentIndex].filename}`;
+    if (modalImg && currentImages[currentIndex]) {
+        modalImg.src = `/uploads/${currentImages[currentIndex].filename}`;
+    }
 }
 
-// Close on background click
 window.onclick = function (event) {
     const modal = document.getElementById('slideshow-modal');
     if (event.target == modal) {
@@ -223,7 +261,6 @@ window.onclick = function (event) {
     }
 }
 
-// Keyboard navigation
 document.addEventListener('keydown', (e) => {
     if (document.getElementById('slideshow-modal').style.display === 'flex') {
         if (e.key === 'ArrowLeft') changeSlide(-1);
