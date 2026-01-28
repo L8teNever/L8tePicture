@@ -379,6 +379,12 @@ function closeSlideshow() {
 }
 
 function changeSlide(direction) {
+    const card = document.querySelector('.floating-image-card');
+    if (card) {
+        card.classList.remove('slide-next', 'slide-prev');
+        void card.offsetWidth; // reflow
+        card.classList.add(direction > 0 ? 'slide-next' : 'slide-prev');
+    }
     currentIndex += direction;
     if (currentIndex >= currentImages.length) currentIndex = 0;
     if (currentIndex < 0) currentIndex = currentImages.length - 1;
@@ -417,7 +423,14 @@ function updateModalImage() {
 // Modal Actions
 async function toggleFavoriteCurrent() {
     const img = currentImages[currentIndex];
+    const favIcon = document.getElementById('modal-fav-icon');
     if (!img) return;
+
+    if (favIcon) {
+        favIcon.classList.add('heart-pop');
+        favIcon.addEventListener('animationend', () => favIcon.classList.remove('heart_pop'), { once: true });
+    }
+
     try {
         const response = await fetch(`/favorite/${img.id}`, { method: 'POST' });
         const data = await response.json();
@@ -460,15 +473,28 @@ function stopSlideshow() {
 
 async function deleteCurrent() {
     const img = currentImages[currentIndex];
+    const card = document.querySelector('.floating-image-card');
     if (!img || !confirm('Bist du sicher?')) return;
     try {
         const response = await fetch(`/delete/${img.id}`, { method: 'DELETE' });
         if (response.ok) {
-            const card = document.querySelector(`.image-card[data-id="${img.id}"]`);
-            if (card) card.remove();
-            currentImages.splice(currentIndex, 1);
-            if (currentImages.length === 0) closeSlideshow();
-            else changeSlide(0);
+            if (card) {
+                card.classList.add('image-exit');
+                setTimeout(() => {
+                    const galleryCard = document.querySelector(`.image-card[data-id="${img.id}"]`);
+                    if (galleryCard) galleryCard.remove();
+                    currentImages.splice(currentIndex, 1);
+                    if (currentImages.length === 0) closeSlideshow();
+                    else {
+                        card.classList.remove('image-exit');
+                        changeSlide(0);
+                    }
+                }, 400);
+            } else {
+                currentImages.splice(currentIndex, 1);
+                if (currentImages.length === 0) closeSlideshow();
+                else changeSlide(0);
+            }
         }
     } catch (e) { console.error(e); }
 }
@@ -546,4 +572,46 @@ function handleSwipe() {
         // Swipe Left -> Next Image
         changeSlide(1);
     }
+}
+
+// Standalone Helper Functions (for Live Injection and Grid)
+async function toggleFavorite(id, btn) {
+    const icon = btn.querySelector('span');
+    if (icon) {
+        icon.classList.add('heart-pop');
+        icon.addEventListener('animationend', () => icon.classList.remove('heart-pop'), { once: true });
+    }
+
+    try {
+        const response = await fetch(`/favorite/${id}`, { method: 'POST' });
+        const data = await response.json();
+        const img = currentImages.find(i => i.id === id);
+        if (img) img.is_favorite = data.is_favorite;
+
+        if (data.is_favorite) icon.classList.add('fill-1');
+        else icon.classList.remove('fill-1');
+
+        // Sync with modal if open
+        const modalFavIcon = document.getElementById('modal-fav-icon');
+        if (modalFavIcon && currentImages[currentIndex]?.id === id) {
+            if (data.is_favorite) modalFavIcon.classList.add('fill-1');
+            else modalFavIcon.classList.remove('fill-1');
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function deleteImage(id) {
+    const card = document.querySelector(`.image-card[data-id="${id}"]`);
+    if (!card || !confirm('Bist du sicher?')) return;
+
+    try {
+        const response = await fetch(`/delete/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            card.classList.add('image-exit');
+            setTimeout(() => {
+                card.remove();
+                currentImages = currentImages.filter(img => img.id !== id);
+            }, 400);
+        }
+    } catch (e) { console.error(e); }
 }
