@@ -146,13 +146,9 @@ function uploadFile(file, index, total) {
         const formData = new FormData();
         formData.append('files', file);
 
-        const fill = document.getElementById('progress-fill');
-        const percentLabel = document.getElementById('current-percent');
-        const fileNameLabel = document.getElementById('current-file-name');
-        const countLabel = document.getElementById('file-count');
-
-        if (fileNameLabel) fileNameLabel.innerText = file.name;
-        if (countLabel) countLabel.innerText = `${index + 1} of ${total} images`;
+        const row = document.getElementById(`upload-row-${index}`);
+        const fill = row ? row.querySelector('.row-fill') : null;
+        const percentLabel = row ? row.querySelector('.row-percent') : null;
 
         xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
@@ -182,27 +178,50 @@ async function handleUpload(event) {
     if (files.length === 0) return;
 
     const modal = document.getElementById('upload-modal');
+    const listContainer = document.getElementById('upload-file-list');
     const dotsContainer = document.getElementById('overall-progress-dots');
     const overallStatus = document.getElementById('overall-status');
+    const countLabel = document.getElementById('file-count');
 
     if (modal) modal.style.display = 'flex';
+    if (listContainer) listContainer.innerHTML = '';
     if (dotsContainer) dotsContainer.innerHTML = '';
-    if (overallStatus) overallStatus.innerText = 'Uploading...';
+    if (overallStatus) overallStatus.innerText = 'Uploading Images...';
+    if (countLabel) countLabel.innerText = `0 of ${files.length} images uploaded`;
 
+    // Create rows for each file
     for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const row = document.createElement('div');
+        row.id = `upload-row-${i}`;
+        row.className = "flex flex-col gap-1.5";
+        row.innerHTML = `
+            <div class="flex justify-between items-center text-[11px] font-medium">
+                <span class="text-slate-700 truncate max-w-[200px]">${file.name}</span>
+                <span class="row-percent text-ios-accent">0%</span>
+            </div>
+            <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div class="row-fill h-full bg-ios-accent transition-all duration-300" style="width: 0%;"></div>
+            </div>
+        `;
+        listContainer.appendChild(row);
+
         const dot = document.createElement('div');
         dot.className = "h-1.5 w-1.5 rounded-full bg-slate-200 transition-all duration-300";
         dot.id = `dot-${i}`;
         if (dotsContainer) dotsContainer.appendChild(dot);
     }
 
+    let successCount = 0;
     for (let i = 0; i < files.length; i++) {
         const dot = document.getElementById(`dot-${i}`);
         if (dot) dot.classList.replace('bg-slate-200', 'bg-ios-accent');
 
         try {
             await uploadFile(files[i], i, files.length);
+            successCount++;
             if (dot) dot.classList.replace('bg-ios-accent', 'bg-emerald-500');
+            if (countLabel) countLabel.innerText = `${successCount} of ${files.length} images uploaded`;
         } catch (error) {
             console.error(error);
             if (dot) dot.classList.replace('bg-ios-accent', 'bg-red-500');
@@ -221,9 +240,9 @@ async function toggleFavorite(id, btn) {
         const data = await response.json();
         const icon = btn.querySelector('.material-symbols-outlined');
         if (data.is_favorite) {
-            icon.style.fontVariationSettings = "'FILL' 1";
+            icon.classList.add('fill-1');
         } else {
-            icon.style.fontVariationSettings = "'FILL' 0";
+            icon.classList.remove('fill-1');
         }
     } catch (error) {
         console.error('Error toggling favorite:', error);
