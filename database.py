@@ -22,3 +22,27 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def run_migrations():
+    import sqlite3
+    db_path = "./data/data.db"
+    if not os.path.exists(db_path):
+        return
+        
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    try:
+        # Check for content_hash column
+        cursor.execute("PRAGMA table_info(images)")
+        columns = [column[1] for column in cursor.fetchall()]
+        
+        if columns and "content_hash" not in columns:
+            print("Migration: Adding content_hash column to images table...")
+            cursor.execute("ALTER TABLE images ADD COLUMN content_hash VARCHAR")
+            cursor.execute("CREATE INDEX ix_images_content_hash ON images (content_hash)")
+            conn.commit()
+            print("Migration: Successfully added content_hash column.")
+    except Exception as e:
+        print(f"Migration Error: {e}")
+    finally:
+        conn.close()

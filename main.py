@@ -3,6 +3,7 @@ import uuid
 import shutil
 import logging
 import hashlib
+import time
 from typing import List
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
@@ -19,10 +20,12 @@ logger = logging.getLogger(__name__)
 
 # Create database tables
 try:
+    from database import run_migrations
+    run_migrations()
     models.Base.metadata.create_all(bind=engine)
     logger.info("Database tables created or already exist.")
 except Exception as e:
-    logger.error(f"Error creating database tables: {e}")
+    logger.error(f"Error creating database tables or running migrations: {e}")
 
 app = FastAPI(title="L8tePicture")
 
