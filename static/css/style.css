@@ -241,6 +241,18 @@ input[type="range"] {
     }
 }
 
+@keyframes scrollPop {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
 @keyframes popIn {
     0% {
         opacity: 0;
@@ -258,7 +270,9 @@ input[type="range"] {
 }
 
 .masonry-item {
-    animation: fadeIn 0.6s ease-out forwards;
+    animation: scrollPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    backface-visibility: hidden;
+    will-change: transform, opacity;
 }
 
 /* Loading Spinner Animation */
@@ -350,12 +364,32 @@ input:focus {
     }
 }
 
+@keyframes fadeZoomIn {
+    0% {
+        opacity: 0;
+        transform: scale(1.1);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
 .slide-next {
     animation: slideInRight 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .slide-prev {
     animation: slideInLeft 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+.zoom-in {
+    animation: fadeZoomIn 0.5s ease-out;
 }
 
 .image-exit {
@@ -365,4 +399,19 @@ input:focus {
 
 .heart-pop {
     animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Slideshow UI */
+.ss-fx-btn.active {
+    background: rgba(0, 122, 255, 0.1) !important;
+    border-color: #007AFF !important;
+    color: #007AFF !important;
+}
+
+#ss-autoplay-toggle.active {
+    background: #34C759;
+}
+
+#ss-autoplay-toggle.active div {
+    transform: translateX(24px);
 }

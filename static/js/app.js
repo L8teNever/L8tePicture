@@ -6,6 +6,11 @@ let isLoadingMore = false;
 let hasMore = true;
 let currentSearch = new URLSearchParams(window.location.search).get('search') || "";
 let slideshowInterval = null;
+let ssConfig = {
+    interval: 3000,
+    effect: 'slide',
+    isPlaying: false
+};
 
 // Initialize images from DOM (first batch)
 function updateImageList() {
@@ -380,10 +385,17 @@ function closeSlideshow() {
 
 function changeSlide(direction) {
     const card = document.querySelector('.floating-image-card');
-    if (card) {
-        card.classList.remove('slide-next', 'slide-prev');
+    if (card && ssConfig.effect !== 'none') {
+        card.classList.remove('slide-next', 'slide-prev', 'fade-in', 'zoom-in');
         void card.offsetWidth; // reflow
-        card.classList.add(direction > 0 ? 'slide-next' : 'slide-prev');
+
+        if (ssConfig.effect === 'slide') {
+            card.classList.add(direction >= 0 ? 'slide-next' : 'slide-prev');
+        } else if (ssConfig.effect === 'fade') {
+            card.classList.add('fade-in');
+        } else if (ssConfig.effect === 'zoom') {
+            card.classList.add('zoom-in');
+        }
     }
     currentIndex += direction;
     if (currentIndex >= currentImages.length) currentIndex = 0;
@@ -457,17 +469,69 @@ function downloadCurrent() {
 
 function startSlideshow() {
     if (slideshowInterval) { stopSlideshow(); return; }
-    const playIcon = document.querySelector('button[onclick="startSlideshow()"] span');
-    if (playIcon) playIcon.innerText = 'pause_circle';
-    slideshowInterval = setInterval(() => changeSlide(1), 3000);
+
+    ssConfig.isPlaying = true;
+    updateSSUI();
+
+    slideshowInterval = setInterval(() => changeSlide(1), ssConfig.interval);
 }
 
 function stopSlideshow() {
     if (slideshowInterval) {
         clearInterval(slideshowInterval);
         slideshowInterval = null;
-        const playIcon = document.querySelector('button[onclick="startSlideshow()"] span');
-        if (playIcon) playIcon.innerText = 'play_circle';
+        ssConfig.isPlaying = false;
+        updateSSUI();
+    }
+}
+
+// Slideshow Settings & Control
+function toggleSlideshowSettings() {
+    const panel = document.getElementById('slideshow-settings');
+    if (panel) panel.classList.toggle('hidden');
+}
+
+function updateSSLabel(val) {
+    const label = document.getElementById('ss-speed-label');
+    if (label) label.innerText = val + 's';
+    ssConfig.interval = val * 1000;
+    if (ssConfig.isPlaying) {
+        stopSlideshow();
+        startSlideshow();
+    }
+}
+
+function setSSEffect(fx) {
+    ssConfig.effect = fx;
+    document.querySelectorAll('.ss-fx-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-white/40');
+        btn.classList.add('bg-white/10');
+    });
+    const activeBtn = document.getElementById(`btn-fx-${fx}`);
+    if (activeBtn) {
+        activeBtn.classList.add('active', 'bg-white/40');
+        activeBtn.classList.remove('bg-white/10');
+    }
+}
+
+function toggleSlideshow() {
+    if (ssConfig.isPlaying) stopSlideshow();
+    else startSlideshow();
+}
+
+function updateSSUI() {
+    const toggle = document.getElementById('ss-autoplay-toggle');
+    const playIcon = document.getElementById('ss-play-icon');
+
+    if (toggle) {
+        if (ssConfig.isPlaying) toggle.classList.add('active');
+        else toggle.classList.remove('active');
+    }
+
+    if (playIcon) {
+        playIcon.innerText = ssConfig.isPlaying ? 'pause_circle' : 'play_circle';
+        if (ssConfig.isPlaying) playIcon.classList.add('text-ios-accent');
+        else playIcon.classList.remove('text-ios-accent');
     }
 }
 

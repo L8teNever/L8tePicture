@@ -173,8 +173,8 @@
                 <span
                     class="material-symbols-outlined text-slate-800 font-extralight text-2xl group-hover:text-ios-accent">download</span>
             </button>
-            <button class="icon-btn-modal group" onclick="startSlideshow()">
-                <span
+            <button class="icon-btn-modal group" onclick="toggleSlideshowSettings()">
+                <span id="ss-play-icon"
                     class="material-symbols-outlined text-slate-800 font-extralight text-2xl group-hover:text-ios-accent">play_circle</span>
             </button>
             <button class="icon-btn-modal group" onclick="deleteCurrent()">
@@ -182,6 +182,52 @@
                     class="material-symbols-outlined text-slate-800 font-extralight text-2xl group-hover:text-red-500">delete</span>
             </button>
         </nav>
+
+        <!-- Slideshow Settings Panel -->
+        <div id="slideshow-settings" class="absolute top-20 right-6 z-[70] hidden">
+            <div class="glass-card p-5 rounded-[32px] w-[260px] flex flex-col gap-5 border border-white/50 shadow-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-800">Slideshow Settings</h3>
+                    <button onclick="toggleSlideshowSettings()"
+                        class="h-6 w-6 flex items-center justify-center rounded-full bg-slate-100/50">
+                        <span class="material-symbols-outlined text-xs">close</span>
+                    </button>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Interval
+                        (seconds)</label>
+                    <div class="flex items-center gap-3 bg-slate-100/30 p-2 rounded-2xl">
+                        <input type="range" id="ss-speed" min="1" max="10" value="3" class="flex-grow accent-ios-accent"
+                            oninput="updateSSLabel(this.value)">
+                        <span id="ss-speed-label" class="text-xs font-bold text-ios-accent w-6">3s</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Transition
+                        Effect</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setSSEffect('slide')" id="btn-fx-slide"
+                            class="ss-fx-btn active text-[11px] font-medium p-2 rounded-xl border border-white/40 bg-white/40">Slide</button>
+                        <button onclick="setSSEffect('fade')" id="btn-fx-fade"
+                            class="ss-fx-btn text-[11px] font-medium p-2 rounded-xl border border-white/40 bg-white/10">Fade</button>
+                        <button onclick="setSSEffect('zoom')" id="btn-fx-zoom"
+                            class="ss-fx-btn text-[11px] font-medium p-2 rounded-xl border border-white/40 bg-white/10">Zoom</button>
+                        <button onclick="setSSEffect('none')" id="btn-fx-none"
+                            class="ss-fx-btn text-[11px] font-medium p-2 rounded-xl border border-white/40 bg-white/10">None</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-1">
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Auto-Play</label>
+                    <button id="ss-autoplay-toggle" onclick="toggleSlideshow()"
+                        class="h-8 w-14 bg-slate-200/50 rounded-full p-1 transition-all">
+                        <div class="h-6 w-6 bg-white rounded-full shadow-sm translate-x-0 transition-transform"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Navigation Arrows (Hidden on mobile, use swipe instead) -->
         <div class="hidden md:block absolute left-6 top-1/2 -translate-y-1/2 z-[60]">

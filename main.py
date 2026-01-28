@@ -2,6 +2,7 @@ import os
 import uuid
 import shutil
 import logging
+import hashlib
 from typing import List
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
@@ -130,6 +131,20 @@ async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFil
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
+            # Calculate hash for duplicate detection
+            sha256_hash = hashlib.sha256()
+            with open(file_path, "rb") as f:
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+            content_hash = sha256_hash.hexdigest()
+
+            # Check for duplicate
+            existing_image = db.query(models.Image).filter(models.Image.content_hash == content_hash).first()
+            if existing_image:
+                os.remove(file_path) # Delete the duplicate file
+                new_image_ids.append(existing_image.id)
+                continue
+
             # Quick metadata extraction
             with PILImage.open(file_path) as img:
                 width, height = img.size
@@ -144,7 +159,8 @@ async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFil
                 original_name=file.filename,
                 width=width,
                 height=height,
-                size=actual_size
+                size=actual_size,
+                content_hash=content_hash
             )
             db.add(db_image)
             db.commit()

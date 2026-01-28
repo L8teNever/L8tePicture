@@ -13,3 +13,4 @@ class Image(Base):
     width = Column(Integer)
     height = Column(Integer)
     size = Column(Integer)  # in bytes
+    content_hash = Column(String, index=True)

@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import hashlib
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from sqlalchemy.orm import Session
@@ -77,7 +78,17 @@ class ImageHandler(FileSystemEventHandler):
             # ALWAYS process versions if they are missing
             process_image_versions(file_path, filename)
 
-            if not existing:
+            # Calculate content hash
+            sha256_hash = hashlib.sha256()
+            with open(file_path, "rb") as f:
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+            content_hash = sha256_hash.hexdigest()
+
+            # Check for duplicate by hash
+            existing_by_hash = db.query(models.Image).filter(models.Image.content_hash == content_hash).first()
+
+            if not existing and not existing_by_hash:
                 with PILImage.open(file_path) as img:
                     width, height = img.size
                     actual_size = os.path.getsize(file_path)
@@ -87,11 +98,17 @@ class ImageHandler(FileSystemEventHandler):
                     original_name=filename,
                     width=width,
                     height=height,
-                    size=actual_size
+                    size=actual_size,
+                    content_hash=content_hash
                 )
                 db.add(db_image)
                 db.commit()
                 logger.info(f"Auto-imported & optimized: {filename}")
+            elif existing and not existing.content_hash:
+                # Update hash for legacy entries
+                existing.content_hash = content_hash
+                db.commit()
+                logger.info(f"Updated hash for: {filename}")
         except Exception as e:
             logger.error(f"Watchdog failed for {filename}: {e}")
         finally:
@@ -133,7 +150,17 @@ def sync_existing_files():
             
             # 2. Check if in DB
             existing = db.query(models.Image).filter(models.Image.filename == filename).first()
-            if not existing:
+            
+            # Calculate hash
+            sha256_hash = hashlib.sha256()
+            with open(file_path, "rb") as f:
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+            content_hash = sha256_hash.hexdigest()
+            
+            existing_by_hash = db.query(models.Image).filter(models.Image.content_hash == content_hash).first()
+
+            if not existing and not existing_by_hash:
                 try:
                     with PILImage.open(file_path) as img:
                         width, height = img.size
@@ -144,12 +171,16 @@ def sync_existing_files():
                         original_name=filename,
                         width=width,
                         height=height,
-                        size=size
+                        size=size,
+                        content_hash=content_hash
                     )
                     db.add(db_image)
                     db.commit()
                     logger.info(f"Startup Sync: Added {filename} to DB")
                 except Exception as e:
                     logger.error(f"Startup Sync failed for {filename}: {e}")
+            elif existing and not existing.content_hash:
+                existing.content_hash = content_hash
+                db.commit()
     finally:
         db.close()
