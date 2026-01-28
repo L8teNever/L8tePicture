@@ -22,17 +22,11 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
     
-    - name: Get version from file
-      id: version
-      run: echo "VERSION=$(cat version.txt)" >> $GITHUB_OUTPUT
-      
     - name: Build and push
       uses: docker/build-push-action@v5
       with:
         context: .
         push: true
-        tags: |
-          ${{ secrets.DOCKER_USERNAME }}/l8tepicture:latest
-          ${{ secrets.DOCKER_USERNAME }}/l8tepicture:${{ steps.version.outputs.VERSION }}
+        tags: ${{ secrets.DOCKER_USERNAME }}/l8tepicture:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
