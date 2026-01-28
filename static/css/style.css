@@ -100,12 +100,10 @@ header {
     transition: box-shadow 0.3s ease;
 }
 
-/* Grid View (Default) */
 .gallery.grid-view {
     grid-template-columns: repeat(var(--grid-cols, auto-fill), minmax(var(--grid-size, 300px), 1fr));
 }
 
-/* Masonry View */
 .gallery.masonry-view {
     display: block;
     columns: var(--masonry-cols, 3);
@@ -117,7 +115,6 @@ header {
     width: 100%;
     margin-bottom: 1.5rem;
     aspect-ratio: auto;
-    /* Allow natural height in masonry */
 }
 
 .masonry-view .image-card img {
@@ -202,6 +199,7 @@ header {
     border-radius: 15px;
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(10px);
+    flex-wrap: wrap;
 }
 
 .view-btn {
@@ -344,4 +342,93 @@ header {
 
 .image-card {
     animation: fadeIn 0.5s ease forwards;
+}
+
+/* Responsiveness Media Queries */
+@media (max-width: 1024px) {
+    .container {
+        padding: 1.5rem;
+    }
+
+    .prev-btn {
+        left: -30px;
+    }
+
+    .next-btn {
+        right: -30px;
+    }
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 1rem 1.5rem;
+    }
+
+    .logo {
+        font-size: 1.2rem;
+    }
+
+    .view-controls {
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .zoom-control {
+        width: 100%;
+        order: 2;
+    }
+
+    .view-modes {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        order: 1;
+    }
+
+    .view-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .nav-btn {
+        padding: 0.75rem;
+        font-size: 1.2rem;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .prev-btn {
+        left: 10px;
+    }
+
+    .next-btn {
+        right: 10px;
+    }
+
+    .close-modal {
+        top: 10px;
+        right: 15px;
+        font-size: 1.8rem;
+        z-index: 1001;
+    }
+
+    #upload-progress-container {
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+        width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .gallery {
+        gap: 1rem;
+    }
+
+    .image-card {
+        border-radius: 12px;
+    }
 }

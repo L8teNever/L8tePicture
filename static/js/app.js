@@ -16,8 +16,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('file-input');
     fileInput.addEventListener('change', handleUpload);
 
-    // Initial zoom trigger
-    updateZoom(document.getElementById('zoom-slider').value);
+    // Initial zoom trigger based on screen width
+    const slider = document.getElementById('zoom-slider');
+    if (window.innerWidth < 768) {
+        slider.value = 2; // Default 2 columns on mobile
+    }
+    updateZoom(slider.value);
 });
 
 function setViewMode(mode) {

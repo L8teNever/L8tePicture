@@ -1,0 +1,22 @@
+services:
+  l8tepicture:
+    image: l8tenever/l8tepicture:latest
+    container_name: l8tepicture
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./thumbnails:/app/thumbnails
+      - ./data.db:/app/data.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - l8te_network
+
+networks:
+  l8te_network:
+    driver: bridge
