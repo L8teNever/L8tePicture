@@ -146,9 +146,7 @@
                     <span id="modal-meta" class="text-[9px] font-semibold opacity-40 uppercase tracking-[0.2em]">Shot on
                         L8te</span>
                 </div>
-                <button class="icon-btn-modal" onclick="shareImage()">
-                    <span class="material-symbols-outlined text-slate-800 font-extralight text-xl">ios_share</span>
-                </button>
+                <div class="w-10"></div> <!-- Placeholder for symmetry -->
             </div>
         </header>
 
@@ -185,13 +183,13 @@
             </button>
         </nav>
 
-        <!-- Navigation Arrows -->
-        <div class="absolute left-6 top-1/2 -translate-y-1/2 z-[60]">
+        <!-- Navigation Arrows (Hidden on mobile, use swipe instead) -->
+        <div class="hidden md:block absolute left-6 top-1/2 -translate-y-1/2 z-[60]">
             <button class="icon-btn-modal" onclick="changeSlide(-1)">
                 <span class="material-symbols-outlined">chevron_left</span>
             </button>
         </div>
-        <div class="absolute right-6 top-1/2 -translate-y-1/2 z-[60]">
+        <div class="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 z-[60]">
             <button class="icon-btn-modal" onclick="changeSlide(1)">
                 <span class="material-symbols-outlined">chevron_right</span>
             </button>

@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initPinchToZoom();
     initInfiniteScroll();
+    initSwipeNavigation();
 });
 
 // Optimization for 10,000+ images: Infinite Scroll
@@ -426,4 +427,35 @@ function initPinchToZoom() {
         }
     }, { passive: true });
     gallery.addEventListener('touchend', () => { initialPinchDistance = null; }, { passive: true });
+}
+
+// Swipe Navigation for Modal
+let touchStartX = 0;
+let touchEndX = 0;
+
+function initSwipeNavigation() {
+    const modal = document.getElementById('slideshow-modal');
+    if (!modal) return;
+
+    modal.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    modal.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, { passive: true });
+}
+
+function handleSwipe() {
+    const swipeDistance = touchEndX - touchStartX;
+    const threshold = 50; // pixels
+
+    if (swipeDistance > threshold) {
+        // Swipe Right -> Previous Image
+        changeSlide(-1);
+    } else if (swipeDistance < -threshold) {
+        // Swipe Left -> Next Image
+        changeSlide(1);
+    }
 }

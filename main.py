@@ -43,25 +43,29 @@ templates = Jinja2Templates(directory="templates")
 def process_image_versions(file_path: str, filename: str):
     """Generates a small thumbnail and a medium preview in WebP format."""
     try:
+        # Use a small delay to ensure file is flushed
+        time.sleep(0.1)
         with PILImage.open(file_path) as img:
             # Generate Preview (max 1600px)
             preview_path = os.path.join(PREVIEW_DIR, filename + ".webp")
-            preview_img = img.copy()
-            preview_img.thumbnail((1600, 1600))
-            if preview_img.mode in ("RGBA", "P"):
-                preview_img = preview_img.convert("RGB")
-            preview_img.save(preview_path, "WEBP", quality=75)
+            if not os.path.exists(preview_path):
+                preview_img = img.copy()
+                preview_img.thumbnail((1600, 1600))
+                if preview_img.mode in ("RGBA", "P"):
+                    preview_img = preview_img.convert("RGB")
+                preview_img.save(preview_path, "WEBP", quality=75, method=3) # Method 3 is faster
 
             # Generate Thumbnail (max 300px)
             thumb_path = os.path.join(THUMB_DIR, filename + ".webp")
-            thumb_img = img.copy()
-            thumb_img.thumbnail((300, 300))
-            if thumb_img.mode in ("RGBA", "P"):
-                thumb_img = thumb_img.convert("RGB")
-            thumb_img.save(thumb_path, "WEBP", quality=60)
+            if not os.path.exists(thumb_path):
+                thumb_img = img.copy()
+                thumb_img.thumbnail((300, 300))
+                if thumb_img.mode in ("RGBA", "P"):
+                    thumb_img = thumb_img.convert("RGB")
+                thumb_img.save(thumb_path, "WEBP", quality=60, method=3)
             
     except Exception as e:
-        logger.error(f"Image optimization failed for {filename}: {e}")
+        logger.error(f"Background optimization failed for {filename}: {e}")
 
 @app.on_event("startup")
 async def startup_event():
@@ -106,7 +110,7 @@ async def get_images_api(db: Session = Depends(get_db), offset: int = 0, limit: 
     } for img in images]
 
 @app.post("/upload")
-async def upload_images(files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
+async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
     uploaded_count = 0
     errors = []
     
@@ -116,43 +120,35 @@ async def upload_images(files: List[UploadFile] = File(...), db: Session = Depen
             continue
             
         try:
-            # Generate unique filename to avoid collisions
+            # Generate unique filename
             ext = os.path.splitext(file.filename)[1]
             unique_filename = f"{uuid.uuid4()}{ext}"
             file_path = os.path.join(UPLOAD_DIR, unique_filename)
-            thumb_path = os.path.join(THUMB_DIR, unique_filename)
 
-            # Save original file
+            # Save original file instantly
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
-            # Process image metadata and create optimized versions (Preview & Thumb)
+            # Quick metadata extraction (Don't process here)
             with PILImage.open(file_path) as img:
                 width, height = img.size
-                size = os.path.getsize(file_path)
+                actual_size = os.path.getsize(file_path)
 
-            process_image_versions(file_path, unique_filename)
+            # OFFLOAD heavy processing to background
+            background_tasks.add_task(process_image_versions, file_path, unique_filename)
 
-            # Save to DB
+            # Save to DB instantly
             db_image = models.Image(
                 filename=unique_filename,
                 original_name=file.filename,
                 width=width,
                 height=height,
-                size=size
+                size=actual_size
             )
             db.add(db_image)
             db.commit()
             uploaded_count += 1
-            logger.info(f"Successfully uploaded: {unique_filename} (original: {file.filename})")
-            
         except Exception as e:
-            logger.error(f"Failed to upload {file.filename}: {e}")
-            errors.append(f"Could not process {file.filename}: {str(e)}")
-
-    if errors and uploaded_count == 0:
-        return JSONResponse(status_code=500, content={"message": "Upload failed", "errors": errors})
-        
     return {
         "message": f"Successfully uploaded {uploaded_count} images", 
         "count": uploaded_count,
