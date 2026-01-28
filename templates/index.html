@@ -57,7 +57,8 @@
                 <span class="material-symbols-outlined text-slate-400 font-extralight mr-2">search</span>
                 <input id="search-input"
                     class="w-full bg-transparent border-none focus:ring-0 text-slate-800 placeholder:text-slate-400 font-light text-sm"
-                    placeholder="Search your memories..." type="text" oninput="filterImages(this.value)" />
+                    placeholder="Search your memories..." type="text" value="{{ search }}"
+                    oninput="debounceSearch(this.value)" />
                 <button class="flex items-center justify-center p-2 rounded-full hover:bg-white/40 transition-colors"
                     onclick="toggleSettings()">
                     <span class="material-symbols-outlined text-slate-400 font-extralight">settings</span>

@@ -1,13 +1,19 @@
 let currentImages = [];
 let currentIndex = 0;
+let offset = 50;
+let limit = 50;
+let isLoadingMore = false;
+let hasMore = true;
+let currentSearch = new URLSearchParams(window.location.search).get('search') || "";
 
-// Initialize images from DOM
+// Initialize images from DOM (first batch)
 function updateImageList() {
     const cards = document.querySelectorAll('.image-card');
     currentImages = Array.from(cards).map(card => ({
-        id: card.dataset.id,
+        id: parseInt(card.dataset.id),
         filename: card.dataset.filename,
-        name: card.dataset.name
+        name: card.dataset.name,
+        is_favorite: card.querySelector('.favorite-btn span').classList.contains('fill-1')
     }));
 }
 
@@ -17,23 +23,141 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('file-input');
     if (fileInput) fileInput.addEventListener('change', handleUpload);
 
-    // Initial zoom trigger based on screen width
     const slider = document.getElementById('zoom-slider');
     if (slider) {
         if (window.innerWidth < 768) {
-            slider.value = 2; // Default 2 columns on mobile
+            slider.value = 2;
         } else {
             slider.value = 3;
         }
         updateZoom(slider.value);
     }
 
-    // Pinch to Zoom implementation for mobile
     initPinchToZoom();
+    initInfiniteScroll();
 });
 
-let initialPinchDistance = null;
+// Optimization for 10,000+ images: Infinite Scroll
+function initInfiniteScroll() {
+    window.addEventListener('scroll', () => {
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
+            loadNextBatch();
+        }
+    }, { passive: true });
+}
 
+async function loadNextBatch() {
+    if (isLoadingMore || !hasMore) return;
+    isLoadingMore = true;
+
+    try {
+        const response = await fetch(`/api/images?offset=${offset}&limit=${limit}&search=${encodeURIComponent(currentSearch)}`);
+        const newImages = await response.json();
+
+        if (newImages.length < limit) {
+            hasMore = false;
+        }
+
+        if (newImages.length > 0) {
+            const gallery = document.getElementById('image-gallery');
+            newImages.forEach(img => {
+                // Check if already exist to avoid duplicates
+                if (currentImages.find(existing => existing.id === img.id)) return;
+
+                const item = document.createElement('div');
+                item.className = "masonry-item image-card";
+                item.dataset.id = img.id;
+                item.dataset.filename = img.filename;
+                item.dataset.name = img.original_name;
+                item.onclick = () => openSlideshow(currentImages.length);
+
+                const favoriteClass = img.is_favorite ? 'fill-1' : '';
+
+                item.innerHTML = `
+                <div class="glass-card rounded-[28px] overflow-hidden p-1 relative min-h-[100px] flex items-center justify-center">
+                    <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
+                        <div class="spinner"></div>
+                    </div>
+                    <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10">
+                        <img src="/thumbnails/${img.filename}.webp" alt="${img.original_name}"
+                            class="w-full h-full object-cover image-loading" loading="lazy" 
+                            onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4">
+                            <div class="flex gap-2 text-white">
+                                <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30 favorite-btn" 
+                                    onclick="event.stopPropagation(); toggleFavorite(${img.id}, this)">
+                                    <span class="material-symbols-outlined text-white text-[18px] font-extralight ${favoriteClass}">favorite</span>
+                                </button>
+                                <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30" 
+                                    onclick="event.stopPropagation(); deleteImage(${img.id})">
+                                    <span class="material-symbols-outlined text-white text-[18px] font-extralight">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+                gallery.appendChild(item);
+                currentImages.push({
+                    id: img.id,
+                    filename: img.filename,
+                    name: img.original_name,
+                    is_favorite: img.is_favorite
+                });
+            });
+            offset += newImages.length;
+        }
+    } catch (e) {
+        console.error("Failed to load more images:", e);
+    } finally {
+        isLoadingMore = false;
+    }
+}
+
+// Server-side Search with Debounce for efficiency
+let searchTimeout;
+function debounceSearch(query) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        // We use full page reload for search to keep state clean, 
+        // but we could also do it via AJAX if preferred.
+        // For 10k images, server search is mandatory.
+        const url = new URL(window.location);
+        url.searchParams.set('search', query);
+        window.location.href = url.href;
+    }, 600);
+}
+
+function updateZoom(value) {
+    const gallery = document.getElementById('image-gallery');
+    const label = document.getElementById('zoom-label');
+    if (!gallery) return;
+
+    if (label) label.innerText = value;
+
+    if (gallery.classList.contains('grid-view')) {
+        gallery.style.setProperty('--grid-cols', value);
+    } else {
+        gallery.style.setProperty('--masonry-cols', value);
+    }
+}
+
+function toggleSettings() {
+    const popup = document.getElementById('settings-popup');
+    if (!popup) return;
+
+    const isHidden = popup.classList.contains('opacity-0');
+    if (isHidden) {
+        popup.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+        popup.classList.add('opacity-100', 'scale-100');
+    } else {
+        popup.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+        popup.classList.remove('opacity-100', 'scale-100');
+    }
+}
+
+// Pinch to Zoom implementation for mobile
+let initialPinchDistance = null;
 function initPinchToZoom() {
     const gallery = document.getElementById('image-gallery');
     const slider = document.getElementById('zoom-slider');
@@ -68,9 +192,7 @@ function initPinchToZoom() {
         }
     }, { passive: true });
 
-    gallery.addEventListener('touchend', () => {
-        initialPinchDistance = null;
-    }, { passive: true });
+    gallery.addEventListener('touchend', () => { initialPinchDistance = null; }, { passive: true });
 }
 
 function getDistance(touch1, touch2) {
@@ -96,47 +218,6 @@ function setViewMode(mode) {
         gridBtn.classList.remove('bg-white/60', 'shadow-sm');
     }
     updateZoom(document.getElementById('zoom-slider').value);
-}
-
-function updateZoom(value) {
-    const gallery = document.getElementById('image-gallery');
-    const label = document.getElementById('zoom-label');
-    if (!gallery) return;
-
-    if (label) label.innerText = value;
-
-    if (gallery.classList.contains('grid-view')) {
-        gallery.style.setProperty('--grid-cols', value);
-    } else {
-        gallery.style.setProperty('--masonry-cols', value);
-    }
-}
-
-function toggleSettings() {
-    const popup = document.getElementById('settings-popup');
-    if (!popup) return;
-
-    const isHidden = popup.classList.contains('opacity-0');
-    if (isHidden) {
-        popup.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
-        popup.classList.add('opacity-100', 'scale-100');
-    } else {
-        popup.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
-        popup.classList.remove('opacity-100', 'scale-100');
-    }
-}
-
-function filterImages(query) {
-    const q = query.toLowerCase();
-    const cards = document.querySelectorAll('.image-card');
-    cards.forEach(card => {
-        const name = card.dataset.name.toLowerCase();
-        if (name.includes(q)) {
-            card.style.display = '';
-        } else {
-            card.style.display = 'none';
-        }
-    });
 }
 
 // PREMIUM UPLOAD LOGIC with Progress Tracking
@@ -189,7 +270,6 @@ async function handleUpload(event) {
     if (overallStatus) overallStatus.innerText = 'Uploading Images...';
     if (countLabel) countLabel.innerText = `0 of ${files.length} images uploaded`;
 
-    // Create rows for each file
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const row = document.createElement('div');
@@ -229,9 +309,7 @@ async function handleUpload(event) {
     }
 
     if (overallStatus) overallStatus.innerText = 'Success!';
-    setTimeout(() => {
-        location.reload();
-    }, 1000);
+    setTimeout(() => { location.reload(); }, 1000);
 }
 
 async function toggleFavorite(id, btn) {
@@ -239,19 +317,13 @@ async function toggleFavorite(id, btn) {
         const response = await fetch(`/favorite/${id}`, { method: 'POST' });
         const data = await response.json();
         const icon = btn.querySelector('.material-symbols-outlined');
-        if (data.is_favorite) {
-            icon.classList.add('fill-1');
-        } else {
-            icon.classList.remove('fill-1');
-        }
-    } catch (error) {
-        console.error('Error toggling favorite:', error);
-    }
+        if (data.is_favorite) { icon.classList.add('fill-1'); }
+        else { icon.classList.remove('fill-1'); }
+    } catch (error) { console.error('Error toggling favorite:', error); }
 }
 
 async function deleteImage(id) {
     if (!confirm('Bist du sicher?')) return;
-
     try {
         const response = await fetch(`/delete/${id}`, { method: 'DELETE' });
         if (response.ok) {
@@ -259,15 +331,10 @@ async function deleteImage(id) {
             if (card) {
                 card.style.opacity = '0';
                 card.style.transform = 'scale(0.8)';
-                setTimeout(() => {
-                    card.remove();
-                    updateImageList();
-                }, 300);
+                setTimeout(() => { card.remove(); updateImageList(); }, 300);
             }
         }
-    } catch (error) {
-        console.error('Error deleting image:', error);
-    }
+    } catch (error) { console.error('Error deleting image:', error); }
 }
 
 function openSlideshow(index) {
@@ -300,14 +367,10 @@ function updateModalImage() {
     const spinner = document.getElementById('modal-spinner');
     if (!modalImg || !currentImages[currentIndex]) return;
 
-    // Reset loading state
     modalImg.classList.remove('image-loaded');
     if (spinner) spinner.style.display = 'flex';
-
-    // Set source to optimized preview
     modalImg.src = `/previews/${currentImages[currentIndex].filename}.webp`;
 
-    // Smart Pre-loading: Load the next image in the background
     const nextIdx = (currentIndex + 1) % currentImages.length;
     if (currentImages[nextIdx]) {
         const img = new Image();

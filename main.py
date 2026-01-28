@@ -72,13 +72,34 @@ async def startup_event():
         logger.error(f"Failed to start folder observer: {e}")
 
 @app.get("/")
-async def read_root(request: Request, db: Session = Depends(get_db)):
+async def read_root(request: Request, db: Session = Depends(get_db), search: str = ""):
     try:
-        images = db.query(models.Image).order_by(models.Image.upload_date.desc()).all()
-        return templates.TemplateResponse("index.html", {"request": request, "images": images})
+        query = db.query(models.Image).order_by(models.Image.upload_date.desc())
+        if search:
+            query = query.filter(models.Image.original_name.ilike(f"%{search}%"))
+        
+        # Load first 50 images for initial landing
+        images = query.limit(50).all()
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "search": search})
     except Exception as e:
         logger.error(f"Error loading images for root: {e}")
-        return templates.TemplateResponse("index.html", {"request": request, "images": []})
+        return templates.TemplateResponse("index.html", {"request": request, "images": [], "search": ""})
+
+@app.get("/api/images")
+async def get_images_api(db: Session = Depends(get_db), offset: int = 0, limit: int = 50, search: str = ""):
+    """API endpoint for infinite scrolling and efficient image fetching."""
+    query = db.query(models.Image).order_by(models.Image.upload_date.desc())
+    if search:
+        query = query.filter(models.Image.original_name.ilike(f"%{search}%"))
+    
+    images = query.offset(offset).limit(limit).all()
+    return [{
+        "id": img.id,
+        "filename": img.filename,
+        "original_name": img.original_name,
+        "is_favorite": img.is_favorite,
+        "upload_date": img.upload_date.isoformat() if img.upload_date else None
+    } for img in images]
 
 @app.post("/upload")
 async def upload_images(files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
