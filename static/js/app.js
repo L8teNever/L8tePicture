@@ -23,6 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateZoom(slider.value);
 
+    // Enable transitions after initial set to avoid flickering
+    setTimeout(() => {
+        const gallery = document.getElementById('image-gallery');
+        if (gallery) gallery.style.transition = 'all 0.4s ease';
+    }, 100);
+
     // Pinch to Zoom implementation for mobile
     initPinchToZoom();
 });
