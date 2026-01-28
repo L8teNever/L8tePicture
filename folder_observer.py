@@ -11,25 +11,38 @@ from database import SessionLocal
 # Setup logging
 logger = logging.getLogger(__name__)
 
-PREVIEW_DIR = "previews"
-THUMB_DIR = "thumbnails"
-UPLOAD_DIR = "uploads"
+# Use absolute paths for reliability
+BASE_DIR = os.getcwd()
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+PREVIEW_DIR = os.path.join(BASE_DIR, "previews")
+THUMB_DIR = os.path.join(BASE_DIR, "thumbnails")
 
 def process_image_versions(file_path: str, filename: str):
     """Generates a small thumbnail and a medium preview in WebP format."""
     try:
+        if not os.path.exists(file_path):
+            return
+
         with PILImage.open(file_path) as img:
             # Generate Preview (max 1600px)
-            preview_img = img.copy()
-            preview_img.thumbnail((1600, 1600))
             preview_path = os.path.join(PREVIEW_DIR, filename + ".webp")
-            preview_img.save(preview_path, "WEBP", quality=75)
+            if not os.path.exists(preview_path):
+                preview_img = img.copy()
+                preview_img.thumbnail((1600, 1600))
+                # Ensure RGB for JPEG/PNG compatibility
+                if preview_img.mode in ("RGBA", "P"):
+                    preview_img = preview_img.convert("RGB")
+                preview_img.save(preview_path, "WEBP", quality=75)
 
             # Generate Thumbnail (max 300px)
-            thumb_img = img.copy()
-            thumb_img.thumbnail((300, 300))
             thumb_path = os.path.join(THUMB_DIR, filename + ".webp")
-            thumb_img.save(thumb_path, "WEBP", quality=60)
+            if not os.path.exists(thumb_path):
+                thumb_img = img.copy()
+                thumb_img.thumbnail((300, 300))
+                if thumb_img.mode in ("RGBA", "P"):
+                    thumb_img = thumb_img.convert("RGB")
+                thumb_img.save(thumb_path, "WEBP", quality=60)
+            
     except Exception as e:
         logger.error(f"Image optimization failed (Watchdog) for {filename}: {e}")
 
@@ -44,6 +57,7 @@ class ImageHandler(FileSystemEventHandler):
         file_path = event.src_path
         filename = os.path.basename(file_path)
         
+        # Skip hidden files and already generated webp versions
         if filename.startswith('.') or filename.endswith('.webp'):
             return
 
@@ -53,33 +67,31 @@ class ImageHandler(FileSystemEventHandler):
 
         db = SessionLocal()
         try:
+            # Check DB
             existing = db.query(models.Image).filter(models.Image.filename == filename).first()
-            if existing:
-                return
-
-            if os.path.getsize(file_path) == 0:
-                time.sleep(2)
-
-            with PILImage.open(file_path) as img:
-                width, height = img.size
-                actual_size = os.path.getsize(file_path)
-
-            # Ensure directories exist
+            
+            # Ensure folders exist
             os.makedirs(PREVIEW_DIR, exist_ok=True)
             os.makedirs(THUMB_DIR, exist_ok=True)
             
+            # ALWAYS process versions if they are missing
             process_image_versions(file_path, filename)
 
-            db_image = models.Image(
-                filename=filename,
-                original_name=filename,
-                width=width,
-                height=height,
-                size=actual_size
-            )
-            db.add(db_image)
-            db.commit()
-            logger.info(f"Auto-imported & optimized: {filename}")
+            if not existing:
+                with PILImage.open(file_path) as img:
+                    width, height = img.size
+                    actual_size = os.path.getsize(file_path)
+
+                db_image = models.Image(
+                    filename=filename,
+                    original_name=filename,
+                    width=width,
+                    height=height,
+                    size=actual_size
+                )
+                db.add(db_image)
+                db.commit()
+                logger.info(f"Auto-imported & optimized: {filename}")
         except Exception as e:
             logger.error(f"Watchdog failed for {filename}: {e}")
         finally:
@@ -114,16 +126,19 @@ def sync_existing_files():
             if ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']:
                 continue
                 
+            file_path = os.path.join(UPLOAD_DIR, filename)
+            
+            # 1. Ensure Previews/Thumbs exist (even for existing DB entries)
+            process_image_versions(file_path, filename)
+            
+            # 2. Check if in DB
             existing = db.query(models.Image).filter(models.Image.filename == filename).first()
             if not existing:
-                file_path = os.path.join(UPLOAD_DIR, filename)
                 try:
                     with PILImage.open(file_path) as img:
                         width, height = img.size
                         size = os.path.getsize(file_path)
                     
-                    process_image_versions(file_path, filename)
-
                     db_image = models.Image(
                         filename=filename,
                         original_name=filename,
@@ -133,7 +148,7 @@ def sync_existing_files():
                     )
                     db.add(db_image)
                     db.commit()
-                    logger.info(f"Startup Sync & Optimize: {filename}")
+                    logger.info(f"Startup Sync: Added {filename} to DB")
                 except Exception as e:
                     logger.error(f"Startup Sync failed for {filename}: {e}")
     finally:

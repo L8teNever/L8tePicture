@@ -166,3 +166,11 @@ input[type="range"] {
 input:focus {
     outline: none;
 }
+
+.fill-1 {
+    font-variation-settings: 'FILL' 1 !important;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}

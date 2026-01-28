@@ -45,15 +45,19 @@ def process_image_versions(file_path: str, filename: str):
     try:
         with PILImage.open(file_path) as img:
             # Generate Preview (max 1600px)
+            preview_path = os.path.join(PREVIEW_DIR, filename + ".webp")
             preview_img = img.copy()
             preview_img.thumbnail((1600, 1600))
-            preview_path = os.path.join(PREVIEW_DIR, filename + ".webp")
+            if preview_img.mode in ("RGBA", "P"):
+                preview_img = preview_img.convert("RGB")
             preview_img.save(preview_path, "WEBP", quality=75)
 
             # Generate Thumbnail (max 300px)
+            thumb_path = os.path.join(THUMB_DIR, filename + ".webp")
             thumb_img = img.copy()
             thumb_img.thumbnail((300, 300))
-            thumb_path = os.path.join(THUMB_DIR, filename + ".webp")
+            if thumb_img.mode in ("RGBA", "P"):
+                thumb_img = thumb_img.convert("RGB")
             thumb_img.save(thumb_path, "WEBP", quality=60)
             
     except Exception as e:
