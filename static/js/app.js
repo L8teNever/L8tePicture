@@ -179,18 +179,29 @@ function setViewMode(mode) {
     const gridBtn = document.getElementById('grid-mode-btn');
     const masonryBtn = document.getElementById('masonry-mode-btn');
     if (!gallery || !gridBtn || !masonryBtn) return;
-    if (mode === 'grid') {
-        gallery.classList.remove('masonry-view');
-        gallery.classList.add('grid-view');
-        gridBtn.classList.add('bg-white/60', 'shadow-sm');
-        masonryBtn.classList.remove('bg-white/60', 'shadow-sm');
-    } else {
-        gallery.classList.remove('grid-view');
-        gallery.classList.add('masonry-view');
-        masonryBtn.classList.add('bg-white/60', 'shadow-sm');
-        gridBtn.classList.remove('bg-white/60', 'shadow-sm');
-    }
-    updateZoom(document.getElementById('zoom-slider').value);
+
+    // Fade out current view
+    gallery.style.opacity = '0';
+    gallery.style.transform = 'scale(0.98)';
+
+    setTimeout(() => {
+        if (mode === 'grid') {
+            gallery.classList.remove('masonry-view');
+            gallery.classList.add('grid-view');
+            gridBtn.classList.add('bg-white/60', 'shadow-sm');
+            masonryBtn.classList.remove('bg-white/60', 'shadow-sm');
+        } else {
+            gallery.classList.remove('grid-view');
+            gallery.classList.add('masonry-view');
+            masonryBtn.classList.add('bg-white/60', 'shadow-sm');
+            gridBtn.classList.remove('bg-white/60', 'shadow-sm');
+        }
+        updateZoom(document.getElementById('zoom-slider').value);
+
+        // Fade in new view
+        gallery.style.opacity = '1';
+        gallery.style.transform = 'scale(1)';
+    }, 300);
 }
 
 // PREMIUM UPLOAD LOGIC with Background Task Capability
@@ -429,7 +440,7 @@ function closeSlideshow() {
     stopSlideshow();
 }
 
-function changeSlide(direction) {
+async function changeSlide(direction) {
     const card = document.querySelector('.floating-image-card');
     if (card && ssConfig.effect !== 'none') {
         card.classList.remove('slide-next', 'slide-prev', 'fade-in', 'zoom-in');
@@ -443,27 +454,48 @@ function changeSlide(direction) {
             card.classList.add('zoom-in');
         }
     }
-    currentIndex += direction;
-    if (currentIndex >= currentImages.length) currentIndex = 0;
-    if (currentIndex < 0) currentIndex = currentImages.length - 1;
+
+    let nextIndex = currentIndex + direction;
+
+    // Auto-loading more images if we hit the end
+    if (nextIndex >= currentImages.length) {
+        if (hasMore) {
+            await loadNextBatch();
+            // If we successfully loaded more, update index
+            if (nextIndex < currentImages.length) {
+                currentIndex = nextIndex;
+            } else {
+                currentIndex = 0; // Truly reached the end, wrap to start
+            }
+        } else {
+            currentIndex = 0; // Wrap to start
+        }
+    } else if (nextIndex < 0) {
+        currentIndex = currentImages.length - 1; // Wrap to end
+    } else {
+        currentIndex = nextIndex;
+    }
+
     updateModalImage();
 }
 
 function updateModalImage() {
     const modalImg = document.getElementById('modal-img');
-    const modalBg = document.getElementById('modal-bg');
     const spinner = document.getElementById('modal-spinner');
     const title = document.getElementById('modal-title');
     const favIcon = document.getElementById('modal-fav-icon');
 
     if (!modalImg || !currentImages[currentIndex]) return;
 
+    // Reset previous state but KEEP the background for now
     modalImg.classList.remove('image-loaded');
     if (spinner) spinner.style.display = 'flex';
 
     const imgUrl = `/previews/${currentImages[currentIndex].filename}.webp`;
+
+    // Set the source - the actual update of the blur happens in handleModalImageLoad
     modalImg.src = imgUrl;
-    if (modalBg) modalBg.style.backgroundImage = `url('${imgUrl}')`;
+
     if (title) title.innerText = currentImages[currentIndex].name || "Image Preview";
 
     if (favIcon) {
@@ -472,6 +504,23 @@ function updateModalImage() {
     }
 
     // Update thumbnail strip
+    const strip = document.getElementById('thumb-strip');
+    const activeThumb = document.getElementById(`thumb-${currentIndex}`);
+
+    // Check if we need to regenerate/append thumbs (if loadNextBatch was called)
+    if (strip && strip.children.length < currentImages.length) {
+        const start = strip.children.length;
+        for (let i = start; i < currentImages.length; i++) {
+            const thumb = document.createElement('img');
+            thumb.src = `/thumbnails/${currentImages[i].filename}.webp`;
+            thumb.className = 'thumb-strip-item';
+            thumb.id = `thumb-${i}`;
+            thumb.onclick = () => jumpToSlide(i);
+            thumb.loading = 'lazy';
+            strip.appendChild(thumb);
+        }
+    }
+
     document.querySelectorAll('.thumb-strip-item').forEach((item, i) => {
         if (i === currentIndex) {
             item.classList.add('active');
@@ -481,11 +530,32 @@ function updateModalImage() {
         }
     });
 
+    // Sync background gallery scroll
+    const galleryItem = document.querySelector(`.image-card[data-id="${currentImages[currentIndex].id}"]`);
+    if (galleryItem) {
+        galleryItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     const nextIdx = (currentIndex + 1) % currentImages.length;
     if (currentImages[nextIdx]) {
         const img = new Image();
         img.src = `/previews/${currentImages[nextIdx].filename}.webp`;
     }
+}
+
+function handleModalImageLoad() {
+    const modalImg = document.getElementById('modal-img');
+    const modalBg = document.getElementById('modal-bg');
+    const spinner = document.getElementById('modal-spinner');
+
+    if (!modalImg || !modalBg) return;
+
+    // 1. Show the image
+    modalImg.classList.add('image-loaded');
+    if (spinner) spinner.style.display = 'none';
+
+    // 2. NOW update the background blur (it will transition smoothly)
+    modalBg.style.backgroundImage = `url('${modalImg.src}')`;
 }
 
 // Modal Actions
@@ -529,7 +599,9 @@ function startSlideshow() {
     ssConfig.isPlaying = true;
     updateSSUI();
 
-    slideshowInterval = setInterval(() => changeSlide(1), ssConfig.interval);
+    slideshowInterval = setInterval(async () => {
+        await changeSlide(1);
+    }, ssConfig.interval);
 }
 
 function stopSlideshow() {

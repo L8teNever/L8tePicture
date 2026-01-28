@@ -172,8 +172,7 @@
                     class="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
                     <div class="spinner" style="width: 48px; height: 48px; border-width: 4px;"></div>
                 </div>
-                <img id="modal-img" class="modal-img image-loading z-10" src="" alt=""
-                    onload="this.classList.add('image-loaded'); document.getElementById('modal-spinner').style.display='none';"
+                <img id="modal-img" class="modal-img image-loading z-10" src="" alt="" onload="handleModalImageLoad()"
                     onerror="document.getElementById('modal-spinner').style.display='none';">
             </div>
         </main>

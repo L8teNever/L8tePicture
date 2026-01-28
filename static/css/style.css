@@ -39,6 +39,19 @@ body {
     display: grid;
     gap: 12px;
     grid-template-columns: repeat(var(--grid-cols, 3), 1fr);
+    animation: stagggerFadeIn 0.5s var(--fluid-easing);
+}
+
+@keyframes stagggerFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .gallery.grid-view .glass-card {
@@ -49,6 +62,7 @@ body {
     display: block;
     columns: var(--masonry-cols, 2);
     column-gap: 12px;
+    animation: stagggerFadeIn 0.5s var(--fluid-easing);
 }
 
 .masonry-item {
@@ -118,11 +132,15 @@ input[type="range"] {
     z-index: 2000;
     overflow: hidden;
     background: rgba(0, 0, 0, 0);
-    transition: background 0.4s var(--fluid-easing);
+    transition: background 0.6s var(--fluid-easing);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
 }
 
 .modal.active {
     background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 
 .preview-bg {
@@ -166,11 +184,18 @@ input[type="range"] {
     max-height: 100%;
     padding: 0;
     position: relative;
-    transition: all 0.5s var(--fluid-easing);
+    transition: all 0.6s var(--spring-easing);
     display: flex;
     align-items: center;
     justify-content: center;
     pointer-events: auto;
+    transform: scale(0.9) translateY(40px);
+    opacity: 0;
+}
+
+.modal.active .floating-image-card {
+    transform: scale(1) translateY(0);
+    opacity: 1;
 }
 
 .modal-img {
@@ -461,11 +486,39 @@ input:focus {
 }
 
 .fade-in {
-    animation: fadeIn 0.4s ease-out;
+    animation: fadeBlurIn 0.6s var(--fluid-easing);
+}
+
+@keyframes fadeBlurIn {
+    from {
+        opacity: 0;
+        filter: blur(20px);
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
 }
 
 .zoom-in {
-    animation: fadeZoomIn 0.5s ease-out;
+    animation: fadeBlurZoomIn 0.6s var(--spring-easing);
+}
+
+@keyframes fadeBlurZoomIn {
+    0% {
+        opacity: 0;
+        transform: scale(1.2);
+        filter: blur(10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0px);
+    }
 }
 
 .image-exit {
