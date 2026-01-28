@@ -130,34 +130,82 @@
         </div>
     </main>
 
-    <!-- Modal for Slideshow -->
-    <div id="slideshow-modal" class="modal" onclick="if(event.target === this) closeSlideshow()">
-        <span class="close-modal" onclick="closeSlideshow()">
-            <span class="material-symbols-outlined text-slate-600">close</span>
-        </span>
-        <div class="absolute left-4 top-1/2 -translate-y-1/2">
-            <button class="h-12 w-12 flex items-center justify-center rounded-full bg-white/80 shadow-lg"
-                onclick="changeSlide(-1)">
+    <!-- Modal for Slideshow (Immersive iOS 26 Design) -->
+    <div id="slideshow-modal" class="modal">
+        <div id="modal-bg" class="preview-bg"></div>
+
+        <header class="modal-header-glass">
+            <div class="w-full flex items-center justify-between px-6">
+                <button class="icon-btn-modal" onclick="closeSlideshow()">
+                    <span class="material-symbols-outlined text-slate-800 font-extralight text-xl">close</span>
+                </button>
+                <div class="flex flex-col items-center">
+                    <h2 id="modal-title"
+                        class="text-[15px] font-normal tracking-tight text-slate-900/80 truncate max-w-[200px]">Image
+                        Preview</h2>
+                    <span id="modal-meta" class="text-[9px] font-semibold opacity-40 uppercase tracking-[0.2em]">Shot on
+                        L8te</span>
+                </div>
+                <button class="icon-btn-modal" onclick="shareImage()">
+                    <span class="material-symbols-outlined text-slate-800 font-extralight text-xl">ios_share</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="modal-content-container" onclick="if(event.target === this) closeSlideshow()">
+            <div class="floating-image-card">
+                <div class="refraction"></div>
+                <!-- Modal Loading Spinner -->
+                <div id="modal-spinner"
+                    class="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                    <div class="spinner" style="width: 48px; height: 48px; border-width: 4px;"></div>
+                </div>
+                <img id="modal-img" class="modal-img image-loading z-10" src="" alt=""
+                    onload="this.classList.add('image-loaded'); document.getElementById('modal-spinner').style.display='none';"
+                    onerror="document.getElementById('modal-spinner').style.display='none';">
+            </div>
+        </main>
+
+        <nav class="glass-dock">
+            <button class="icon-btn-modal group" onclick="toggleFavoriteCurrent()">
+                <span id="modal-fav-icon"
+                    class="material-symbols-outlined text-slate-800 font-extralight text-2xl group-hover:text-ios-accent">favorite</span>
+            </button>
+            <button class="icon-btn-modal group" onclick="downloadCurrent()">
+                <span
+                    class="material-symbols-outlined text-slate-800 font-extralight text-2xl group-hover:text-ios-accent">download</span>
+            </button>
+            <button class="icon-btn-modal group" onclick="startSlideshow()">
+                <span
+                    class="material-symbols-outlined text-slate-800 font-extralight text-2xl group-hover:text-ios-accent">play_circle</span>
+            </button>
+            <button class="icon-btn-modal group" onclick="deleteCurrent()">
+                <span
+                    class="material-symbols-outlined text-slate-800 font-extralight text-2xl group-hover:text-red-500">delete</span>
+            </button>
+        </nav>
+
+        <!-- Navigation Arrows -->
+        <div class="absolute left-6 top-1/2 -translate-y-1/2 z-[60]">
+            <button class="icon-btn-modal" onclick="changeSlide(-1)">
                 <span class="material-symbols-outlined">chevron_left</span>
             </button>
         </div>
-        <div class="absolute right-4 top-1/2 -translate-y-1/2">
-            <button class="h-12 w-12 flex items-center justify-center rounded-full bg-white/80 shadow-lg"
-                onclick="changeSlide(1)">
+        <div class="absolute right-6 top-1/2 -translate-y-1/2 z-[60]">
+            <button class="icon-btn-modal" onclick="changeSlide(1)">
                 <span class="material-symbols-outlined">chevron_right</span>
             </button>
         </div>
-        <div id="modal-spinner" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div class="spinner" style="width: 48px; height: 48px; border-width: 4px;"></div>
-        </div>
-        <img id="modal-img" class="modal-img image-loading" src="" alt=""
-            onload="this.classList.add('image-loaded'); document.getElementById('modal-spinner').style.display='none';"
-            onerror="document.getElementById('modal-spinner').style.display='none';">
     </div>
 
     <!-- Upload Progress Modal -->
     <div id="upload-modal" class="modal" style="display: none;">
-        <div class="glass-card p-6 rounded-[40px] max-w-md w-full max-h-[80vh] flex flex-col">
+        <div class="glass-card p-6 rounded-[40px] max-w-md w-full max-h-[80vh] flex flex-col relative">
+            <button
+                class="absolute top-4 right-4 h-8 w-8 flex items-center justify-center rounded-full bg-slate-100/50 hover:bg-slate-200/50 transition-colors"
+                onclick="closeUploadModal()">
+                <span class="material-symbols-outlined text-slate-500 text-sm">close</span>
+            </button>
             <div class="flex items-center gap-4 mb-6">
                 <div class="h-12 w-12 bg-ios-accent/10 rounded-full flex items-center justify-center shrink-0">
                     <span class="material-symbols-outlined text-ios-accent text-2xl">cloud_upload</span>
@@ -175,6 +223,26 @@
 
             <div class="mt-6 pt-4 border-t border-slate-100">
                 <div id="overall-progress-dots" class="flex justify-center gap-1.5"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mini Background Progress -->
+    <div id="upload-mini-progress" class="fixed bottom-6 right-6 z-[2001] hidden" onclick="openUploadModal()">
+        <div
+            class="light-glass p-3 pl-4 pr-5 rounded-full shadow-2xl border border-white/80 flex items-center gap-3 cursor-pointer hover:scale-105 active:scale-95 transition-all">
+            <div class="relative h-8 w-8 flex items-center justify-center">
+                <svg class="w-full h-full -rotate-90">
+                    <circle cx="16" cy="16" r="14" fill="none" stroke="rgba(0,122,255,0.1)" stroke-width="3"></circle>
+                    <circle id="mini-progress-circle" cx="16" cy="16" r="14" fill="none" stroke="#007AFF"
+                        stroke-width="3" stroke-dasharray="88" stroke-dashoffset="88" stroke-linecap="round"
+                        class="transition-all duration-300"></circle>
+                </svg>
+                <span class="material-symbols-outlined text-ios-accent text-sm absolute">cloud_upload</span>
+            </div>
+            <div class="flex flex-col">
+                <span id="mini-status" class="text-[11px] font-bold text-slate-900 leading-tight">Uploading...</span>
+                <span id="mini-count" class="text-[9px] text-slate-400 font-medium">0/0 Images</span>
             </div>
         </div>
     </div>
