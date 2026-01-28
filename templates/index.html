@@ -45,7 +45,7 @@
             {% for image in images %}
             <div class="image-card" data-id="{{ image.id }}" data-filename="{{ image.filename }}"
                 onclick="openSlideshow({{ loop.index0 }})">
-                <img src="/thumbnails/{{ image.filename }}" alt="{{ image.original_name }}" loading="lazy">
+                <img src="/thumbnails/{{ image.filename }}.webp" alt="{{ image.original_name }}" loading="lazy">
                 <div class="image-overlay">
                     <div class="image-actions">
                         <button class="action-btn favorite-btn {% if image.is_favorite %}active{% endif %}"

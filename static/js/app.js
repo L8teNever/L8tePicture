@@ -256,7 +256,8 @@ function changeSlide(direction) {
 function updateModalImage() {
     const modalImg = document.getElementById('modal-img');
     if (modalImg && currentImages[currentIndex]) {
-        modalImg.src = `/uploads/${currentImages[currentIndex].filename}`;
+        // Use optimized preview instead of original for lightning fast loading
+        modalImg.src = `/previews/${currentImages[currentIndex].filename}.webp`;
     }
 }
 

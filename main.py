@@ -27,26 +27,37 @@ app = FastAPI(title="L8tePicture")
 
 # Setup directories
 UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
+PREVIEW_DIR = os.path.join(os.getcwd(), "previews")
 THUMB_DIR = os.path.join(os.getcwd(), "thumbnails")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(PREVIEW_DIR, exist_ok=True)
 os.makedirs(THUMB_DIR, exist_ok=True)
 
 # Mount static files and templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+app.mount("/previews", StaticFiles(directory=PREVIEW_DIR), name="previews")
 app.mount("/thumbnails", StaticFiles(directory=THUMB_DIR), name="thumbnails")
 templates = Jinja2Templates(directory="templates")
 
-def create_thumbnail(image_path: str, thumb_path: str, size=(400, 400)):
+def process_image_versions(file_path: str, filename: str):
+    """Generates a small thumbnail and a medium preview in WebP format."""
     try:
-        with PILImage.open(image_path) as img:
-            img.thumbnail(size)
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
-            img.save(thumb_path, "JPEG", quality=85)
+        with PILImage.open(file_path) as img:
+            # Generate Preview (max 1600px)
+            preview_img = img.copy()
+            preview_img.thumbnail((1600, 1600))
+            preview_path = os.path.join(PREVIEW_DIR, filename + ".webp")
+            preview_img.save(preview_path, "WEBP", quality=75)
+
+            # Generate Thumbnail (max 300px)
+            thumb_img = img.copy()
+            thumb_img.thumbnail((300, 300))
+            thumb_path = os.path.join(THUMB_DIR, filename + ".webp")
+            thumb_img.save(thumb_path, "WEBP", quality=60)
+            
     except Exception as e:
-        logger.error(f"Thumbnail generation failed: {e}")
-        raise
+        logger.error(f"Image optimization failed for {filename}: {e}")
 
 @app.on_event("startup")
 async def startup_event():
@@ -90,13 +101,12 @@ async def upload_images(files: List[UploadFile] = File(...), db: Session = Depen
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
-            # Process image to get metadata
+            # Process image metadata and create optimized versions (Preview & Thumb)
             with PILImage.open(file_path) as img:
                 width, height = img.size
                 size = os.path.getsize(file_path)
 
-            # Create thumbnail
-            create_thumbnail(file_path, thumb_path)
+            process_image_versions(file_path, unique_filename)
 
             # Save to DB
             db_image = models.Image(

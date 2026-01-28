@@ -11,48 +11,52 @@ from database import SessionLocal
 # Setup logging
 logger = logging.getLogger(__name__)
 
+PREVIEW_DIR = "previews"
 THUMB_DIR = "thumbnails"
 UPLOAD_DIR = "uploads"
 
-def create_thumbnail(image_path: str, thumb_path: str, size=(400, 400)):
+def process_image_versions(file_path: str, filename: str):
+    """Generates a small thumbnail and a medium preview in WebP format."""
     try:
-        with PILImage.open(image_path) as img:
-            img.thumbnail(size)
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
-            img.save(thumb_path, "JPEG", quality=85)
+        with PILImage.open(file_path) as img:
+            # Generate Preview (max 1600px)
+            preview_img = img.copy()
+            preview_img.thumbnail((1600, 1600))
+            preview_path = os.path.join(PREVIEW_DIR, filename + ".webp")
+            preview_img.save(preview_path, "WEBP", quality=75)
+
+            # Generate Thumbnail (max 300px)
+            thumb_img = img.copy()
+            thumb_img.thumbnail((300, 300))
+            thumb_path = os.path.join(THUMB_DIR, filename + ".webp")
+            thumb_img.save(thumb_path, "WEBP", quality=60)
     except Exception as e:
-        logger.error(f"Error creating thumbnail in observer: {e}")
+        logger.error(f"Image optimization failed (Watchdog) for {filename}: {e}")
 
 class ImageHandler(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
             return
         
-        # Delay to ensure file is fully copied (FTP/Filezilla friendly)
+        # Delay for FTP
         time.sleep(2)
         
         file_path = event.src_path
         filename = os.path.basename(file_path)
         
-        # Skip hidden files
-        if filename.startswith('.'):
+        if filename.startswith('.') or filename.endswith('.webp'):
             return
 
-        # Check if it's an image
         ext = os.path.splitext(filename)[1].lower()
         if ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']:
             return
 
         db = SessionLocal()
         try:
-            # CHECK: If already in database, skip
-            # This prevents duplicate entries when web-uploading
             existing = db.query(models.Image).filter(models.Image.filename == filename).first()
             if existing:
                 return
 
-            # DOUBLE CHECK: If file size is 0, it might still be copying
             if os.path.getsize(file_path) == 0:
                 time.sleep(2)
 
@@ -60,9 +64,11 @@ class ImageHandler(FileSystemEventHandler):
                 width, height = img.size
                 actual_size = os.path.getsize(file_path)
 
-            thumb_path = os.path.join(THUMB_DIR, filename)
-            if not os.path.exists(thumb_path):
-                create_thumbnail(file_path, thumb_path)
+            # Ensure directories exist
+            os.makedirs(PREVIEW_DIR, exist_ok=True)
+            os.makedirs(THUMB_DIR, exist_ok=True)
+            
+            process_image_versions(file_path, filename)
 
             db_image = models.Image(
                 filename=filename,
@@ -73,17 +79,14 @@ class ImageHandler(FileSystemEventHandler):
             )
             db.add(db_image)
             db.commit()
-            logger.info(f"Auto-imported (Watchdog): {filename}")
+            logger.info(f"Auto-imported & optimized: {filename}")
         except Exception as e:
-            # Log but don't crash the observer
-            logger.error(f"Watchdog failed to import {filename}: {e}")
+            logger.error(f"Watchdog failed for {filename}: {e}")
         finally:
             db.close()
 
 def start_observer():
-    # Initial sync
     sync_existing_files()
-    
     event_handler = ImageHandler()
     observer = Observer()
     observer.schedule(event_handler, UPLOAD_DIR, recursive=False)
@@ -99,13 +102,13 @@ def start_observer():
 def sync_existing_files():
     db = SessionLocal()
     try:
-        if not os.path.exists(UPLOAD_DIR):
-            os.makedirs(UPLOAD_DIR, exist_ok=True)
-            return
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        os.makedirs(PREVIEW_DIR, exist_ok=True)
+        os.makedirs(THUMB_DIR, exist_ok=True)
 
         files = os.listdir(UPLOAD_DIR)
         for filename in files:
-            if filename.startswith('.'): continue
+            if filename.startswith('.') or filename.endswith('.webp'): continue
             
             ext = os.path.splitext(filename)[1].lower()
             if ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']:
@@ -119,9 +122,7 @@ def sync_existing_files():
                         width, height = img.size
                         size = os.path.getsize(file_path)
                     
-                    thumb_path = os.path.join(THUMB_DIR, filename)
-                    if not os.path.exists(thumb_path):
-                        create_thumbnail(file_path, thumb_path)
+                    process_image_versions(file_path, filename)
 
                     db_image = models.Image(
                         filename=filename,
@@ -132,7 +133,7 @@ def sync_existing_files():
                     )
                     db.add(db_image)
                     db.commit()
-                    logger.info(f"Startup Sync: Found new image {filename}")
+                    logger.info(f"Startup Sync & Optimize: {filename}")
                 except Exception as e:
                     logger.error(f"Startup Sync failed for {filename}: {e}")
     finally:
