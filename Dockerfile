@@ -1,29 +1,44 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim
+# -- Stage 1: Build stage --
+FROM python:3.11-slim as builder
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Install system dependencies for Pillow
-RUN apt-get update && apt-get install -y \
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     libjpeg-dev \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the requirements file into the container at /app
+# Install python dependencies to a local directory
 COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the current directory contents into the container at /app
+# -- Stage 2: Final image --
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install runtime dependencies for Pillow
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libjpeg62-turbo \
+    zlib1g \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed dependencies from builder
+COPY --from=builder /install /usr/local
+
+# Copy application code
 COPY . .
 
-# Create directories for uploads and thumbnails
-RUN mkdir -p uploads thumbnails
+# Create persistent directories
+RUN mkdir -p uploads thumbnails && chmod 777 uploads thumbnails
 
-# Make port 8000 available to the world outside this container
 EXPOSE 8000
 
-# Run uvicorn when the container launches
+# Metadata
+LABEL org.opencontainers.image.source="https://github.com/L8teNever/L8tePicture"
+LABEL org.opencontainers.image.description="Futuristic iOS-style Gallery"
+
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

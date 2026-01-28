@@ -1,6 +1,7 @@
 services:
   l8tepicture:
     image: l8tenever/l8tepicture:latest
+    build: .
     container_name: l8tepicture
     ports:
       - "8000:8000"
