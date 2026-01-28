@@ -33,6 +33,10 @@ body {
     grid-template-columns: repeat(var(--grid-cols, 3), 1fr);
 }
 
+.gallery.grid-view .glass-card {
+    aspect-ratio: 1 / 1;
+}
+
 .gallery.masonry-view {
     display: block;
     columns: var(--masonry-cols, 2);
@@ -42,6 +46,12 @@ body {
 .masonry-item {
     break-inside: avoid;
     margin-bottom: 0.75rem;
+    transition: transform 0.3s ease;
+}
+
+/* Prevent extreme vertical stretching in masonry */
+.gallery.masonry-view .glass-card {
+    max-height: 500px;
 }
 
 .glass-card {
@@ -51,6 +61,11 @@ body {
     box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    height: 100%;
+}
+
+.glass-card>div {
+    height: 100%;
 }
 
 .glass-card:hover {
