@@ -5,6 +5,7 @@ let limit = 50;
 let isLoadingMore = false;
 let hasMore = true;
 let currentSearch = new URLSearchParams(window.location.search).get('search') || "";
+let currentFavoritesOnly = new URLSearchParams(window.location.search).get('favorites') === "true";
 let slideshowInterval = null;
 let ssConfig = {
     interval: 3000,
@@ -32,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const slider = document.getElementById('zoom-slider');
     if (slider) {
         if (window.innerWidth < 768) { slider.value = 2; }
-        else { slider.value = 3; }
+        else if (window.innerWidth < 1280) { slider.value = 4; }
+        else { slider.value = 6; }
         updateZoom(slider.value);
     }
 
@@ -64,7 +66,7 @@ async function loadNextBatch() {
     isLoadingMore = true;
 
     try {
-        const response = await fetch(`/api/images?offset=${offset}&limit=${limit}&search=${encodeURIComponent(currentSearch)}`);
+        const response = await fetch(`/api/images?offset=${offset}&limit=${limit}&search=${encodeURIComponent(currentSearch)}&favorites=${currentFavoritesOnly}`);
         const newImages = await response.json();
 
         if (newImages.length < limit) { hasMore = false; }
@@ -125,11 +127,24 @@ async function loadNextBatch() {
     }
 }
 
+function toggleFavoritesFilter() {
+    currentFavoritesOnly = !currentFavoritesOnly;
+    const url = new URL(window.location);
+    if (currentFavoritesOnly) {
+        url.searchParams.set('favorites', 'true');
+    } else {
+        url.searchParams.delete('favorites');
+    }
+    window.location.href = url.href;
+}
+
+let searchTimeout;
 function debounceSearch(query) {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
         const url = new URL(window.location);
         url.searchParams.set('search', query);
+        if (currentFavoritesOnly) url.searchParams.set('favorites', 'true');
         window.location.href = url.href;
     }, 600);
 }
@@ -376,11 +391,29 @@ function openSlideshow(id) {
     if (index === -1) return;
     currentIndex = index;
     const modal = document.getElementById('slideshow-modal');
+
+    // Inject thumbnails into strip
+    const strip = document.getElementById('thumb-strip');
+    if (strip) {
+        strip.innerHTML = currentImages.map((img, i) => `
+            <img src="/thumbnails/${img.filename}.webp" 
+                 class="thumb-strip-item ${i === currentIndex ? 'active' : ''}" 
+                 onclick="jumpToSlide(${i})" 
+                 id="thumb-${i}"
+                 loading="lazy">
+        `).join('');
+    }
+
     updateModalImage();
     if (modal) {
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
     }
+}
+
+function jumpToSlide(index) {
+    currentIndex = index;
+    updateModalImage();
 }
 
 function closeSlideshow() {
@@ -433,6 +466,16 @@ function updateModalImage() {
         if (currentImages[currentIndex].is_favorite) favIcon.classList.add('fill-1');
         else favIcon.classList.remove('fill-1');
     }
+
+    // Update thumbnail strip
+    document.querySelectorAll('.thumb-strip-item').forEach((item, i) => {
+        if (i === currentIndex) {
+            item.classList.add('active');
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+            item.classList.remove('active');
+        }
+    });
 
     const nextIdx = (currentIndex + 1) % currentImages.length;
     if (currentImages[nextIdx]) {
@@ -584,13 +627,27 @@ function shareImage() {
 
 // Global Shortcuts
 document.addEventListener('keydown', (e) => {
-    if (document.getElementById('slideshow-modal').style.display === 'block') {
+    const modal = document.getElementById('slideshow-modal');
+    if (modal && modal.style.display === 'block') {
         if (e.key === 'ArrowLeft') changeSlide(-1);
         if (e.key === 'ArrowRight') changeSlide(1);
         if (e.key === 'Escape') closeSlideshow();
         if (e.key === 'f') toggleFavoriteCurrent();
+        if (e.key === ' ') {
+            e.preventDefault();
+            toggleSlideshow();
+        }
+        if (e.key === 'd') downloadCurrent();
+        if (e.key === 'Delete') deleteCurrent();
     }
 });
+
+// Mousewheel navigation in modal
+document.getElementById('slideshow-modal')?.addEventListener('wheel', (e) => {
+    if (Math.abs(e.deltaX) > 30) {
+        changeSlide(e.deltaX > 0 ? 1 : -1);
+    }
+}, { passive: true });
 
 // Touch & Pinch
 let initialPinchDistance = null;

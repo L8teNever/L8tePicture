@@ -92,25 +92,29 @@ async def service_worker():
     return FileResponse("static/sw.js", media_type="application/javascript")
 
 @app.get("/")
-async def read_root(request: Request, db: Session = Depends(get_db), search: str = ""):
+async def read_root(request: Request, db: Session = Depends(get_db), search: str = "", favorites: bool = False):
     try:
         query = db.query(models.Image).order_by(models.Image.upload_date.desc())
         if search:
             query = query.filter(models.Image.original_name.ilike(f"%{search}%"))
+        if favorites:
+            query = query.filter(models.Image.is_favorite == True)
         
         # Load first 50 images for initial landing
         images = query.limit(50).all()
-        return templates.TemplateResponse("index.html", {"request": request, "images": images, "search": search})
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "search": search, "favorites": favorites})
     except Exception as e:
         logger.error(f"Error loading images for root: {e}")
-        return templates.TemplateResponse("index.html", {"request": request, "images": [], "search": ""})
+        return templates.TemplateResponse("index.html", {"request": request, "images": [], "search": "", "favorites": False})
 
 @app.get("/api/images")
-async def get_images_api(db: Session = Depends(get_db), offset: int = 0, limit: int = 50, search: str = ""):
+async def get_images_api(db: Session = Depends(get_db), offset: int = 0, limit: int = 50, search: str = "", favorites: bool = False):
     """API endpoint for infinite scrolling and efficient image fetching."""
     query = db.query(models.Image).order_by(models.Image.upload_date.desc())
     if search:
         query = query.filter(models.Image.original_name.ilike(f"%{search}%"))
+    if favorites:
+        query = query.filter(models.Image.is_favorite == True)
     
     images = query.offset(offset).limit(limit).all()
     return [{

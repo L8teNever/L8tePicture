@@ -1,36 +1,43 @@
 :root {
-    --glass-bg: rgba(255, 255, 255, 0.75);
-    /* Increased for better readability */
-    --glass-border: rgba(255, 255, 255, 0.9);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.8);
     --glow-color: rgba(0, 122, 255, 0.5);
     --ios-accent: #007AFF;
+    --spring-easing: cubic-bezier(0.3, 1.5, 0.5, 1);
+    --fluid-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
     background: linear-gradient(135deg, #f8faff 0%, #fff5f8 50%, #f5faff 100%);
     background-attachment: fixed;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 200;
+    font-weight: 300;
     min-height: 100dvh;
     color: #1e293b;
     -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
 }
 
 .light-glass {
     background: var(--glass-bg);
-    backdrop-filter: blur(25px) saturate(180%);
-    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    backdrop-filter: blur(30px) saturate(190%);
+    -webkit-backdrop-filter: blur(30px) saturate(190%);
     border-bottom: 1px solid var(--glass-border);
+    transition: all 0.3s var(--fluid-easing);
 }
 
 /* Dynamic Gallery Styles */
 .gallery {
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.4s var(--fluid-easing), transform 0.4s var(--fluid-easing);
 }
 
 .gallery.grid-view {
     display: grid;
-    gap: 0.75rem;
+    gap: 12px;
     grid-template-columns: repeat(var(--grid-cols, 3), 1fr);
 }
 
@@ -41,13 +48,12 @@ body {
 .gallery.masonry-view {
     display: block;
     columns: var(--masonry-cols, 2);
-    column-gap: 0.75rem;
+    column-gap: 12px;
 }
 
 .masonry-item {
     break-inside: avoid;
-    margin-bottom: 0.75rem;
-    transition: transform 0.3s ease;
+    margin-bottom: 12px;
 }
 
 /* Prevent extreme vertical stretching in masonry */
@@ -56,14 +62,15 @@ body {
 }
 
 .glass-card {
-    background: rgba(255, 255, 255, 0.65);
-    /* Increased opacity */
-    backdrop-filter: blur(15px);
-    border: 1.5px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.05);
+    transition: all 0.5s var(--spring-easing);
     cursor: pointer;
     height: 100%;
+    transform-origin: center;
 }
 
 .glass-card>div {
@@ -110,6 +117,12 @@ input[type="range"] {
     inset: 0;
     z-index: 2000;
     overflow: hidden;
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.4s var(--fluid-easing);
+}
+
+.modal.active {
+    background: rgba(0, 0, 0, 0.4);
 }
 
 .preview-bg {
@@ -141,15 +154,14 @@ input[type="range"] {
 }
 
 .floating-image-card {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(20px) saturate(140%);
-    -webkit-backdrop-filter: blur(20px) saturate(140%);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.2);
-    border-radius: 48px;
-    width: min(95%, 1200px);
-    max-height: 85vh;
-    padding: 8px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    width: 100%;
+    height: 100%;
+    max-height: calc(100vh - 200px);
+    padding: 0;
     position: relative;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
@@ -160,11 +172,16 @@ input[type="range"] {
 .modal-img {
     width: auto;
     height: auto;
-    max-width: 100%;
-    max-height: calc(85vh - 16px);
-    border-radius: 40px;
+    max-width: 95vw;
+    max-height: calc(100vh - 250px);
+    border-radius: 24px;
     object-fit: contain;
-    /* Prevents cropping */
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.modal-img:active {
+    cursor: grabbing;
 }
 
 .refraction {
@@ -181,7 +198,6 @@ input[type="range"] {
 
 .glass-dock {
     background: rgba(255, 255, 255, 0.7);
-    /* Much more solid for legibility */
     backdrop-filter: blur(35px) saturate(200%);
     -webkit-backdrop-filter: blur(35px) saturate(200%);
     border: 1px solid rgba(255, 255, 255, 0.9);
@@ -191,10 +207,57 @@ input[type="range"] {
     padding: 0.75rem 1.5rem;
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
     position: absolute;
-    bottom: 40px;
+    bottom: 120px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 50;
+    transition: bottom 0.3s ease;
+}
+
+/* Thumbnail Strip */
+.thumb-strip-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(95%, 800px);
+    height: 70px;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    overflow-x: auto;
+    gap: 10px;
+    z-index: 50;
+    scrollbar-width: none;
+}
+
+.thumb-strip-container::-webkit-scrollbar {
+    display: none;
+}
+
+.thumb-strip-item {
+    height: 50px;
+    min-width: 50px;
+    border-radius: 10px;
+    object-fit: cover;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.thumb-strip-item.active {
+    opacity: 1;
+    border-color: var(--ios-accent);
+    transform: scale(1.1);
+}
+
+.thumb-strip-item:hover {
+    opacity: 0.8;
 }
 
 .modal-header-glass {
@@ -202,11 +265,11 @@ input[type="range"] {
     top: 0;
     left: 0;
     right: 0;
-    height: 100px;
+    height: 80px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding-top: 40px;
+    justify-content: space-between;
+    padding: 0 24px;
     z-index: 100;
 }
 
@@ -244,13 +307,30 @@ input[type="range"] {
 @keyframes scrollPop {
     0% {
         opacity: 0;
-        transform: scale(0.8) translateY(30px);
+        transform: scale(0.9) translateY(20px);
     }
 
     100% {
         opacity: 1;
         transform: scale(1) translateY(0);
     }
+}
+
+.masonry-item {
+    animation: scrollPop 0.8s var(--spring-easing) forwards;
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+}
+
+.glass-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.12);
+    z-index: 20;
+}
+
+.glass-card:active {
+    transform: scale(0.96);
+    transition: all 0.1s var(--fluid-easing);
 }
 
 @keyframes popIn {
@@ -270,7 +350,7 @@ input[type="range"] {
 }
 
 .masonry-item {
-    animation: scrollPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: scrollPop 0.8s var(--spring-easing) forwards;
     backface-visibility: hidden;
     will-change: transform, opacity;
 }
@@ -401,7 +481,69 @@ input:focus {
     animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* Tablet & Desktop Optimizations */
+@media (min-width: 768px) {
+    header {
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+
+    .modal-img {
+        max-height: calc(100vh - 300px);
+    }
+
+    .glass-dock {
+        bottom: 120px;
+    }
+
+    .gallery.masonry-view {
+        columns: var(--masonry-cols, 4);
+    }
+
+    .gallery.grid-view {
+        grid-template-columns: repeat(var(--grid-cols, 5), 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    header {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .gallery.masonry-view {
+        columns: var(--masonry-cols, 6);
+    }
+
+    .gallery.grid-view {
+        grid-template-columns: repeat(var(--grid-cols, 8), 1fr);
+    }
+
+    header {
+        padding-left: 5%;
+        padding-right: 5%;
+    }
+
+    main {
+        padding-left: 5%;
+        padding-right: 5%;
+    }
+}
+
 /* Slideshow UI */
+#favorites-filter-btn.text-ios-accent {
+    background: rgba(0, 122, 255, 0.1);
+    box-shadow: inset 0 0 10px rgba(0, 122, 255, 0.05);
+}
+
+#favorites-filter-btn:hover {
+    transform: scale(1.1);
+}
+
+#favorites-filter-btn:active {
+    transform: scale(0.9);
+}
+
 .ss-fx-btn.active {
     background: rgba(0, 122, 255, 0.1) !important;
     border-color: #007AFF !important;
