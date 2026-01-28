@@ -102,13 +102,21 @@
     </header>
 
     <main class="p-3 pt-6 pb-24">
-        <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
+        <input type="file" id="file-input" multiple accept="image/*,video/*" style="display: none;">
 
         <div class="gallery masonry-view" id="image-gallery">
             {% for image in images %}
             <div class="masonry-item image-card" data-id="{{ image.id }}" data-filename="{{ image.filename }}"
-                data-name="{{ image.original_name }}" onclick="openSlideshow({{ image.id }})">
+                data-name="{{ image.original_name }}" data-media-type="{{ image.media_type }}"
+                onclick="openSlideshow({{ image.id }})">
                 <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
+                    {% if image.media_type == 'video' %}
+                    <div
+                        class="absolute top-4 left-4 z-20 bg-black/40 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-white text-xs">play_circle</span>
+                        <span class="text-white text-[10px] uppercase font-bold tracking-widest">Video</span>
+                    </div>
+                    {% endif %}
                     <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
                         <div class="spinner"></div>
                     </div>
@@ -174,6 +182,7 @@
                 </div>
                 <img id="modal-img" class="modal-img image-loading z-10" src="" alt="" onload="handleModalImageLoad()"
                     onerror="document.getElementById('modal-spinner').style.display='none';">
+                <video id="modal-video" class="modal-img z-10 hidden" controls playsinline></video>
             </div>
         </main>
 

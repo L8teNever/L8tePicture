@@ -151,6 +151,7 @@ async def get_images_api(db: Session = Depends(get_db), offset: int = 0, limit: 
         "filename": img.filename,
         "original_name": img.original_name,
         "is_favorite": img.is_favorite,
+        "media_type": img.media_type,
         "upload_date": img.upload_date.isoformat() if img.upload_date else None
     } for img in images]
 
@@ -161,8 +162,13 @@ async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFil
     
     new_image_ids = []
     for file in files:
-        if not file.content_type.startswith("image/"):
-            errors.append(f"{file.filename} is not an image.")
+        media_type = "image"
+        if file.content_type.startswith("image/"):
+            media_type = "image"
+        elif file.content_type.startswith("video/"):
+            media_type = "video"
+        else:
+            errors.append(f"{file.filename} is not a supported image or video.")
             continue
             
         try:
@@ -190,12 +196,15 @@ async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFil
                 continue
 
             # Quick metadata extraction
-            with PILImage.open(file_path) as img:
-                width, height = img.size
-                actual_size = os.path.getsize(file_path)
+            width, height = 0, 0
+            if media_type == "image":
+                with PILImage.open(file_path) as img:
+                    width, height = img.size
+            
+            actual_size = os.path.getsize(file_path)
 
             # OFFLOAD heavy processing to background
-            background_tasks.add_task(process_image_versions, file_path, unique_filename)
+            background_tasks.add_task(process_image_versions, file_path, unique_filename, media_type)
 
             # Save to DB instantly
             db_image = models.Image(
@@ -204,7 +213,8 @@ async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFil
                 width=width,
                 height=height,
                 size=actual_size,
-                content_hash=content_hash
+                content_hash=content_hash,
+                media_type=media_type
             )
             db.add(db_image)
             db.commit()
@@ -225,7 +235,8 @@ async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFil
             "id": img.id,
             "filename": img.filename,
             "original_name": img.original_name,
-            "is_favorite": img.is_favorite
+            "is_favorite": img.is_favorite,
+            "media_type": img.media_type
         } for img in new_images]
     }
 

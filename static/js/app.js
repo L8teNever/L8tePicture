@@ -20,7 +20,8 @@ function updateImageList() {
         id: parseInt(card.dataset.id),
         filename: card.dataset.filename,
         name: card.dataset.name,
-        is_favorite: card.querySelector('.favorite-btn span').classList.contains('fill-1')
+        is_favorite: card.querySelector('.favorite-btn span').classList.contains('fill-1'),
+        media_type: card.dataset.mediaType
     }));
 }
 
@@ -85,8 +86,15 @@ async function loadNextBatch() {
 
                 const favoriteClass = img.is_favorite ? 'fill-1' : '';
 
+                const videoIndicator = img.media_type === 'video' ? `
+                    <div class="absolute top-4 left-4 z-20 bg-black/40 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-white text-xs">play_circle</span>
+                        <span class="text-white text-[10px] uppercase font-bold tracking-widest">Video</span>
+                    </div>` : '';
+
                 item.innerHTML = `
                 <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
+                    ${videoIndicator}
                     <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
                         <div class="spinner"></div>
                     </div>
@@ -115,7 +123,8 @@ async function loadNextBatch() {
                     id: img.id,
                     filename: img.filename,
                     name: img.original_name,
-                    is_favorite: img.is_favorite
+                    is_favorite: img.is_favorite,
+                    media_type: img.media_type
                 });
             });
             offset += newImages.length;
@@ -362,8 +371,15 @@ function injectNewImage(img) {
 
     const favoriteClass = img.is_favorite ? 'fill-1' : '';
 
+    const videoIndicator = img.media_type === 'video' ? `
+        <div class="absolute top-4 left-4 z-20 bg-black/40 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-1">
+            <span class="material-symbols-outlined text-white text-xs">play_circle</span>
+            <span class="text-white text-[10px] uppercase font-bold tracking-widest">Video</span>
+        </div>` : '';
+
     item.innerHTML = `
     <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
+        ${videoIndicator}
         <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
             <div class="spinner"></div>
         </div>
@@ -393,7 +409,8 @@ function injectNewImage(img) {
         id: img.id,
         filename: img.filename,
         name: img.original_name,
-        is_favorite: img.is_favorite
+        is_favorite: img.is_favorite,
+        media_type: img.media_type
     });
 }
 
@@ -485,21 +502,36 @@ function updateModalImage() {
     const title = document.getElementById('modal-title');
     const favIcon = document.getElementById('modal-fav-icon');
 
-    if (!modalImg || !currentImages[currentIndex]) return;
+    const media = currentImages[currentIndex];
+    if (!media || !modalImg) return;
 
-    // Reset previous state but KEEP the background for now
-    modalImg.classList.remove('image-loaded');
-    if (spinner) spinner.style.display = 'flex';
+    const isVideo = media.media_type === 'video';
+    const modalVideo = document.getElementById('modal-video');
 
-    const imgUrl = `/previews/${currentImages[currentIndex].filename}.webp`;
+    if (isVideo) {
+        modalImg.classList.add('hidden');
+        if (modalVideo) {
+            modalVideo.classList.remove('hidden');
+            modalVideo.src = `/uploads/${media.filename}`;
+            modalVideo.play().catch(e => console.log("Video autoplay blocked", e));
+            if (spinner) spinner.style.display = 'none';
+        }
+    } else {
+        if (modalVideo) {
+            modalVideo.classList.add('hidden');
+            modalVideo.pause();
+            modalVideo.src = "";
+        }
+        modalImg.classList.remove('hidden');
+        modalImg.classList.remove('image-loaded');
+        if (spinner) spinner.style.display = 'flex';
+        modalImg.src = `/previews/${media.filename}.webp`;
+    }
 
-    // Set the source - the actual update of the blur happens in handleModalImageLoad
-    modalImg.src = imgUrl;
-
-    if (title) title.innerText = currentImages[currentIndex].name || "Image Preview";
+    if (title) title.innerText = media.name || "Media Preview";
 
     if (favIcon) {
-        if (currentImages[currentIndex].is_favorite) favIcon.classList.add('fill-1');
+        if (media.is_favorite) favIcon.classList.add('fill-1');
         else favIcon.classList.remove('fill-1');
     }
 

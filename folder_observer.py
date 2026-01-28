@@ -18,10 +18,35 @@ UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 PREVIEW_DIR = os.path.join(BASE_DIR, "previews")
 THUMB_DIR = os.path.join(BASE_DIR, "thumbnails")
 
-def process_image_versions(file_path: str, filename: str):
+def generate_video_thumbnail(video_path, thumb_path):
+    """Extracts a frame from the video using ffmpeg."""
+    import subprocess
+    try:
+        subprocess.run([
+            'ffmpeg', '-y', '-i', video_path, 
+            '-ss', '00:00:01', '-vframes', '1', 
+            '-vf', 'scale=300:-1', 
+            thumb_path
+        ], check=True, capture_output=True)
+        return True
+    except Exception as e:
+        logger.error(f"FFmpeg thumbnail failed (Watcher): {e}")
+        return False
+
+def process_image_versions(file_path: str, filename: str, media_type: str = "image"):
     """Generates a small thumbnail and a medium preview in WebP format."""
     try:
         if not os.path.exists(file_path):
+            return
+
+        if media_type == "video":
+            thumb_path = os.path.join(THUMB_DIR, filename + ".webp")
+            if not os.path.exists(thumb_path):
+                temp_thumb = os.path.join(THUMB_DIR, filename + "_tmp.jpg")
+                if generate_video_thumbnail(file_path, temp_thumb):
+                    with PILImage.open(temp_thumb) as img:
+                        img.save(thumb_path, "WEBP", quality=60)
+                    os.remove(temp_thumb)
             return
 
         with PILImage.open(file_path) as img:
@@ -63,7 +88,12 @@ class ImageHandler(FileSystemEventHandler):
             return
 
         ext = os.path.splitext(filename)[1].lower()
-        if ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']:
+        media_type = "image"
+        if ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']:
+            media_type = "image"
+        elif ext in ['.mp4', '.webm', '.mov', '.avi', '.mkv']:
+            media_type = "video"
+        else:
             return
 
         db = SessionLocal()
@@ -76,7 +106,7 @@ class ImageHandler(FileSystemEventHandler):
             os.makedirs(THUMB_DIR, exist_ok=True)
             
             # ALWAYS process versions if they are missing
-            process_image_versions(file_path, filename)
+            process_image_versions(file_path, filename, media_type)
 
             # Calculate content hash
             sha256_hash = hashlib.sha256()
@@ -89,9 +119,12 @@ class ImageHandler(FileSystemEventHandler):
             existing_by_hash = db.query(models.Image).filter(models.Image.content_hash == content_hash).first()
 
             if not existing and not existing_by_hash:
-                with PILImage.open(file_path) as img:
-                    width, height = img.size
-                    actual_size = os.path.getsize(file_path)
+                width, height = 0, 0
+                if media_type == "image":
+                    with PILImage.open(file_path) as img:
+                        width, height = img.size
+                
+                actual_size = os.path.getsize(file_path)
 
                 db_image = models.Image(
                     filename=filename,
@@ -99,7 +132,8 @@ class ImageHandler(FileSystemEventHandler):
                     width=width,
                     height=height,
                     size=actual_size,
-                    content_hash=content_hash
+                    content_hash=content_hash,
+                    media_type=media_type
                 )
                 db.add(db_image)
                 db.commit()
@@ -140,13 +174,18 @@ def sync_existing_files():
             if filename.startswith('.') or filename.endswith('.webp'): continue
             
             ext = os.path.splitext(filename)[1].lower()
-            if ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']:
+            media_type = "image"
+            if ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']:
+                media_type = "image"
+            elif ext in ['.mp4', '.webm', '.mov', '.avi', '.mkv']:
+                media_type = "video"
+            else:
                 continue
                 
             file_path = os.path.join(UPLOAD_DIR, filename)
             
             # 1. Ensure Previews/Thumbs exist (even for existing DB entries)
-            process_image_versions(file_path, filename)
+            process_image_versions(file_path, filename, media_type)
             
             # 2. Check if in DB
             existing = db.query(models.Image).filter(models.Image.filename == filename).first()
@@ -162,9 +201,12 @@ def sync_existing_files():
 
             if not existing and not existing_by_hash:
                 try:
-                    with PILImage.open(file_path) as img:
-                        width, height = img.size
-                        size = os.path.getsize(file_path)
+                    width, height = 0, 0
+                    if media_type == "image":
+                        with PILImage.open(file_path) as img:
+                            width, height = img.size
+                    
+                    size = os.path.getsize(file_path)
                     
                     db_image = models.Image(
                         filename=filename,
@@ -172,7 +214,8 @@ def sync_existing_files():
                         width=width,
                         height=height,
                         size=size,
-                        content_hash=content_hash
+                        content_hash=content_hash,
+                        media_type=media_type
                     )
                     db.add(db_image)
                     db.commit()
