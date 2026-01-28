@@ -407,6 +407,7 @@ function openSlideshow(id) {
     updateModalImage();
     if (modal) {
         modal.style.display = 'block';
+        setTimeout(() => modal.classList.add('active'), 10);
         document.body.style.overflow = 'hidden';
     }
 }
@@ -419,7 +420,10 @@ function jumpToSlide(index) {
 function closeSlideshow() {
     const modal = document.getElementById('slideshow-modal');
     if (modal) {
-        modal.style.display = 'none';
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 400);
         document.body.style.overflow = 'auto';
     }
     stopSlideshow();

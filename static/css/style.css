@@ -144,13 +144,16 @@ input[type="range"] {
 }
 
 .modal-content-container {
-    height: 100%;
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding-top: 80px;
+    padding-bottom: 200px;
     z-index: 10;
+    pointer-events: none;
 }
 
 .floating-image-card {
@@ -160,24 +163,25 @@ input[type="range"] {
     border-radius: 0;
     width: 100%;
     height: 100%;
-    max-height: calc(100vh - 200px);
+    max-height: 100%;
     padding: 0;
     position: relative;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.5s var(--fluid-easing);
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: auto;
 }
 
 .modal-img {
     width: auto;
     height: auto;
     max-width: 95vw;
-    max-height: calc(100vh - 250px);
-    border-radius: 24px;
+    max-height: 100%;
+    border-radius: 20px;
     object-fit: contain;
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s ease;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s var(--fluid-easing);
 }
 
 .modal-img:active {
@@ -185,15 +189,7 @@ input[type="range"] {
 }
 
 .refraction {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, transparent 60%);
-    pointer-events: none;
-    border-radius: 40px;
-    z-index: 20;
+    display: none;
 }
 
 .glass-dock {
@@ -488,8 +484,12 @@ input:focus {
         padding-bottom: 1.5rem;
     }
 
+    .modal-content-container {
+        padding-bottom: 220px;
+    }
+
     .modal-img {
-        max-height: calc(100vh - 300px);
+        max-width: 90vw;
     }
 
     .glass-dock {
