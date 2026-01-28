@@ -96,7 +96,7 @@
         <div class="gallery masonry-view" id="image-gallery">
             {% for image in images %}
             <div class="masonry-item image-card" data-id="{{ image.id }}" data-filename="{{ image.filename }}"
-                data-name="{{ image.original_name }}" onclick="openSlideshow({{ loop.index0 }})">
+                data-name="{{ image.original_name }}" onclick="openSlideshow({{ image.id }})">
                 <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
                     <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
                         <div class="spinner"></div>

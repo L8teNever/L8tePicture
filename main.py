@@ -114,6 +114,7 @@ async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFil
     uploaded_count = 0
     errors = []
     
+    new_image_ids = []
     for file in files:
         if not file.content_type.startswith("image/"):
             errors.append(f"{file.filename} is not an image.")
@@ -129,7 +130,7 @@ async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFil
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
-            # Quick metadata extraction (Don't process here)
+            # Quick metadata extraction
             with PILImage.open(file_path) as img:
                 width, height = img.size
                 actual_size = os.path.getsize(file_path)
@@ -147,12 +148,25 @@ async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFil
             )
             db.add(db_image)
             db.commit()
+            db.refresh(db_image)
+            new_image_ids.append(db_image.id)
             uploaded_count += 1
         except Exception as e:
+            logger.error(f"Upload error: {e}")
+            errors.append(f"Failed to process {file.filename}")
+
+    # Fetch recently added images for the response
+    new_images = db.query(models.Image).filter(models.Image.id.in_(new_image_ids)).all()
+
     return {
         "message": f"Successfully uploaded {uploaded_count} images", 
         "count": uploaded_count,
-        "errors": errors
+        "images": [{
+            "id": img.id,
+            "filename": img.filename,
+            "original_name": img.original_name,
+            "is_favorite": img.is_favorite
+        } for img in new_images]
     }
 
 @app.post("/favorite/{image_id}")

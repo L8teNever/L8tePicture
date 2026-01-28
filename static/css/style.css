@@ -252,41 +252,43 @@ input[type="range"] {
 }
 
 .masonry-item {
+    animation: fadeIn 0.6s ease-out forwards;
+}
 
-    /* Loading Spinner Animation */
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
+/* Loading Spinner Animation */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
     }
+}
 
-    .spinner {
-        width: 24px;
-        height: 24px;
-        border: 2px solid rgba(0, 122, 255, 0.1);
-        border-top-color: var(--ios-accent);
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-    }
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(0, 122, 255, 0.1);
+    border-top-color: var(--ios-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
 
-    .image-loading {
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
-    }
+.image-loading {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
 
-    .image-loaded {
-        opacity: 1;
-    }
+.image-loaded {
+    opacity: 1;
+}
 
-    /* Forms Fixes */
-    input:focus {
-        outline: none;
-    }
+/* Forms Fixes */
+input:focus {
+    outline: none;
+}
 
-    .fill-1 {
-        font-variation-settings: 'FILL' 1 !important;
-    }
+.fill-1 {
+    font-variation-settings: 'FILL' 1 !important;
+}
 
-    .no-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}

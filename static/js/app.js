@@ -65,7 +65,7 @@ async function loadNextBatch() {
                 item.dataset.id = img.id;
                 item.dataset.filename = img.filename;
                 item.dataset.name = img.original_name;
-                item.onclick = () => openSlideshow(currentImages.indexOf(currentImages.find(i => i.id === img.id)) || currentImages.length);
+                item.onclick = () => openSlideshow(img.id);
 
                 const favoriteClass = img.is_favorite ? 'fill-1' : '';
 
@@ -318,7 +318,7 @@ function injectNewImage(img) {
     item.dataset.name = img.original_name;
 
     // Calculate index for the new image (it will be at the start)
-    item.onclick = () => openSlideshow(0);
+    item.onclick = () => openSlideshow(img.id);
 
     const favoriteClass = img.is_favorite ? 'fill-1' : '';
 
@@ -357,7 +357,9 @@ function injectNewImage(img) {
     });
 }
 
-function openSlideshow(index) {
+function openSlideshow(id) {
+    const index = currentImages.findIndex(img => img.id === id);
+    if (index === -1) return;
     currentIndex = index;
     const modal = document.getElementById('slideshow-modal');
     updateModalImage();
