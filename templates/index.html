@@ -58,9 +58,33 @@
                 <input id="search-input"
                     class="w-full bg-transparent border-none focus:ring-0 text-slate-800 placeholder:text-slate-400 font-light text-sm"
                     placeholder="Search your memories..." type="text" oninput="filterImages(this.value)" />
-                <button class="flex items-center justify-center">
-                    <span class="material-symbols-outlined text-slate-400 font-extralight">more_vert</span>
+                <button class="flex items-center justify-center p-2 rounded-full hover:bg-white/40 transition-colors"
+                    onclick="toggleSettings()">
+                    <span class="material-symbols-outlined text-slate-400 font-extralight">settings</span>
                 </button>
+
+                <!-- Settings Popup -->
+                <div id="settings-popup"
+                    class="absolute top-14 right-0 w-64 p-5 light-glass border border-white/60 rounded-[32px] shadow-xl z-[60] opacity-0 pointer-events-none transition-all scale-95 origin-top-right">
+                    <h3 class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-4">Gallery Settings
+                    </h3>
+                    <div class="flex flex-col gap-4">
+                        <div class="flex flex-col gap-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-slate-600">Grid Columns</span>
+                                <span id="zoom-label"
+                                    class="text-[10px] font-bold text-ios-accent bg-ios-accent/10 px-2 py-0.5 rounded-full">3</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-slate-400 text-sm">zoom_out</span>
+                                <input type="range" id="zoom-slider" min="1" max="8" value="3"
+                                    class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-ios-accent"
+                                    oninput="updateZoom(this.value)">
+                                <span class="material-symbols-outlined text-slate-400 text-sm">zoom_in</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -72,10 +96,15 @@
             {% for image in images %}
             <div class="masonry-item image-card" data-id="{{ image.id }}" data-filename="{{ image.filename }}"
                 data-name="{{ image.original_name }}" onclick="openSlideshow({{ loop.index0 }})">
-                <div class="glass-card rounded-[28px] overflow-hidden p-1">
-                    <div class="relative rounded-[24px] overflow-hidden">
+                <div
+                    class="glass-card rounded-[28px] overflow-hidden p-1 relative min-h-[100px] flex items-center justify-center">
+                    <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
+                        <div class="spinner"></div>
+                    </div>
+                    <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10">
                         <img src="/thumbnails/{{ image.filename }}.webp" alt="{{ image.original_name }}"
-                            class="w-full h-full object-cover" loading="lazy">
+                            class="w-full h-full object-cover image-loading" loading="lazy"
+                            onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
                         <div
                             class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4">
                             <div class="flex gap-2">
@@ -100,12 +129,7 @@
         </div>
     </main>
 
-    <!-- Floating Zoom Control -->
-    <div class="zoom-control-floating">
-        <span class="material-symbols-outlined text-slate-400 text-sm">zoom_out</span>
-        <input type="range" id="zoom-slider" min="1" max="6" value="2" oninput="updateZoom(this.value)">
-        <span class="material-symbols-outlined text-slate-400 text-sm">zoom_in</span>
-    </div>
+    </main>
 
     <!-- Modal for Slideshow -->
     <div id="slideshow-modal" class="modal" onclick="if(event.target === this) closeSlideshow()">
@@ -124,7 +148,12 @@
                 <span class="material-symbols-outlined">chevron_right</span>
             </button>
         </div>
-        <img id="modal-img" class="modal-img" src="" alt="">
+        <!-- Modal Loading Spinner -->
+        <div id="modal-spinner" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="spinner" style="width: 48px; height: 48px; border-width: 4px;"></div>
+        </div>
+        <img id="modal-img" class="modal-img image-loading" src="" alt=""
+            onload="this.classList.add('image-loaded'); document.getElementById('modal-spinner').style.display='none';">
     </div>
 
     <!-- Upload Progress Modal -->

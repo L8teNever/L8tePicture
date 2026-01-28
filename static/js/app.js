@@ -100,12 +100,29 @@ function setViewMode(mode) {
 
 function updateZoom(value) {
     const gallery = document.getElementById('image-gallery');
+    const label = document.getElementById('zoom-label');
     if (!gallery) return;
+
+    if (label) label.innerText = value;
 
     if (gallery.classList.contains('grid-view')) {
         gallery.style.setProperty('--grid-cols', value);
     } else {
         gallery.style.setProperty('--masonry-cols', value);
+    }
+}
+
+function toggleSettings() {
+    const popup = document.getElementById('settings-popup');
+    if (!popup) return;
+
+    const isHidden = popup.classList.contains('opacity-0');
+    if (isHidden) {
+        popup.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+        popup.classList.add('opacity-100', 'scale-100');
+    } else {
+        popup.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+        popup.classList.remove('opacity-100', 'scale-100');
     }
 }
 
@@ -261,8 +278,21 @@ function changeSlide(direction) {
 
 function updateModalImage() {
     const modalImg = document.getElementById('modal-img');
-    if (modalImg && currentImages[currentIndex]) {
-        modalImg.src = `/previews/${currentImages[currentIndex].filename}.webp`;
+    const spinner = document.getElementById('modal-spinner');
+    if (!modalImg || !currentImages[currentIndex]) return;
+
+    // Reset loading state
+    modalImg.classList.remove('image-loaded');
+    if (spinner) spinner.style.display = 'flex';
+
+    // Set source to optimized preview
+    modalImg.src = `/previews/${currentImages[currentIndex].filename}.webp`;
+
+    // Smart Pre-loading: Load the next image in the background
+    const nextIdx = (currentIndex + 1) % currentImages.length;
+    if (currentImages[nextIdx]) {
+        const img = new Image();
+        img.src = `/previews/${currentImages[nextIdx].filename}.webp`;
     }
 }
 
