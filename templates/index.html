@@ -30,21 +30,15 @@
 
     <main class="container">
         <div class="view-controls">
-            <div class="view-modes">
-                <button id="grid-mode-btn" class="view-btn active" onclick="setViewMode('grid')">
-                    <i class="fas fa-th"></i> Grid
-                </button>
-                <button id="masonry-mode-btn" class="view-btn" onclick="setViewMode('masonry')">
-                    <i class="fas fa-columns"></i> Masonry
-                </button>
-            </div>
+            <button id="grid-mode-btn" class="view-btn active" onclick="setViewMode('grid')">Grid</button>
+            <button id="masonry-mode-btn" class="view-btn" onclick="setViewMode('masonry')">Masonry</button>
+        </div>
 
-            <div class="zoom-control">
-                <i class="fas fa-search-minus"></i>
-                <input type="range" id="zoom-slider" min="1" max="10" value="3" oninput="updateZoom(this.value)">
-                <i class="fas fa-search-plus"></i>
-                <span id="zoom-label">3 Spalten</span>
-            </div>
+        <div class="zoom-control">
+            <i class="fas fa-minus" style="font-size: 0.7rem;"></i>
+            <input type="range" id="zoom-slider" min="1" max="10" value="3" oninput="updateZoom(this.value)">
+            <i class="fas fa-plus" style="font-size: 0.7rem;"></i>
+            <span id="zoom-label">3 Columns</span>
         </div>
 
         <div class="gallery grid-view" id="image-gallery">
@@ -70,6 +64,11 @@
             {% endfor %}
         </div>
     </main>
+
+    <!-- Floating Action Button for Mobile -->
+    <button class="fab" onclick="document.getElementById('file-input').click()">
+        <i class="fas fa-plus"></i>
+    </button>
 
     <!-- Modal for Slideshow -->
     <div id="slideshow-modal" class="modal">

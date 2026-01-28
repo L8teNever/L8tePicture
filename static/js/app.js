@@ -22,7 +22,57 @@ document.addEventListener('DOMContentLoaded', () => {
         slider.value = 2; // Default 2 columns on mobile
     }
     updateZoom(slider.value);
+
+    // Pinch to Zoom implementation for mobile
+    initPinchToZoom();
 });
+
+let initialPinchDistance = null;
+
+function initPinchToZoom() {
+    const gallery = document.getElementById('image-gallery');
+    const slider = document.getElementById('zoom-slider');
+
+    gallery.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            initialPinchDistance = getDistance(e.touches[0], e.touches[1]);
+        }
+    }, { passive: true });
+
+    gallery.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialPinchDistance) {
+            const currentDistance = getDistance(e.touches[0], e.touches[1]);
+            const diff = currentDistance - initialPinchDistance;
+
+            // Threshold for zoom change
+            if (Math.abs(diff) > 50) {
+                let currentValue = parseInt(slider.value);
+                if (diff > 0 && currentValue > 1) {
+                    // Pinch out -> Zoom in (fewer columns)
+                    currentValue--;
+                    initialPinchDistance = currentDistance;
+                } else if (diff < 0 && currentValue < 10) {
+                    // Pinch in -> Zoom out (more columns)
+                    currentValue++;
+                    initialPinchDistance = currentDistance;
+                }
+
+                if (currentValue !== parseInt(slider.value)) {
+                    slider.value = currentValue;
+                    updateZoom(currentValue);
+                }
+            }
+        }
+    }, { passive: true });
+
+    gallery.addEventListener('touchend', (e) => {
+        initialPinchDistance = null;
+    }, { passive: true });
+}
+
+function getDistance(touch1, touch2) {
+    return Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
+}
 
 function setViewMode(mode) {
     const gallery = document.getElementById('image-gallery');
@@ -47,7 +97,7 @@ function updateZoom(value) {
     const gallery = document.getElementById('image-gallery');
     const label = document.getElementById('zoom-label');
 
-    label.innerText = `${value} ${value == 1 ? 'Spalte' : 'Spalten'}`;
+    label.innerText = `${value} ${value == 1 ? 'Column' : 'Columns'}`;
 
     if (gallery.classList.contains('grid-view')) {
         // In grid view we translate the slider value to column count
