@@ -218,7 +218,7 @@ function openUploadModal() {
 }
 
 async function handleUpload(event) {
-    const files = event.target.files;
+    const files = Array.from(event.target.files);
     if (files.length === 0) return;
 
     openUploadModal();
@@ -232,14 +232,14 @@ async function handleUpload(event) {
     if (overallStatus) overallStatus.innerText = 'Uploading Images...';
     if (countLabel) countLabel.innerText = `0 of ${files.length} images uploaded`;
 
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+    // Initialize UI rows
+    files.forEach((file, i) => {
         const row = document.createElement('div');
         row.id = `upload-row-${i}`;
         row.className = "flex flex-col gap-1.5";
         row.innerHTML = `<div class="flex justify-between items-center text-[11px] font-medium">
                 <span class="text-slate-700 truncate max-w-[200px]">${file.name}</span>
-                <span class="row-percent text-ios-accent">0%</span>
+                <span class="row-percent text-ios-accent">Waiting...</span>
             </div>
             <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                 <div class="row-fill h-full bg-ios-accent transition-all duration-300" style="width: 0%;"></div>
@@ -250,25 +250,45 @@ async function handleUpload(event) {
         dot.className = "h-1.5 w-1.5 rounded-full bg-slate-200 transition-all duration-300";
         dot.id = `dot-${i}`;
         if (dotsContainer) dotsContainer.appendChild(dot);
-    }
+    });
 
     let successCount = 0;
-    for (let i = 0; i < files.length; i++) {
-        const dot = document.getElementById(`dot-${i}`);
-        if (dot) dot.classList.replace('bg-slate-200', 'bg-ios-accent');
-        try {
-            await uploadFile(files[i], i, files.length);
-            successCount++;
-            if (dot) dot.classList.replace('bg-ios-accent', 'bg-emerald-500');
-            if (countLabel) countLabel.innerText = `${successCount} of ${files.length} images uploaded`;
-        } catch (error) {
-            console.error(error);
-            if (dot) dot.classList.replace('bg-ios-accent', 'bg-red-500');
-        }
-    }
+    const concurrencyLimit = 3;
+    const queue = files.map((file, index) => ({ file, index }));
+    let activeUploads = 0;
 
-    if (overallStatus) overallStatus.innerText = 'All Done!';
-    setTimeout(() => { location.reload(); }, 1500);
+    return new Promise((resolve) => {
+        function startNext() {
+            if (queue.length === 0 && activeUploads === 0) {
+                if (overallStatus) overallStatus.innerText = 'All Done! Optimizing...';
+                setTimeout(() => { location.reload(); }, 1500);
+                return resolve();
+            }
+
+            while (activeUploads < concurrencyLimit && queue.length > 0) {
+                const { file, index } = queue.shift();
+                activeUploads++;
+                const dot = document.getElementById(`dot-${index}`);
+                if (dot) dot.classList.replace('bg-slate-200', 'bg-ios-accent');
+
+                uploadFile(file, index, files.length)
+                    .then(() => {
+                        successCount++;
+                        if (dot) dot.classList.replace('bg-ios-accent', 'bg-emerald-500');
+                        if (countLabel) countLabel.innerText = `${successCount} of ${files.length} images uploaded`;
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        if (dot) dot.classList.replace('bg-ios-accent', 'bg-red-500');
+                    })
+                    .finally(() => {
+                        activeUploads--;
+                        startNext();
+                    });
+            }
+        }
+        startNext();
+    });
 }
 
 function openSlideshow(index) {
