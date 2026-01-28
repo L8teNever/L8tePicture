@@ -42,6 +42,12 @@ def run_migrations():
             cursor.execute("CREATE INDEX ix_images_content_hash ON images (content_hash)")
             conn.commit()
             print("Migration: Successfully added content_hash column.")
+            
+        if columns and "media_type" not in columns:
+            print("Migration: Adding media_type column to images table...")
+            cursor.execute("ALTER TABLE images ADD COLUMN media_type VARCHAR DEFAULT 'image'")
+            conn.commit()
+            print("Migration: Successfully added media_type column.")
     except Exception as e:
         print(f"Migration Error: {e}")
     finally:

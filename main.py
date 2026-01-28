@@ -44,11 +44,40 @@ app.mount("/previews", StaticFiles(directory=PREVIEW_DIR), name="previews")
 app.mount("/thumbnails", StaticFiles(directory=THUMB_DIR), name="thumbnails")
 templates = Jinja2Templates(directory="templates")
 
-def process_image_versions(file_path: str, filename: str):
+def generate_video_thumbnail(video_path, thumb_path):
+    """Extracts a frame from the video using ffmpeg."""
+    import subprocess
+    try:
+        # Extract frame at 1 second mark
+        subprocess.run([
+            'ffmpeg', '-y', '-i', video_path, 
+            '-ss', '00:00:01', '-vframes', '1', 
+            '-vf', 'scale=300:-1', 
+            thumb_path
+        ], check=True, capture_output=True)
+        return True
+    except Exception as e:
+        logger.error(f"FFmpeg thumbnail failed: {e}")
+        return False
+
+def process_image_versions(file_path: str, filename: str, media_type: str = "image"):
     """Generates a small thumbnail and a medium preview in WebP format."""
     try:
         # Use a small delay to ensure file is flushed
         time.sleep(0.1)
+        
+        if media_type == "video":
+            thumb_path = os.path.join(THUMB_DIR, filename + ".webp")
+            if not os.path.exists(thumb_path):
+                # Generate a temporary jpg frame then convert to webp if we want or just use jpg
+                # For simplicity, we'll just use .jpg for video thumbs if needed or webp
+                temp_thumb = os.path.join(THUMB_DIR, filename + "_tmp.jpg")
+                if generate_video_thumbnail(file_path, temp_thumb):
+                    with PILImage.open(temp_thumb) as img:
+                        img.save(thumb_path, "WEBP", quality=60)
+                    os.remove(temp_thumb)
+            return
+
         with PILImage.open(file_path) as img:
             # Generate Preview (max 1600px)
             preview_path = os.path.join(PREVIEW_DIR, filename + ".webp")

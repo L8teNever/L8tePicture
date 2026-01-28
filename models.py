@@ -14,3 +14,4 @@ class Image(Base):
     height = Column(Integer)
     size = Column(Integer)  # in bytes
     content_hash = Column(String, index=True)
+    media_type = Column(String, default="image") # "image" or "video"

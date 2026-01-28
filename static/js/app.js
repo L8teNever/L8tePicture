@@ -530,10 +530,12 @@ function updateModalImage() {
         }
     });
 
-    // Sync background gallery scroll
-    const galleryItem = document.querySelector(`.image-card[data-id="${currentImages[currentIndex].id}"]`);
-    if (galleryItem) {
-        galleryItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Sync background gallery scroll (Disabled on mobile to prevent layout shifts)
+    if (window.innerWidth >= 768) {
+        const galleryItem = document.querySelector(`.image-card[data-id="${currentImages[currentIndex].id}"]`);
+        if (galleryItem) {
+            galleryItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
     }
 
     const nextIdx = (currentIndex + 1) % currentImages.length;

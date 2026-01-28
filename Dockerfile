@@ -20,10 +20,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install runtime dependencies for Pillow
+# Install runtime dependencies for Pillow and Video support
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg62-turbo \
     zlib1g \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy installed dependencies from builder
