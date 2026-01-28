@@ -258,10 +258,18 @@ async function handleUpload(event) {
     let activeUploads = 0;
 
     return new Promise((resolve) => {
+        // Prevent accidental page reload during active upload
+        const beforeUnloadHandler = (e) => {
+            e.preventDefault();
+            e.returnValue = '';
+        };
+        window.addEventListener('beforeunload', beforeUnloadHandler);
+
         function startNext() {
             if (queue.length === 0 && activeUploads === 0) {
-                if (overallStatus) overallStatus.innerText = 'All Done! Optimizing...';
-                setTimeout(() => { location.reload(); }, 1500);
+                window.removeEventListener('beforeunload', beforeUnloadHandler);
+                if (overallStatus) overallStatus.innerText = 'Upload Complete! ✨';
+                setTimeout(() => { closeUploadModal(); }, 2000);
                 return resolve();
             }
 
@@ -272,10 +280,15 @@ async function handleUpload(event) {
                 if (dot) dot.classList.replace('bg-slate-200', 'bg-ios-accent');
 
                 uploadFile(file, index, files.length)
-                    .then(() => {
+                    .then((data) => {
                         successCount++;
                         if (dot) dot.classList.replace('bg-ios-accent', 'bg-emerald-500');
                         if (countLabel) countLabel.innerText = `${successCount} of ${files.length} images uploaded`;
+
+                        // LIVE INJECTION: Add the new image to the gallery immediately
+                        if (data && data.images && data.images.length > 0) {
+                            injectNewImage(data.images[0]);
+                        }
                     })
                     .catch(err => {
                         console.error(err);
@@ -288,6 +301,59 @@ async function handleUpload(event) {
             }
         }
         startNext();
+    });
+}
+
+function injectNewImage(img) {
+    const gallery = document.getElementById('image-gallery');
+    if (!gallery) return;
+
+    // Check for duplicates
+    if (currentImages.find(existing => existing.id === img.id)) return;
+
+    const item = document.createElement('div');
+    item.className = "masonry-item image-card animate-pop-in";
+    item.dataset.id = img.id;
+    item.dataset.filename = img.filename;
+    item.dataset.name = img.original_name;
+
+    // Calculate index for the new image (it will be at the start)
+    item.onclick = () => openSlideshow(0);
+
+    const favoriteClass = img.is_favorite ? 'fill-1' : '';
+
+    item.innerHTML = `
+    <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
+        <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
+            <div class="spinner"></div>
+        </div>
+        <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10">
+            <img src="/thumbnails/${img.filename}.webp" alt="${img.original_name}"
+                class="w-full h-full object-cover image-loading" loading="lazy" 
+                onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';"
+                onerror="this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4">
+                <div class="flex gap-2 text-white">
+                    <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30 favorite-btn" 
+                        onclick="event.stopPropagation(); toggleFavorite(${img.id}, this)">
+                        <span class="material-symbols-outlined text-white text-[18px] font-extralight ${favoriteClass}">favorite</span>
+                    </button>
+                    <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30" 
+                        onclick="event.stopPropagation(); deleteImage(${img.id})">
+                        <span class="material-symbols-outlined text-white text-[18px] font-extralight">delete</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    // Add to top of gallery and update tracking list
+    gallery.prepend(item);
+    currentImages.unshift({
+        id: img.id,
+        filename: img.filename,
+        name: img.original_name,
+        is_favorite: img.is_favorite
     });
 }
 
