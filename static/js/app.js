@@ -101,7 +101,7 @@ function createGalleryItem(img) {
         </div>
         <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10 video-preview-container">
             <img src="/thumbnails/${img.filename}.webp" alt="${img.original_name}"
-                class="w-full h-full object-cover image-loading" loading="lazy" 
+                class="w-full h-full object-cover image-loading" loading="lazy" decoding="async"
                 onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';"
                 onerror="this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
             ${animatedPreview}
@@ -521,6 +521,7 @@ function updateModalImage() {
         modalImg.classList.remove('hidden');
         modalImg.classList.remove('image-loaded');
         if (spinner) spinner.style.display = 'flex';
+        modalImg.decoding = "async";
         modalImg.src = `/previews/${media.filename}.webp`;
     }
 

@@ -385,29 +385,37 @@ input[type="range"] {
     animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Loading Spinner Animation */
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
     }
 }
 
+.spinner-container {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.4) 25%, rgba(255, 255, 255, 0.8) 50%, rgba(255, 255, 255, 0.4) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+}
+
 .spinner {
-    width: 24px;
-    height: 24px;
-    border: 2px solid rgba(0, 122, 255, 0.1);
-    border-top-color: var(--ios-accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    display: none;
 }
 
 .image-loading {
     opacity: 0;
-    transition: opacity 0.5s ease-in-out;
+    transition: opacity 0.4s var(--fluid-easing);
 }
 
 .image-loaded {
     opacity: 1;
+}
+
+.glass-card {
+    contain: layout style;
 }
 
 /* Modern Video Badge - iOS 26 Inspired */

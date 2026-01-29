@@ -40,8 +40,20 @@ os.makedirs(THUMB_DIR, exist_ok=True)
 # Mount static files and templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-app.mount("/previews", StaticFiles(directory=PREVIEW_DIR), name="previews")
-app.mount("/thumbnails", StaticFiles(directory=THUMB_DIR), name="thumbnails")
+
+# Specialized mounts with caching headers
+@app.get("/thumbnails/{filename}")
+async def get_thumbnail(filename: str):
+    path = os.path.join(THUMB_DIR, filename)
+    if not os.path.exists(path): raise HTTPException(404)
+    return FileResponse(path, headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
+@app.get("/previews/{filename}")
+async def get_preview(filename: str):
+    path = os.path.join(PREVIEW_DIR, filename)
+    if not os.path.exists(path): raise HTTPException(404)
+    return FileResponse(path, headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
 templates = Jinja2Templates(directory="templates")
 
 def generate_video_thumbnail(video_path, thumb_path):
@@ -103,7 +115,7 @@ def process_image_versions(file_path: str, filename: str, media_type: str = "ima
                 preview_img.thumbnail((1600, 1600))
                 if preview_img.mode in ("RGBA", "P"):
                     preview_img = preview_img.convert("RGB")
-                preview_img.save(preview_path, "WEBP", quality=75, method=3) # Method 3 is faster
+                preview_img.save(preview_path, "WEBP", quality=75, method=6) # Method 6 is best compression
 
             # Generate Thumbnail (max 300px)
             thumb_path = os.path.join(THUMB_DIR, filename + ".webp")
@@ -112,7 +124,7 @@ def process_image_versions(file_path: str, filename: str, media_type: str = "ima
                 thumb_img.thumbnail((300, 300))
                 if thumb_img.mode in ("RGBA", "P"):
                     thumb_img = thumb_img.convert("RGB")
-                thumb_img.save(thumb_path, "WEBP", quality=60, method=3)
+                thumb_img.save(thumb_path, "WEBP", quality=60, method=6)
             
     except Exception as e:
         logger.error(f"Background optimization failed for {filename}: {e}")
