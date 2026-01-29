@@ -989,3 +989,77 @@ async function deleteImage(id) {
         }
     } catch (e) { console.error(e); }
 }
+
+// AI Filter Dropdown Functions
+function toggleAIFilters() {
+    const popup = document.getElementById('ai-filter-popup');
+    if (!popup) return;
+    const isHidden = popup.classList.contains('opacity-0');
+
+    // Close settings if open
+    const settingsPopup = document.getElementById('settings-popup');
+    if (settingsPopup && !settingsPopup.classList.contains('opacity-0')) {
+        toggleSettings();
+    }
+
+    if (isHidden) {
+        popup.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+        popup.classList.add('opacity-100', 'scale-100');
+    } else {
+        popup.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+        popup.classList.remove('opacity-100', 'scale-100');
+    }
+}
+
+function applyQuickFilter(filterString) {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.value = filterString;
+        currentSearch = filterString;
+        loadNextBatch(true);
+    }
+
+    // Close the popup
+    toggleAIFilters();
+
+    // Visual feedback
+    const btn = document.getElementById('ai-filter-btn');
+    if (btn) {
+        btn.classList.add('text-ios-accent', 'bg-white/40');
+        setTimeout(() => {
+            btn.classList.remove('text-ios-accent', 'bg-white/40');
+        }, 2000);
+    }
+}
+
+function clearFilters() {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.value = '';
+        currentSearch = '';
+        loadNextBatch(true);
+    }
+    toggleAIFilters();
+}
+
+// Close popups when clicking outside
+document.addEventListener('click', (e) => {
+    const aiFilterBtn = document.getElementById('ai-filter-btn');
+    const aiFilterPopup = document.getElementById('ai-filter-popup');
+    const settingsBtn = document.querySelector('[onclick="toggleSettings()"]');
+    const settingsPopup = document.getElementById('settings-popup');
+
+    // Close AI filter popup if clicking outside
+    if (aiFilterPopup && !aiFilterPopup.classList.contains('opacity-0')) {
+        if (!aiFilterPopup.contains(e.target) && !aiFilterBtn.contains(e.target)) {
+            toggleAIFilters();
+        }
+    }
+
+    // Close settings popup if clicking outside
+    if (settingsPopup && !settingsPopup.classList.contains('opacity-0')) {
+        if (!settingsPopup.contains(e.target) && !settingsBtn.contains(e.target)) {
+            toggleSettings();
+        }
+    }
+});

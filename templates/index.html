@@ -110,6 +110,97 @@
                     </div>
                 </div>
 
+                <!-- AI Filter Dropdown -->
+                <div class="relative">
+                    <button id="ai-filter-btn"
+                        class="flex items-center justify-center gap-1 px-3 py-2 rounded-full hover:bg-white/40 transition-colors text-slate-600"
+                        onclick="toggleAIFilters()">
+                        <span class="material-symbols-outlined font-extralight text-[20px]">filter_alt</span>
+                        <span class="text-xs font-medium">Filter</span>
+                    </button>
+
+                    <!-- AI Filter Popup -->
+                    <div id="ai-filter-popup"
+                        class="absolute top-14 right-0 w-72 p-5 light-glass border border-white/80 rounded-[32px] shadow-xl z-[60] opacity-0 pointer-events-none transition-all scale-95 origin-top-right">
+                        <h3 class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-4">Smart Filters
+                        </h3>
+                        <div class="flex flex-col gap-3">
+                            <!-- People Filters -->
+                            <div class="border-b border-slate-200 pb-3">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">People</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="applyQuickFilter('people:true')"
+                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
+                                        <span class="material-symbols-outlined text-[14px] mr-1">person</span>
+                                        With People
+                                    </button>
+                                    <button onclick="applyQuickFilter('faces:1')"
+                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
+                                        <span class="material-symbols-outlined text-[14px] mr-1">face</span>
+                                        Portraits
+                                    </button>
+                                    <button onclick="applyQuickFilter('faces:2')"
+                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
+                                        <span class="material-symbols-outlined text-[14px] mr-1">group</span>
+                                        Groups (2+)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Brightness Filters -->
+                            <div class="border-b border-slate-200 pb-3">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Brightness
+                                </p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="applyQuickFilter('brightness:bright')"
+                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
+                                        <span class="material-symbols-outlined text-[14px] mr-1">light_mode</span>
+                                        Bright
+                                    </button>
+                                    <button onclick="applyQuickFilter('brightness:dark')"
+                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
+                                        <span class="material-symbols-outlined text-[14px] mr-1">dark_mode</span>
+                                        Dark
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tag Filters -->
+                            <div class="pb-2">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Tags</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="applyQuickFilter('tag:portrait')"
+                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
+                                        Portrait
+                                    </button>
+                                    <button onclick="applyQuickFilter('tag:duo')"
+                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
+                                        Duo
+                                    </button>
+                                    <button onclick="applyQuickFilter('tag:group')"
+                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
+                                        Group
+                                    </button>
+                                    <button onclick="applyQuickFilter('tag:daylight')"
+                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
+                                        Daylight
+                                    </button>
+                                    <button onclick="applyQuickFilter('tag:night')"
+                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
+                                        Night
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Clear Filter -->
+                            <button onclick="clearFilters()"
+                                class="w-full py-2 text-xs font-medium text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                Clear All Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <button id="favorites-filter-btn"
                     class="flex items-center justify-center p-2 rounded-full hover:bg-white/40 transition-colors mr-1 {% if favorites %}text-ios-accent bg-white/40{% else %}text-slate-400{% endif %}"
                     onclick="toggleFavoritesFilter()">
