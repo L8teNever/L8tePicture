@@ -19,18 +19,34 @@ PREVIEW_DIR = os.path.join(BASE_DIR, "previews")
 THUMB_DIR = os.path.join(BASE_DIR, "thumbnails")
 
 def generate_video_thumbnail(video_path, thumb_path):
-    """Extracts a frame from the video using ffmpeg."""
+    """Extracts a frame from the video using ffmpeg and saves as WebP."""
     import subprocess
     try:
         subprocess.run([
-            'ffmpeg', '-y', '-i', video_path, 
-            '-ss', '00:00:01', '-vframes', '1', 
-            '-vf', 'scale=300:-1', 
+            'ffmpeg', '-y', '-ss', '00:00:01', '-i', video_path, 
+            '-vframes', '1', 
+            '-vf', 'scale=400:-1', 
+            '-c:v', 'webp', '-lossless', '0', '-compression_level', '4', '-q:v', '65',
             thumb_path
         ], check=True, capture_output=True)
         return True
     except Exception as e:
         logger.error(f"FFmpeg thumbnail failed (Watcher): {e}")
+        return False
+
+def generate_video_preview(video_path, preview_path):
+    """Generates a short (3s) silent looping preview of the video."""
+    import subprocess
+    try:
+        subprocess.run([
+            'ffmpeg', '-y', '-ss', '00:00:01', '-t', '3', '-i', video_path,
+            '-vf', 'fps=10,scale=320:-1:flags=lanczos',
+            '-loop', '0', '-c:v', 'webp', '-lossless', '0', '-compression_level', '4', '-q:v', '50',
+            preview_path
+        ], check=True, capture_output=True)
+        return True
+    except Exception as e:
+        logger.error(f"FFmpeg preview generation failed (Watcher): {e}")
         return False
 
 def process_image_versions(file_path: str, filename: str, media_type: str = "image"):
@@ -41,12 +57,13 @@ def process_image_versions(file_path: str, filename: str, media_type: str = "ima
 
         if media_type == "video":
             thumb_path = os.path.join(THUMB_DIR, filename + ".webp")
+            preview_path = os.path.join(THUMB_DIR, filename + "_preview.webp")
+            
             if not os.path.exists(thumb_path):
-                temp_thumb = os.path.join(THUMB_DIR, filename + "_tmp.jpg")
-                if generate_video_thumbnail(file_path, temp_thumb):
-                    with PILImage.open(temp_thumb) as img:
-                        img.save(thumb_path, "WEBP", quality=60)
-                    os.remove(temp_thumb)
+                generate_video_thumbnail(file_path, thumb_path)
+            
+            if not os.path.exists(preview_path):
+                generate_video_preview(file_path, preview_path)
             return
 
         with PILImage.open(file_path) as img:

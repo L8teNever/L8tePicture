@@ -87,10 +87,17 @@ async function loadNextBatch() {
                 const favoriteClass = img.is_favorite ? 'fill-1' : '';
 
                 const videoIndicator = img.media_type === 'video' ? `
-                    <div class="absolute top-4 left-4 z-20 bg-black/40 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-white text-xs">play_circle</span>
-                        <span class="text-white text-[10px] uppercase font-bold tracking-widest">Video</span>
+                    <div class="video-badge-modern">
+                        <div class="badge-blur"></div>
+                        <div class="badge-content">
+                            <span class="material-symbols-outlined">play_circle</span>
+                            <span class="badge-text">VIDEO</span>
+                        </div>
                     </div>` : '';
+
+                const animatedPreview = img.media_type === 'video' ? `
+                    <img src="/thumbnails/${img.filename}_preview.webp" alt="Preview" 
+                        class="preview-animated w-full h-full object-cover" loading="lazy">` : '';
 
                 item.innerHTML = `
                 <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
@@ -98,13 +105,14 @@ async function loadNextBatch() {
                     <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
                         <div class="spinner"></div>
                     </div>
-                    <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10">
+                    <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10 video-preview-container">
                         <img src="/thumbnails/${img.filename}.webp" alt="${img.original_name}"
                             class="w-full h-full object-cover image-loading" loading="lazy" 
                             onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';"
                             onerror="this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4">
-                            <div class="flex gap-2 text-white">
+                        ${animatedPreview}
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4 z-20 text-white">
+                            <div class="flex gap-2">
                                 <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30 favorite-btn" 
                                     onclick="event.stopPropagation(); toggleFavorite(${img.id}, this)">
                                     <span class="material-symbols-outlined text-white text-[18px] font-extralight ${favoriteClass}">favorite</span>
@@ -372,10 +380,17 @@ function injectNewImage(img) {
     const favoriteClass = img.is_favorite ? 'fill-1' : '';
 
     const videoIndicator = img.media_type === 'video' ? `
-        <div class="absolute top-4 left-4 z-20 bg-black/40 backdrop-blur-md rounded-full px-2 py-1 flex items-center gap-1">
-            <span class="material-symbols-outlined text-white text-xs">play_circle</span>
-            <span class="text-white text-[10px] uppercase font-bold tracking-widest">Video</span>
+        <div class="video-badge-modern">
+            <div class="badge-blur"></div>
+            <div class="badge-content">
+                <span class="material-symbols-outlined">play_circle</span>
+                <span class="badge-text">VIDEO</span>
+            </div>
         </div>` : '';
+
+    const animatedPreview = img.media_type === 'video' ? `
+        <img src="/thumbnails/${img.filename}_preview.webp" alt="Preview" 
+            class="preview-animated w-full h-full object-cover" loading="lazy">` : '';
 
     item.innerHTML = `
     <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
@@ -383,13 +398,14 @@ function injectNewImage(img) {
         <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
             <div class="spinner"></div>
         </div>
-        <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10">
+        <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10 video-preview-container">
             <img src="/thumbnails/${img.filename}.webp" alt="${img.original_name}"
                 class="w-full h-full object-cover image-loading" loading="lazy" 
                 onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';"
                 onerror="this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4">
-                <div class="flex gap-2 text-white">
+            ${animatedPreview}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4 z-20 text-white">
+                <div class="flex gap-2">
                     <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30 favorite-btn" 
                         onclick="event.stopPropagation(); toggleFavorite(${img.id}, this)">
                         <span class="material-symbols-outlined text-white text-[18px] font-extralight ${favoriteClass}">favorite</span>
