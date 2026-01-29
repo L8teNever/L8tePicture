@@ -138,6 +138,10 @@ async def service_worker():
     return FileResponse("static/sw.js", media_type="application/javascript")
 
 @app.get("/")
+async def landing_page(request: Request):
+    return templates.TemplateResponse("landing.html", {"request": request})
+
+@app.get("/gallery")
 async def read_root(request: Request, db: Session = Depends(get_db), search: str = "", favorites: bool = False):
     try:
         query = db.query(models.Image).order_by(models.Image.upload_date.desc())

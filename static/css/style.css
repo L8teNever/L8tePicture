@@ -27,7 +27,8 @@ body {
     backdrop-filter: blur(30px) saturate(190%);
     -webkit-backdrop-filter: blur(30px) saturate(190%);
     border-bottom: 1px solid var(--glass-border);
-    transition: all 0.3s var(--fluid-easing);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+    transition: all 0.4s var(--fluid-easing);
 }
 
 /* Dynamic Gallery Styles */
@@ -35,23 +36,23 @@ body {
     transition: opacity 0.4s var(--fluid-easing), transform 0.4s var(--fluid-easing);
 }
 
-.gallery.grid-view {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(var(--grid-cols, 3), 1fr);
-    animation: stagggerFadeIn 0.5s var(--fluid-easing);
-}
-
-@keyframes stagggerFadeIn {
+@keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(12px) scale(0.98);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
+}
+
+.gallery.grid-view {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(var(--grid-cols, 3), 1fr);
+    animation: fadeIn 0.6s var(--fluid-easing) backwards;
 }
 
 .gallery.grid-view .glass-card {
@@ -62,7 +63,7 @@ body {
     display: block;
     columns: var(--masonry-cols, 2);
     column-gap: 12px;
-    animation: stagggerFadeIn 0.5s var(--fluid-easing);
+    animation: fadeIn 0.6s var(--fluid-easing) backwards;
 }
 
 .masonry-item {
@@ -138,9 +139,9 @@ input[type="range"] {
 }
 
 .modal.active {
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
 }
 
 .preview-bg {
@@ -214,7 +215,17 @@ input[type="range"] {
 }
 
 .refraction {
-    display: none;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(0, 0, 0, 0.05) 100%);
+    opacity: 0.5;
+}
+
+.floating-image-card:hover .refraction {
+    opacity: 0.8;
+    transform: translate(5px, 5px);
 }
 
 .glass-dock {
@@ -338,7 +349,21 @@ input[type="range"] {
     }
 }
 
+@keyframes popIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
 .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 12px;
     animation: scrollPop 0.8s var(--spring-easing) forwards;
     backface-visibility: hidden;
     will-change: transform, opacity;
@@ -355,26 +380,9 @@ input[type="range"] {
     transition: all 0.1s var(--fluid-easing);
 }
 
-@keyframes popIn {
-    0% {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
+/* Pop in animation for added items */
 .animate-pop-in {
     animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.masonry-item {
-    animation: scrollPop 0.8s var(--spring-easing) forwards;
-    backface-visibility: hidden;
-    will-change: transform, opacity;
 }
 
 /* Loading Spinner Animation */

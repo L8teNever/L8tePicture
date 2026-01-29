@@ -53,18 +53,86 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Optimization for 10,000+ images: Infinite Scroll
+// Optimization for 10,000+ images: Infinite Scroll with IntersectionObserver
 function initInfiniteScroll() {
-    window.addEventListener('scroll', () => {
-        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
+    const sentinel = document.createElement('div');
+    sentinel.id = 'infinite-scroll-sentinel';
+    sentinel.style.height = '10px';
+    document.body.appendChild(sentinel);
+
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
             loadNextBatch();
         }
-    }, { passive: true });
+    }, { rootMargin: '1000px' });
+
+    observer.observe(sentinel);
 }
 
-async function loadNextBatch() {
-    if (isLoadingMore || !hasMore) return;
+function createGalleryItem(img) {
+    const item = document.createElement('div');
+    item.className = "masonry-item image-card";
+    item.dataset.id = img.id;
+    item.dataset.filename = img.filename;
+    item.dataset.name = img.original_name;
+    item.dataset.mediaType = img.media_type;
+    item.onclick = () => openSlideshow(img.id);
+
+    const favoriteClass = img.is_favorite ? 'fill-1' : '';
+
+    const videoIndicator = img.media_type === 'video' ? `
+        <div class="video-badge-modern">
+            <div class="badge-blur"></div>
+            <div class="badge-content">
+                <span class="material-symbols-outlined">play_circle</span>
+                <span class="badge-text">VIDEO</span>
+            </div>
+        </div>` : '';
+
+    const animatedPreview = img.media_type === 'video' ? `
+        <img src="/thumbnails/${img.filename}_preview.webp" alt="Preview" 
+            class="preview-animated w-full h-full object-cover" loading="lazy">` : '';
+
+    item.innerHTML = `
+    <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
+        ${videoIndicator}
+        <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
+            <div class="spinner"></div>
+        </div>
+        <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10 video-preview-container">
+            <img src="/thumbnails/${img.filename}.webp" alt="${img.original_name}"
+                class="w-full h-full object-cover image-loading" loading="lazy" 
+                onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';"
+                onerror="this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
+            ${animatedPreview}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4 z-20 text-white">
+                <div class="flex gap-2">
+                    <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30 favorite-btn" 
+                        onclick="event.stopPropagation(); toggleFavorite(${img.id}, this)">
+                        <span class="material-symbols-outlined text-white text-[18px] font-extralight ${favoriteClass}">favorite</span>
+                    </button>
+                    <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30" 
+                        onclick="event.stopPropagation(); deleteImage(${img.id})">
+                        <span class="material-symbols-outlined text-white text-[18px] font-extralight">delete</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    return item;
+}
+
+async function loadNextBatch(reset = false) {
+    if (isLoadingMore || (!hasMore && !reset)) return;
     isLoadingMore = true;
+
+    if (reset) {
+        offset = 0;
+        hasMore = true;
+        currentImages = [];
+        const gallery = document.getElementById('image-gallery');
+        if (gallery) gallery.innerHTML = '';
+    }
 
     try {
         const response = await fetch(`/api/images?offset=${offset}&limit=${limit}&search=${encodeURIComponent(currentSearch)}&favorites=${currentFavoritesOnly}`);
@@ -74,59 +142,14 @@ async function loadNextBatch() {
 
         if (newImages.length > 0) {
             const gallery = document.getElementById('image-gallery');
+            const fragment = document.createDocumentFragment();
+
             newImages.forEach(img => {
                 if (currentImages.find(existing => existing.id === img.id)) return;
 
-                const item = document.createElement('div');
-                item.className = "masonry-item image-card";
-                item.dataset.id = img.id;
-                item.dataset.filename = img.filename;
-                item.dataset.name = img.original_name;
-                item.onclick = () => openSlideshow(img.id);
+                const item = createGalleryItem(img);
+                fragment.appendChild(item);
 
-                const favoriteClass = img.is_favorite ? 'fill-1' : '';
-
-                const videoIndicator = img.media_type === 'video' ? `
-                    <div class="video-badge-modern">
-                        <div class="badge-blur"></div>
-                        <div class="badge-content">
-                            <span class="material-symbols-outlined">play_circle</span>
-                            <span class="badge-text">VIDEO</span>
-                        </div>
-                    </div>` : '';
-
-                const animatedPreview = img.media_type === 'video' ? `
-                    <img src="/thumbnails/${img.filename}_preview.webp" alt="Preview" 
-                        class="preview-animated w-full h-full object-cover" loading="lazy">` : '';
-
-                item.innerHTML = `
-                <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
-                    ${videoIndicator}
-                    <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
-                        <div class="spinner"></div>
-                    </div>
-                    <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10 video-preview-container">
-                        <img src="/thumbnails/${img.filename}.webp" alt="${img.original_name}"
-                            class="w-full h-full object-cover image-loading" loading="lazy" 
-                            onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';"
-                            onerror="this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
-                        ${animatedPreview}
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4 z-20 text-white">
-                            <div class="flex gap-2">
-                                <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30 favorite-btn" 
-                                    onclick="event.stopPropagation(); toggleFavorite(${img.id}, this)">
-                                    <span class="material-symbols-outlined text-white text-[18px] font-extralight ${favoriteClass}">favorite</span>
-                                </button>
-                                <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30" 
-                                    onclick="event.stopPropagation(); deleteImage(${img.id})">
-                                    <span class="material-symbols-outlined text-white text-[18px] font-extralight">delete</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-
-                gallery.appendChild(item);
                 currentImages.push({
                     id: img.id,
                     filename: img.filename,
@@ -135,6 +158,8 @@ async function loadNextBatch() {
                     media_type: img.media_type
                 });
             });
+
+            gallery.appendChild(fragment);
             offset += newImages.length;
         }
     } catch (e) {
@@ -146,24 +171,26 @@ async function loadNextBatch() {
 
 function toggleFavoritesFilter() {
     currentFavoritesOnly = !currentFavoritesOnly;
-    const url = new URL(window.location);
-    if (currentFavoritesOnly) {
-        url.searchParams.set('favorites', 'true');
-    } else {
-        url.searchParams.delete('favorites');
+    const btn = document.getElementById('favorites-filter-btn');
+    if (btn) {
+        if (currentFavoritesOnly) {
+            btn.classList.add('text-ios-accent', 'bg-white/40');
+            btn.querySelector('span').classList.add('fill-1');
+        } else {
+            btn.classList.remove('text-ios-accent', 'bg-white/40');
+            btn.querySelector('span').classList.remove('fill-1');
+        }
     }
-    window.location.href = url.href;
+    loadNextBatch(true);
 }
 
 let searchTimeout;
 function debounceSearch(query) {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-        const url = new URL(window.location);
-        url.searchParams.set('search', query);
-        if (currentFavoritesOnly) url.searchParams.set('favorites', 'true');
-        window.location.href = url.href;
-    }, 600);
+        currentSearch = query;
+        loadNextBatch(true);
+    }, 400);
 }
 
 function updateZoom(value) {
@@ -369,56 +396,8 @@ function injectNewImage(img) {
     // Check for duplicates
     if (currentImages.find(existing => existing.id === img.id)) return;
 
-    const item = document.createElement('div');
-    item.className = "masonry-item image-card animate-pop-in";
-    item.dataset.id = img.id;
-    item.dataset.filename = img.filename;
-    item.dataset.name = img.original_name;
-
-    // Calculate index for the new image (it will be at the start)
-    item.onclick = () => openSlideshow(img.id);
-
-    const favoriteClass = img.is_favorite ? 'fill-1' : '';
-
-    const videoIndicator = img.media_type === 'video' ? `
-        <div class="video-badge-modern">
-            <div class="badge-blur"></div>
-            <div class="badge-content">
-                <span class="material-symbols-outlined">play_circle</span>
-                <span class="badge-text">VIDEO</span>
-            </div>
-        </div>` : '';
-
-    const animatedPreview = img.media_type === 'video' ? `
-        <img src="/thumbnails/${img.filename}_preview.webp" alt="Preview" 
-            class="preview-animated w-full h-full object-cover" loading="lazy">` : '';
-
-    item.innerHTML = `
-    <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
-        ${videoIndicator}
-        <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
-            <div class="spinner"></div>
-        </div>
-        <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10 video-preview-container">
-            <img src="/thumbnails/${img.filename}.webp" alt="${img.original_name}"
-                class="w-full h-full object-cover image-loading" loading="lazy" 
-                onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';"
-                onerror="this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
-            ${animatedPreview}
-            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4 z-20 text-white">
-                <div class="flex gap-2">
-                    <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30 favorite-btn" 
-                        onclick="event.stopPropagation(); toggleFavorite(${img.id}, this)">
-                        <span class="material-symbols-outlined text-white text-[18px] font-extralight ${favoriteClass}">favorite</span>
-                    </button>
-                    <button class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30" 
-                        onclick="event.stopPropagation(); deleteImage(${img.id})">
-                        <span class="material-symbols-outlined text-white text-[18px] font-extralight">delete</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>`;
+    const item = createGalleryItem(img);
+    item.classList.add('animate-pop-in');
 
     // Add to top of gallery and update tracking list
     gallery.prepend(item);
@@ -587,11 +566,14 @@ function updateModalImage() {
         }
     }
 
-    const nextIdx = (currentIndex + 1) % currentImages.length;
-    if (currentImages[nextIdx]) {
-        const img = new Image();
-        img.src = `/previews/${currentImages[nextIdx].filename}.webp`;
-    }
+    // Preload next 2 and previous 1 images
+    [currentIndex + 1, currentIndex + 2, currentIndex - 1].forEach(idx => {
+        const i = (idx + currentImages.length) % currentImages.length;
+        if (currentImages[i] && currentImages[i].media_type === 'image') {
+            const img = new Image();
+            img.src = `/previews/${currentImages[i].filename}.webp`;
+        }
+    });
 }
 
 function handleModalImageLoad() {
@@ -605,8 +587,11 @@ function handleModalImageLoad() {
     modalImg.classList.add('image-loaded');
     if (spinner) spinner.style.display = 'none';
 
-    // 2. NOW update the background blur (it will transition smoothly)
-    modalBg.style.backgroundImage = `url('${modalImg.src}')`;
+    // 2. NOW update the background blur using the THUMBNAIL for efficiency
+    const media = currentImages[currentIndex];
+    if (media) {
+        modalBg.style.backgroundImage = `url('/thumbnails/${media.filename}.webp')`;
+    }
 }
 
 // Modal Actions
@@ -802,7 +787,9 @@ function initPinchToZoom() {
 
 // Swipe Navigation for Modal
 let touchStartX = 0;
+let touchStartY = 0;
 let touchEndX = 0;
+let touchEndY = 0;
 
 function initSwipeNavigation() {
     const modal = document.getElementById('slideshow-modal');
@@ -810,24 +797,29 @@ function initSwipeNavigation() {
 
     modal.addEventListener('touchstart', e => {
         touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
     }, { passive: true });
 
     modal.addEventListener('touchend', e => {
         touchEndX = e.changedTouches[0].screenX;
+        touchEndY = e.changedTouches[0].screenY;
         handleSwipe();
     }, { passive: true });
 }
 
 function handleSwipe() {
-    const swipeDistance = touchEndX - touchStartX;
-    const threshold = 50; // pixels
+    const swipeX = touchEndX - touchStartX;
+    const swipeY = touchEndY - touchStartY;
+    const threshold = 50;
 
-    if (swipeDistance > threshold) {
-        // Swipe Right -> Previous Image
-        changeSlide(-1);
-    } else if (swipeDistance < -threshold) {
-        // Swipe Left -> Next Image
-        changeSlide(1);
+    // Horizontal Swipe
+    if (Math.abs(swipeX) > Math.abs(swipeY)) {
+        if (swipeX > threshold) changeSlide(-1);
+        else if (swipeX < -threshold) changeSlide(1);
+    }
+    // Vertical Swipe (Down to close)
+    else if (swipeY > threshold * 1.5) {
+        closeSlideshow();
     }
 }
 
