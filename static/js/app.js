@@ -171,6 +171,7 @@ function updateZoom(value) {
     const label = document.getElementById('zoom-label');
     if (!gallery) return;
     if (label) label.innerText = value;
+    gallery.style.setProperty('--zoom-level', value);
     if (gallery.classList.contains('grid-view')) {
         gallery.style.setProperty('--grid-cols', value);
     } else {

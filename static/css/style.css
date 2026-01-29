@@ -481,6 +481,39 @@ input[type="range"] {
     opacity: 1;
 }
 
+/* Adaptive Quality - Performance Look */
+.image-card img {
+    transition: filter 0.5s var(--fluid-easing), opacity 0.4s var(--fluid-easing);
+}
+
+/* Base degradation variable */
+.gallery {
+    --zoom-level: 2;
+    /* Default fallback */
+}
+
+/* Mobile: Graphics go down faster (starting at 4 cols) */
+@media (max-width: 767px) {
+    .gallery {
+        --degrade: clamp(0, (var(--zoom-level) - 3) * 0.15, 1);
+    }
+
+    .image-card img {
+        filter: blur(calc(var(--degrade) * 2px)) saturate(calc(1 - var(--degrade) * 0.5)) brightness(calc(1 + var(--degrade) * 0.1));
+    }
+}
+
+/* Desktop: Graphics go down slower (starting at 8 cols) */
+@media (min-width: 768px) {
+    .gallery {
+        --degrade: clamp(0, (var(--zoom-level) - 7) * 0.2, 1);
+    }
+
+    .image-card img {
+        filter: blur(calc(var(--degrade) * 1.2px)) contrast(calc(1 - var(--degrade) * 0.15)) saturate(calc(1 - var(--degrade) * 0.2));
+    }
+}
+
 /* Forms Fixes */
 input:focus {
     outline: none;
