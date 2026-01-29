@@ -15,7 +15,6 @@ from sqlalchemy import and_, or_
 from PIL import Image as PILImage
 import models
 from database import engine, get_db, SessionLocal
-from image_analyzer import analyze_image
 import json
 from image_analyzer import get_analyzer
 
