@@ -185,6 +185,8 @@ async def get_images_api(db: Session = Depends(get_db), offset: int = 0, limit: 
         "original_name": img.original_name,
         "is_favorite": img.is_favorite,
         "media_type": img.media_type,
+        "width": img.width,
+        "height": img.height,
         "upload_date": img.upload_date.isoformat() if img.upload_date else None
     } for img in images]
 

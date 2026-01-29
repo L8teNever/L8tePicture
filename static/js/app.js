@@ -20,8 +20,10 @@ function updateImageList() {
         id: parseInt(card.dataset.id),
         filename: card.dataset.filename,
         name: card.dataset.name,
-        is_favorite: card.querySelector('.favorite-btn span').classList.contains('fill-1'),
-        media_type: card.dataset.mediaType
+        is_favorite: card.querySelector('.favorite-btn span')?.classList.contains('fill-1'),
+        media_type: card.dataset.mediaType,
+        width: parseInt(card.dataset.width),
+        height: parseInt(card.dataset.height)
     }));
 }
 
@@ -155,7 +157,9 @@ async function loadNextBatch(reset = false) {
                     filename: img.filename,
                     name: img.original_name,
                     is_favorite: img.is_favorite,
-                    media_type: img.media_type
+                    media_type: img.media_type,
+                    width: img.width,
+                    height: img.height
                 });
             });
 
@@ -406,7 +410,9 @@ function injectNewImage(img) {
         filename: img.filename,
         name: img.original_name,
         is_favorite: img.is_favorite,
-        media_type: img.media_type
+        media_type: img.media_type,
+        width: img.width,
+        height: img.height
     });
 }
 
@@ -521,6 +527,20 @@ function updateModalImage() {
         modalImg.classList.remove('hidden');
         modalImg.classList.remove('image-loaded');
         if (spinner) spinner.style.display = 'flex';
+
+        // IMMEDIATE PLACEHOLDER: Use the already-cached thumbnail as a background
+        modalImg.style.backgroundImage = `url('/thumbnails/${media.filename}.webp')`;
+        modalImg.style.backgroundSize = 'contain';
+        modalImg.style.backgroundPosition = 'center';
+        modalImg.style.backgroundRepeat = 'no-repeat';
+
+        // Improve perceived performance: Set aspect ratio if available to prevent jump
+        if (media.width && media.height) {
+            modalImg.style.aspectRatio = `${media.width} / ${media.height}`;
+        } else {
+            modalImg.style.aspectRatio = 'auto';
+        }
+
         modalImg.decoding = "async";
         modalImg.src = `/previews/${media.filename}.webp`;
     }
@@ -587,6 +607,11 @@ function handleModalImageLoad() {
     // 1. Show the image
     modalImg.classList.add('image-loaded');
     if (spinner) spinner.style.display = 'none';
+
+    // Clear the placeholder background once the high-res image is loaded
+    setTimeout(() => {
+        modalImg.style.backgroundImage = 'none';
+    }, 400);
 
     // 2. NOW update the background blur using the THUMBNAIL for efficiency
     const media = currentImages[currentIndex];

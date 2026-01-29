@@ -207,7 +207,17 @@ input[type="range"] {
     border-radius: 16px;
     object-fit: contain;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-    transition: transform 0.3s var(--fluid-easing);
+    transition: transform 0.3s var(--fluid-easing), filter 0.5s ease-out, opacity 0.4s var(--fluid-easing);
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.modal-img.image-loading {
+    opacity: 1 !important;
+    filter: blur(20px);
+}
+
+.modal-img.image-loaded {
+    filter: blur(0px);
 }
 
 .modal-img:active {
