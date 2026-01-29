@@ -148,6 +148,7 @@ function createGalleryItem(img) {
 
     const ar = (img.width && img.height) ? `${img.width} / ${img.height}` : 'auto';
     const blurThumb = `/thumbnails/${img.filename}.webp`;
+    const fallbackThumb = `/uploads/${img.filename}`;
 
     item.innerHTML = `
     <div class="glass-card rounded-[28px] overflow-hidden p-1 relative" style="aspect-ratio: ${ar};">
@@ -159,7 +160,7 @@ function createGalleryItem(img) {
             <img src="${blurThumb}" alt="${img.original_name}"
                 class="w-full h-full object-cover image-loading" loading="lazy" decoding="async"
                 onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';"
-                onerror="this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
+                onerror="this.onerror=null; this.src='${fallbackThumb}'; this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
             ${animatedPreview}
             <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4 z-20 text-white">
                 <div class="flex gap-2">
@@ -615,6 +616,14 @@ function updateModalImage() {
         }
 
         modalImg.decoding = "async";
+
+        // Try preview first, fallback to original if it fails
+        modalImg.onerror = () => {
+            console.log('Preview not found, loading original image');
+            modalImg.onerror = null; // Prevent infinite loop
+            modalImg.src = `/uploads/${media.filename}`;
+        };
+
         modalImg.src = `/previews/${media.filename}.webp`;
     }
 
