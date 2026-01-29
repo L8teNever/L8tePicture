@@ -18,9 +18,8 @@ class Image(Base):
     
     # AI Analysis fields
     analyzed = Column(Boolean, default=False)
-    faces_count = Column(Integer, default=0)
+    face_count = Column(Integer, default=0)  # Fixed: was faces_count
     has_people = Column(Boolean, default=False)
     dominant_colors = Column(JSON)  # Store top 3 dominant colors as JSON array
     brightness = Column(Float)  # Average brightness 0-1
     tags = Column(JSON)  # Auto-generated tags based on analysis
-    pose_info = Column(JSON) # Information about poses (standing, sitting, etc)

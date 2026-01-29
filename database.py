@@ -59,6 +59,15 @@ def run_migrations():
             "tags": "JSON"
         }
         
+        # Remove old columns if they exist (from previous version)
+        old_columns = ["faces_count", "pose_info"]
+        for old_col in old_columns:
+            if columns and old_col in columns:
+                print(f"Migration: Removing old column {old_col}...")
+                # SQLite doesn't support DROP COLUMN directly, so we'll just ignore it
+                # The new schema will use the correct column names
+                print(f"Migration: Old column {old_col} will be ignored (SQLite limitation)")
+        
         for col, col_type in ai_columns.items():
             if columns and col not in columns:
                 print(f"Migration: Adding {col} column to images table...")
