@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from PIL import Image as PILImage
 import models
 from database import SessionLocal
+from image_analyzer import analyze_image
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -152,9 +153,22 @@ class ImageHandler(FileSystemEventHandler):
                     content_hash=content_hash,
                     media_type=media_type
                 )
+                
+                # Perform AI Analysis
+                if media_type == "image":
+                    results = analyze_image(file_path)
+                    if results:
+                        db_image.analyzed = True
+                        db_image.faces_count = results["faces_count"]
+                        db_image.has_people = results["has_people"]
+                        db_image.pose_info = results["pose_info"]
+                        db_image.brightness = results["brightness"]
+                        db_image.dominant_colors = results["dominant_colors"]
+                        db_image.tags = results["tags"]
+
                 db.add(db_image)
                 db.commit()
-                logger.info(f"Auto-imported & optimized: {filename}")
+                logger.info(f"Auto-imported & optimized & analyzed: {filename}")
             elif existing and not existing.content_hash:
                 # Update hash for legacy entries
                 existing.content_hash = content_hash
@@ -234,9 +248,22 @@ def sync_existing_files():
                         content_hash=content_hash,
                         media_type=media_type
                     )
+
+                    # Perform AI Analysis
+                    if media_type == "image":
+                        results = analyze_image(file_path)
+                        if results:
+                            db_image.analyzed = True
+                            db_image.faces_count = results["faces_count"]
+                            db_image.has_people = results["has_people"]
+                            db_image.pose_info = results["pose_info"]
+                            db_image.brightness = results["brightness"]
+                            db_image.dominant_colors = results["dominant_colors"]
+                            db_image.tags = results["tags"]
+
                     db.add(db_image)
                     db.commit()
-                    logger.info(f"Startup Sync: Added {filename} to DB")
+                    logger.info(f"Startup Sync: Added & Analyzed {filename} to DB")
                 except Exception as e:
                     logger.error(f"Startup Sync failed for {filename}: {e}")
             elif existing and not existing.content_hash:

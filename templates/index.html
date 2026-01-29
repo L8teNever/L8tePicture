@@ -36,6 +36,27 @@
 </head>
 
 <body class="text-slate-800 antialiased font-display">
+    <!-- Immersive Landing Overlay -->
+    <div id="landing-overlay">
+        <div class="landing-bg"></div>
+        <div class="landing-glass">
+            <div class="mb-8 flex justify-center">
+                <div
+                    class="h-24 w-24 bg-white/20 rounded-[32px] flex items-center justify-center backdrop-blur-xl border border-white/30 rotate-12 shadow-2xl">
+                    <span class="material-symbols-outlined text-white text-5xl font-extralight">photo_library</span>
+                </div>
+            </div>
+            <h1 class="text-5xl md:text-6xl font-extrabold tracking-tighter mb-6">L8tePicture</h1>
+            <p class="text-white/80 text-xl font-light leading-relaxed mb-12">
+                Willkommen bei L8tePicture.<br>Deine Erinnerungen in modernem Licht.
+            </p>
+            <button onclick="enterGallery()" class="enter-btn-ios">
+                Hier geht's weiter
+            </button>
+            <p class="mt-8 text-white/40 text-[10px] uppercase tracking-[0.4em] font-bold">iOS 26 Aesthetic Edition</p>
+        </div>
+    </div>
+
     <header class="sticky top-0 z-50 pt-12 pb-6 px-4 light-glass rounded-b-[42px]">
         <div class="flex items-center justify-between mb-5 px-2">
             <div class="flex flex-col">
@@ -63,8 +84,32 @@
                 <span class="material-symbols-outlined text-slate-400 font-extralight mr-2">search</span>
                 <input id="search-input"
                     class="w-full bg-transparent border-none focus:ring-0 text-slate-800 placeholder:text-slate-400 font-light text-sm"
-                    placeholder="Search your memories..." type="text" value="{{ search }}"
+                    placeholder="Search memories, dates or tags..." type="text" value="{{ search }}"
                     oninput="debounceSearch(this.value)" />
+
+                <!-- Smart Search Helper -->
+                <div class="group relative mr-2">
+                    <span
+                        class="material-symbols-outlined text-slate-300 text-[18px] cursor-help hover:text-ios-accent transition-colors">info</span>
+                    <div
+                        class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 rounded-2xl bg-white/90 backdrop-blur-xl border border-white/40 shadow-2xl opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all z-50">
+                        <h4 class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Smart Filters
+                        </h4>
+                        <ul class="text-[11px] text-slate-600 space-y-2">
+                            <li class="flex justify-between"><span>Faces:</span> <code
+                                    class="bg-slate-100 px-1 rounded text-ios-accent">faces:2</code></li>
+                            <li class="flex justify-between"><span>Person:</span> <code
+                                    class="bg-slate-100 px-1 rounded text-ios-accent">people:true</code></li>
+                            <li class="flex justify-between"><span>Brightness:</span> <code
+                                    class="bg-slate-100 px-1 rounded text-ios-accent">brightness:bright</code></li>
+                            <li class="flex justify-between"><span>Date:</span> <code
+                                    class="bg-slate-100 px-1 rounded text-ios-accent">date:2024</code></li>
+                            <li class="flex justify-between"><span>Auto-Tags:</span> <code
+                                    class="bg-slate-100 px-1 rounded text-ios-accent">tag:portrait</code></li>
+                        </ul>
+                    </div>
+                </div>
+
                 <button id="favorites-filter-btn"
                     class="flex items-center justify-center p-2 rounded-full hover:bg-white/40 transition-colors mr-1 {% if favorites %}text-ios-accent bg-white/40{% else %}text-slate-400{% endif %}"
                     onclick="toggleFavoritesFilter()">
@@ -108,9 +153,12 @@
         <div class="gallery masonry-view" id="image-gallery">
             {% for image in images %}
             <div class="masonry-item image-card" data-id="{{ image.id }}" data-filename="{{ image.filename }}"
-                data-name="{{ image.original_name }}" data-media-type="{{ image.media_type }}"
-                data-width="{{ image.width }}" data-height="{{ image.height }}" onclick="openSlideshow({{ image.id }})">
-                <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
+                data-name="Private Media" data-media-type="{{ image.media_type }}" data-width="{{ image.width }}"
+                data-height="{{ image.height }}" data-tags='{{ image.tags | tojson if image.tags else "[]" }}'
+                data-faces-count="{{ image.faces_count or 0 }}" data-pose="{{ image.pose_info or "" }}"
+                onclick="openSlideshow('{{ image.id }}')">
+                <div class="glass-card rounded-[28px] overflow-hidden p-1 relative"
+                    style="aspect-ratio: {{ image.width if image.width else 3 }} / {{ image.height if image.height else 2 }};">
                     {% if image.media_type == 'video' %}
                     <div class="video-badge-modern">
                         <div class="badge-blur"></div>
@@ -120,8 +168,8 @@
                         </div>
                     </div>
                     {% endif %}
-                    <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
-                        <div class="spinner"></div>
+                    <div class="absolute inset-0 z-0 spinner-container bg-slate-100"
+                        style="background-image: url('/thumbnails/{{ image.filename }}.webp'); background-size: cover; background-position: center; filter: blur(20px); opacity: 0.6;">
                     </div>
                     <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10 video-preview-container">
                         <img src="/thumbnails/{{ image.filename }}.webp" alt="{{ image.original_name }}"
@@ -139,13 +187,13 @@
                             <div class="flex gap-2">
                                 <button
                                     class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30 favorite-btn"
-                                    onclick="event.stopPropagation(); toggleFavorite({{ image.id }}, this)">
+                                    onclick="event.stopPropagation(); toggleFavorite('{{ image.id }}', this)">
                                     <span
                                         class="material-symbols-outlined text-white text-[18px] font-extralight {% if image.is_favorite %}fill-1{% endif %}">favorite</span>
                                 </button>
                                 <button
                                     class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30"
-                                    onclick="event.stopPropagation(); deleteImage({{ image.id }})">
+                                    onclick="event.stopPropagation(); deleteImage('{{ image.id }}')">
                                     <span
                                         class="material-symbols-outlined text-white text-[18px] font-extralight">delete</span>
                                 </button>
@@ -173,6 +221,7 @@
                     Preview</h2>
                 <span id="modal-meta" class="text-[9px] font-semibold opacity-40 uppercase tracking-[0.2em]">Shot on
                     L8te</span>
+                <div id="modal-ai-tags" class="flex gap-1 mt-1 empty:hidden"></div>
             </div>
             <div class="flex gap-2">
                 <button class="icon-btn-modal" onclick="shareImage()">

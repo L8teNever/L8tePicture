@@ -48,6 +48,23 @@ def run_migrations():
             cursor.execute("ALTER TABLE images ADD COLUMN media_type VARCHAR DEFAULT 'image'")
             conn.commit()
             print("Migration: Successfully added media_type column.")
+
+        # AI Analysis columns
+        ai_columns = {
+            "analyzed": "BOOLEAN DEFAULT 0",
+            "face_count": "INTEGER DEFAULT 0",
+            "has_people": "BOOLEAN DEFAULT 0",
+            "dominant_colors": "JSON",
+            "brightness": "FLOAT",
+            "tags": "JSON"
+        }
+        
+        for col, col_type in ai_columns.items():
+            if columns and col not in columns:
+                print(f"Migration: Adding {col} column to images table...")
+                cursor.execute(f"ALTER TABLE images ADD COLUMN {col} {col_type}")
+                conn.commit()
+                print(f"Migration: Successfully added {col} column.")
     except Exception as e:
         print(f"Migration Error: {e}")
     finally:

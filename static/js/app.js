@@ -17,14 +17,25 @@ let ssConfig = {
 function updateImageList() {
     const cards = document.querySelectorAll('.image-card');
     currentImages = Array.from(cards).map(card => ({
-        id: parseInt(card.dataset.id),
+        id: card.dataset.id, // Keep as string for consistent matching
         filename: card.dataset.filename,
         name: card.dataset.name,
         is_favorite: card.querySelector('.favorite-btn span')?.classList.contains('fill-1'),
         media_type: card.dataset.mediaType,
         width: parseInt(card.dataset.width),
-        height: parseInt(card.dataset.height)
+        height: parseInt(card.dataset.height),
+        tags: card.dataset.tags ? JSON.parse(card.dataset.tags) : [],
+        faces_count: parseInt(card.dataset.facesCount || 0),
+        pose: card.dataset.pose || ""
     }));
+}
+
+function enterGallery() {
+    const landing = document.getElementById('landing-overlay');
+    if (landing) {
+        landing.classList.add('hidden');
+        document.body.style.overflow = 'auto'; // Re-enable scrolling
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -35,10 +46,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const slider = document.getElementById('zoom-slider');
     if (slider) {
-        if (window.innerWidth < 768) { slider.value = 2; }
-        else if (window.innerWidth < 1280) { slider.value = 4; }
-        else { slider.value = 6; }
-        updateZoom(slider.value);
+        let val;
+        if (window.innerWidth < 768) { val = 2; }
+        else if (window.innerWidth < 1280) { val = 4; }
+        else { val = 6; }
+        slider.value = val;
+        updateZoom(val);
+    }
+
+    // Initially disable scrolling while on landing
+    const isLandingVisible = !document.getElementById('landing-overlay')?.classList.contains('hidden');
+    if (isLandingVisible) {
+        document.body.style.overflow = 'hidden';
     }
 
     initPinchToZoom();
@@ -78,6 +97,9 @@ function createGalleryItem(img) {
     item.dataset.filename = img.filename;
     item.dataset.name = img.original_name;
     item.dataset.mediaType = img.media_type;
+    item.dataset.tags = JSON.stringify(img.tags || []);
+    item.dataset.faceCount = img.face_count || 0;
+    item.dataset.analyzed = img.analyzed || false;
     item.onclick = () => openSlideshow(img.id);
 
     const favoriteClass = img.is_favorite ? 'fill-1' : '';
@@ -91,18 +113,50 @@ function createGalleryItem(img) {
             </div>
         </div>` : '';
 
+    // AI Analysis Badges
+    let aiBadges = '';
+    if (img.analyzed && img.media_type === 'image') {
+        const badges = [];
+
+        // Face count badge
+        if (img.face_count > 0) {
+            badges.push(`
+                <div class="ai-badge-item ai-badge-faces">
+                    <span class="material-symbols-outlined">face</span>
+                    <span>${img.face_count}</span>
+                </div>
+            `);
+        }
+
+        // Primary tag badge
+        if (img.tags && img.tags.length > 0) {
+            badges.push(`
+                <div class="ai-badge-item ai-badge-tag">
+                    <span>${img.tags[0]}</span>
+                </div>
+            `);
+        }
+
+        if (badges.length > 0) {
+            aiBadges = `<div class="ai-badge">${badges.join('')}</div>`;
+        }
+    }
+
     const animatedPreview = img.media_type === 'video' ? `
         <img src="/thumbnails/${img.filename}_preview.webp" alt="Preview" 
             class="preview-animated w-full h-full object-cover" loading="lazy">` : '';
 
+    const ar = (img.width && img.height) ? `${img.width} / ${img.height}` : 'auto';
+    const blurThumb = `/thumbnails/${img.filename}.webp`;
+
     item.innerHTML = `
-    <div class="glass-card rounded-[28px] overflow-hidden p-1 relative">
+    <div class="glass-card rounded-[28px] overflow-hidden p-1 relative" style="aspect-ratio: ${ar};">
         ${videoIndicator}
-        <div class="absolute inset-0 flex items-center justify-center z-0 spinner-container">
-            <div class="spinner"></div>
+        ${aiBadges}
+        <div class="absolute inset-0 z-0 spinner-container" style="background-image: url('${blurThumb}'); background-size: cover; filter: blur(20px) saturate(1.5); transform: scale(1.1); opacity: 0.6;">
         </div>
         <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10 video-preview-container">
-            <img src="/thumbnails/${img.filename}.webp" alt="${img.original_name}"
+            <img src="${blurThumb}" alt="${img.original_name}"
                 class="w-full h-full object-cover image-loading" loading="lazy" decoding="async"
                 onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';"
                 onerror="this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
@@ -159,7 +213,10 @@ async function loadNextBatch(reset = false) {
                     is_favorite: img.is_favorite,
                     media_type: img.media_type,
                     width: img.width,
-                    height: img.height
+                    height: img.height,
+                    tags: img.tags || [],
+                    faces_count: img.faces_count || 0,
+                    pose: img.pose || ""
                 });
             });
 
@@ -289,10 +346,10 @@ function updateMiniProgress(index, total, percent) {
     const miniCount = document.getElementById('mini-count');
 
     if (mini) mini.classList.remove('hidden');
-    if (miniCount) miniCount.innerText = `${index + 1} / ${total} Images`;
+    if (miniCount) miniCount.innerText = `${index + 1}/${total}`;
 
     const totalProgress = ((index / total) * 100) + (percent / total);
-    const offset = 88 - (88 * totalProgress) / 100;
+    const offset = 63 - (63 * totalProgress) / 100;
     if (miniCircle) miniCircle.style.strokeDashoffset = offset;
 }
 
@@ -325,18 +382,22 @@ async function handleUpload(event) {
     files.forEach((file, i) => {
         const row = document.createElement('div');
         row.id = `upload-row-${i}`;
-        row.className = "flex flex-col gap-1.5";
-        row.innerHTML = `<div class="flex justify-between items-center text-[11px] font-medium">
-                <span class="text-slate-700 truncate max-w-[200px]">${file.name}</span>
-                <span class="row-percent text-ios-accent">Waiting...</span>
+        row.className = "upload-item-row row-animate";
+        row.innerHTML = `
+            <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined status-icon-pending text-[18px]">hourglass_empty</span>
+                    <span class="text-sm font-medium text-slate-700 truncate max-w-[240px]">Media Asset ${i + 1}</span>
+                </div>
+                <span class="row-percent text-[11px] font-bold text-ios-accent">Waiting</span>
             </div>
-            <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div class="row-fill h-full bg-ios-accent transition-all duration-300" style="width: 0%;"></div>
+            <div class="progress-track">
+                <div class="row-fill progress-fill" style="width: 0%;"></div>
             </div>`;
         listContainer.appendChild(row);
 
         const dot = document.createElement('div');
-        dot.className = "h-1.5 w-1.5 rounded-full bg-slate-200 transition-all duration-300";
+        dot.className = "h-2 w-2 rounded-full bg-slate-200 transition-all duration-300";
         dot.id = `dot-${i}`;
         if (dotsContainer) dotsContainer.appendChild(dot);
     });
@@ -373,6 +434,18 @@ async function handleUpload(event) {
                         successCount++;
                         if (dot) dot.classList.replace('bg-ios-accent', 'bg-emerald-500');
                         if (countLabel) countLabel.innerText = `${successCount} of ${files.length} images uploaded`;
+
+                        const row = document.getElementById(`upload-row-${index}`);
+                        if (row) {
+                            row.classList.add('completed');
+                            const icon = row.querySelector('.status-icon-pending');
+                            if (icon) {
+                                icon.innerText = 'check_circle';
+                                icon.className = 'material-symbols-outlined status-icon-check text-[18px]';
+                            }
+                            const p = row.querySelector('.row-percent');
+                            if (p) p.innerText = 'Done';
+                        }
 
                         // LIVE INJECTION: Add the new image to the gallery immediately
                         if (data && data.images && data.images.length > 0) {
@@ -545,11 +618,37 @@ function updateModalImage() {
         modalImg.src = `/previews/${media.filename}.webp`;
     }
 
-    if (title) title.innerText = media.name || "Media Preview";
+    if (title) title.innerText = "Memory Preview";
 
     if (favIcon) {
         if (media.is_favorite) favIcon.classList.add('fill-1');
         else favIcon.classList.remove('fill-1');
+    }
+
+    // Update AI Tags
+    const tagsContainer = document.getElementById('modal-ai-tags');
+    if (tagsContainer) {
+        tagsContainer.innerHTML = '';
+        if (media.faces_count > 0) {
+            const badge = document.createElement('span');
+            badge.className = "text-[8px] px-1.5 py-0.5 rounded-full bg-ios-accent/10 text-ios-accent font-bold uppercase";
+            badge.innerText = `${media.faces_count} ${media.faces_count === 1 ? 'Face' : 'Faces'}`;
+            tagsContainer.appendChild(badge);
+        }
+        if (media.pose && media.pose !== 'unknown') {
+            const badge = document.createElement('span');
+            badge.className = "text-[8px] px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-500 font-bold uppercase";
+            badge.innerText = media.pose;
+            tagsContainer.appendChild(badge);
+        }
+        if (media.tags && media.tags.length > 0) {
+            media.tags.forEach(tag => {
+                const badge = document.createElement('span');
+                badge.className = "text-[8px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold uppercase";
+                badge.innerText = tag;
+                tagsContainer.appendChild(badge);
+            });
+        }
     }
 
     // Update thumbnail strip

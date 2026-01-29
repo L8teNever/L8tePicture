@@ -4,15 +4,20 @@ import shutil
 import logging
 import hashlib
 import time
-from typing import List
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request, BackgroundTasks
+from typing import List, Optional
+from datetime import datetime, timedelta
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, Request, BackgroundTasks, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import and_, or_
 from PIL import Image as PILImage
 import models
-from database import engine, get_db
+from database import engine, get_db, SessionLocal
+from image_analyzer import analyze_image
+import json
+from image_analyzer import get_analyzer
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -90,7 +95,32 @@ def generate_video_preview(video_path, preview_path):
         logger.error(f"FFmpeg preview generation failed: {e}")
         return False
 
-def process_image_versions(file_path: str, filename: str, media_type: str = "image"):
+def analyze_and_update_image(image_id: int, file_path: str):
+    """Analyze image and update database with AI metadata."""
+    try:
+        from database import SessionLocal
+        db = SessionLocal()
+        
+        analyzer = get_analyzer()
+        analysis = analyzer.analyze_image(file_path)
+        
+        # Update database
+        image = db.query(models.Image).filter(models.Image.id == image_id).first()
+        if image:
+            image.analyzed = True
+            image.face_count = analysis['face_count']
+            image.has_people = analysis['has_people']
+            image.dominant_colors = analysis['dominant_colors']
+            image.brightness = analysis['brightness']
+            image.tags = analysis['tags']
+            db.commit()
+            logger.info(f"Analysis complete for image {image_id}: {len(analysis['tags'])} tags, {analysis['face_count']} faces")
+        
+        db.close()
+    except Exception as e:
+        logger.error(f"Analysis failed for image {image_id}: {e}")
+
+def process_image_versions(file_path: str, filename: str, media_type: str = "image", image_id: int = None):
     """Generates a small thumbnail and a medium preview in WebP format."""
     try:
         # Use a small delay to ensure file is flushed
@@ -125,9 +155,75 @@ def process_image_versions(file_path: str, filename: str, media_type: str = "ima
                 if thumb_img.mode in ("RGBA", "P"):
                     thumb_img = thumb_img.convert("RGB")
                 thumb_img.save(thumb_path, "WEBP", quality=60, method=6)
+        
+        # Perform AI analysis for images (not videos)
+        if media_type == "image" and image_id:
+            analyze_and_update_image(image_id, file_path)
             
     except Exception as e:
         logger.error(f"Background optimization failed for {filename}: {e}")
+
+
+
+def analyze_unanalyzed_images_on_startup():
+    """Background task to analyze all unanalyzed images on server startup."""
+    import time
+    time.sleep(5)  # Wait 5 seconds for server to fully start
+    
+    from database import SessionLocal
+    db = SessionLocal()
+    
+    try:
+        # Count unanalyzed images
+        unanalyzed = db.query(models.Image).filter(
+            models.Image.analyzed == False,
+            models.Image.media_type == "image"
+        ).all()
+        
+        total = len(unanalyzed)
+        
+        if total == 0:
+            logger.info("✓ All images are already analyzed!")
+            return
+        
+        logger.info(f"🔍 Found {total} unanalyzed images. Starting background analysis...")
+        
+        for idx, image in enumerate(unanalyzed, 1):
+            try:
+                file_path = os.path.join(UPLOAD_DIR, image.filename)
+                
+                if not os.path.exists(file_path):
+                    logger.warning(f"[{idx}/{total}] File not found: {image.filename}")
+                    continue
+                
+                logger.info(f"[{idx}/{total}] Analyzing {image.filename}...")
+                
+                # Perform analysis
+                analyzer = get_analyzer()
+                analysis = analyzer.analyze_image(file_path)
+                
+                # Update database
+                image.analyzed = True
+                image.face_count = analysis['face_count']
+                image.has_people = analysis['has_people']
+                image.dominant_colors = analysis['dominant_colors']
+                image.brightness = analysis['brightness']
+                image.tags = analysis['tags']
+                
+                db.commit()
+                
+                logger.info(f"  ✓ {len(analysis['tags'])} tags, {analysis['face_count']} faces, brightness: {analysis['brightness']:.2f}")
+                
+            except Exception as e:
+                logger.error(f"  ✗ Error analyzing {image.filename}: {e}")
+                db.rollback()
+        
+        logger.info(f"✓ Startup analysis complete! Processed {total} images")
+        
+    except Exception as e:
+        logger.error(f"Startup analysis failed: {e}")
+    finally:
+        db.close()
 
 @app.on_event("startup")
 async def startup_event():
@@ -140,6 +236,14 @@ async def startup_event():
         logger.info("Folder observer started in background thread.")
     except Exception as e:
         logger.error(f"Failed to start folder observer: {e}")
+    
+    # Start background analysis of unanalyzed images
+    try:
+        import threading
+        threading.Thread(target=analyze_unanalyzed_images_on_startup, daemon=True).start()
+        logger.info("Background image analysis started.")
+    except Exception as e:
+        logger.error(f"Failed to start background analysis: {e}")
 
 @app.get("/manifest.json")
 async def manifest():
@@ -150,15 +254,11 @@ async def service_worker():
     return FileResponse("static/sw.js", media_type="application/javascript")
 
 @app.get("/")
-async def landing_page(request: Request):
-    return templates.TemplateResponse("landing.html", {"request": request})
-
-@app.get("/gallery")
 async def read_root(request: Request, db: Session = Depends(get_db), search: str = "", favorites: bool = False):
     try:
         query = db.query(models.Image).order_by(models.Image.upload_date.desc())
         if search:
-            query = query.filter(models.Image.original_name.ilike(f"%{search}%"))
+            query = apply_filters(query, search)
         if favorites:
             query = query.filter(models.Image.is_favorite == True)
         
@@ -169,12 +269,63 @@ async def read_root(request: Request, db: Session = Depends(get_db), search: str
         logger.error(f"Error loading images for root: {e}")
         return templates.TemplateResponse("index.html", {"request": request, "images": [], "search": "", "favorites": False})
 
+@app.get("/gallery")
+async def gallery_redirect():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/")
+
+def apply_filters(query, search_str):
+    if not search_str:
+        return query
+    
+    import re
+    # Look for key:value patterns
+    filters = re.findall(r'(\w+):([\w\-\.]+)', search_str)
+    
+    remaining_search = search_str
+    for key, value in filters:
+        key = key.lower()
+        # Remove the filter from the search string to use the rest for name matching
+        remaining_search = remaining_search.replace(f"{key}:{value}", "").strip()
+        
+        if key == "faces":
+            try:
+                query = query.filter(models.Image.face_count >= int(value))
+            except: pass
+        elif key == "people":
+            if value.lower() == "true":
+                query = query.filter(models.Image.has_people == True)
+            else:
+                query = query.filter(models.Image.has_people == False)
+        elif key == "tag":
+            # JSON contains tags, so we use a contains-like check
+            query = query.filter(models.Image.tags.contains([value]))
+        elif key == "date":
+            # Simple date match
+            query = query.filter(models.Image.upload_date.ilike(f"%{value}%"))
+        elif key == "brightness":
+            try:
+                # Support brightness:dark, brightness:bright, or brightness:0.5
+                if value == "dark":
+                    query = query.filter(models.Image.brightness < 0.3)
+                elif value == "bright":
+                    query = query.filter(models.Image.brightness > 0.7)
+                else:
+                    query = query.filter(models.Image.brightness >= float(value))
+            except: pass
+            
+    if remaining_search:
+        query = query.filter(models.Image.original_name.ilike(f"%{remaining_search}%"))
+    
+    return query
+
 @app.get("/api/images")
 async def get_images_api(db: Session = Depends(get_db), offset: int = 0, limit: int = 50, search: str = "", favorites: bool = False):
     """API endpoint for infinite scrolling and efficient image fetching."""
     query = db.query(models.Image).order_by(models.Image.upload_date.desc())
+    
     if search:
-        query = query.filter(models.Image.original_name.ilike(f"%{search}%"))
+        query = apply_filters(query, search)
     if favorites:
         query = query.filter(models.Image.is_favorite == True)
     
@@ -182,12 +333,17 @@ async def get_images_api(db: Session = Depends(get_db), offset: int = 0, limit: 
     return [{
         "id": img.id,
         "filename": img.filename,
-        "original_name": img.original_name,
+        "original_name": "Private Media", # Privacy: Hide original filenames
         "is_favorite": img.is_favorite,
         "media_type": img.media_type,
         "width": img.width,
         "height": img.height,
-        "upload_date": img.upload_date.isoformat() if img.upload_date else None
+        "upload_date": img.upload_date.isoformat() if img.upload_date else None,
+        "tags": img.tags or [],
+        "face_count": img.face_count if img.analyzed else 0,
+        "has_people": img.has_people if img.analyzed else False,
+        "brightness": img.brightness if img.analyzed else None,
+        "analyzed": img.analyzed
     } for img in images]
 
 @app.post("/upload")
@@ -238,9 +394,6 @@ async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFil
             
             actual_size = os.path.getsize(file_path)
 
-            # OFFLOAD heavy processing to background
-            background_tasks.add_task(process_image_versions, file_path, unique_filename, media_type)
-
             # Save to DB instantly
             db_image = models.Image(
                 filename=unique_filename,
@@ -254,6 +407,10 @@ async def upload_images(background_tasks: BackgroundTasks, files: List[UploadFil
             db.add(db_image)
             db.commit()
             db.refresh(db_image)
+            
+            # OFFLOAD heavy processing to background (including AI analysis)
+            background_tasks.add_task(process_image_versions, file_path, unique_filename, media_type, db_image.id)
+            
             new_image_ids.append(db_image.id)
             uploaded_count += 1
         except Exception as e:
