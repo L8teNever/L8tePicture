@@ -98,6 +98,12 @@ header {
     top: 1rem;
     position: sticky;
     z-index: 100;
+    gap: 1.5rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
 }
 
 .logo {
@@ -413,34 +419,6 @@ header {
     }
 }
 
-.modal-close {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-    background: none;
-    border: none;
-    color: white;
-    font-size: 2.5rem;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: opacity 0.3s;
-}
-
-.modal-close:hover {
-    opacity: 1;
-}
-
-/* Upload Island */
-.upload-island {
-    position: fixed;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 500;
-    display: flex;
-    gap: 1rem;
-    padding: 0.75rem;
-}
 
 /* Responsive */
 @media (max-width: 768px) {

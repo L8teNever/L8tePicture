@@ -33,6 +33,10 @@
             </div>
 
             <div class="header-actions">
+                <button class="btn-action" onclick="document.getElementById('file-input').click()">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    UPLOAD
+                </button>
                 <button class="btn-action" onclick="toggleFavorites()">
                     <span class="material-symbols-outlined {% if favorites %}fill-1{% endif %}">favorite</span>
                     {{ "ALLE" if favorites else "FAVORITEN" }}
@@ -78,15 +82,9 @@
         </main>
     </div>
 
-    <!-- Persistent Navigation Island -->
-    <div class="upload-island glass">
-        <button class="btn-action" onclick="document.getElementById('file-input').click()">
-            <span class="material-symbols-outlined">add_circle</span>
-            UPLOAD
-        </button>
-        <input type="file" id="file-input" multiple accept="image/*,video/*" style="display: none;"
-            onchange="handleFiles(this.files)">
-    </div>
+    <!-- Hidden File Input -->
+    <input type="file" id="file-input" multiple accept="image/*,video/*" style="display: none;"
+        onchange="handleFiles(this.files)">
 
     <!-- Immersive Viewer Modal -->
     <div class="modal-overlay" id="viewer-modal" onclick="closeViewer()">

@@ -17,7 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initGallery();
     initInfiniteScroll();
 
-    // Global ESC key for modal
+    // Handle initial URL state
+    handleUrlState();
+
+    // Global listeners
+    window.addEventListener('popstate', handleUrlState);
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeViewer();
         if (e.key === 'ArrowRight') nextMedia();
@@ -25,8 +29,56 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+function handleUrlState() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fav = urlParams.get('favorites') === 'true';
+    const mediaId = urlParams.get('view');
+    const searchTerm = urlParams.get('search') || "";
+
+    let needsFetch = false;
+
+    // Sync search
+    if (searchTerm !== search) {
+        search = searchTerm;
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) searchInput.value = search;
+        needsFetch = true;
+    }
+
+    // Sync favorites
+    if (fav !== favoritesOnly) {
+        favoritesOnly = fav;
+        updateFavoritesBtnUi();
+        needsFetch = true;
+    }
+
+    if (needsFetch) {
+        fetchImages(true).then(() => {
+            handleViewerUrl(mediaId);
+        });
+    } else {
+        handleViewerUrl(mediaId);
+    }
+}
+
+function handleViewerUrl(mediaId) {
+    if (mediaId) {
+        const openIt = () => {
+            const img = images.find(i => i.id == mediaId);
+            if (img) openViewer(mediaId, img.filename, img.media_type, false);
+        };
+
+        if (images.length > 0) {
+            openIt();
+        } else {
+            fetchImages().then(openIt);
+        }
+    } else {
+        closeViewer(false);
+    }
+}
+
 function initGallery() {
-    // Read initial images from DOM (if any)
     const cards = document.querySelectorAll('.image-card');
     images = Array.from(cards).map(card => ({
         id: card.dataset.id,
@@ -46,7 +98,8 @@ async function fetchImages(reset = false) {
         offset = 0;
         hasMore = true;
         images = [];
-        document.getElementById('gallery').innerHTML = '';
+        const gallery = document.getElementById('gallery');
+        if (gallery) gallery.innerHTML = '';
     }
 
     try {
@@ -72,6 +125,8 @@ async function fetchImages(reset = false) {
 
 function appendImageToGallery(img) {
     const gallery = document.getElementById('gallery');
+    if (!gallery) return;
+
     const card = document.createElement('div');
     card.className = "image-card glass active";
     card.dataset.id = img.id;
@@ -104,13 +159,31 @@ function debounceSearch(val) {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
         search = val;
+
+        const url = new URL(window.location);
+        if (search) url.searchParams.set('search', search);
+        else url.searchParams.delete('search');
+        window.history.pushState({}, '', url);
+
         fetchImages(true);
     }, 400);
 }
 
 function toggleFavorites() {
     favoritesOnly = !favoritesOnly;
+    updateFavoritesBtnUi();
+
+    const url = new URL(window.location);
+    if (favoritesOnly) url.searchParams.set('favorites', 'true');
+    else url.searchParams.delete('favorites');
+    window.history.pushState({}, '', url);
+
+    fetchImages(true);
+}
+
+function updateFavoritesBtnUi() {
     const btn = document.querySelector('.header-actions .btn-action');
+    if (!btn) return;
     const icon = btn.querySelector('.material-symbols-outlined');
 
     if (favoritesOnly) {
@@ -120,8 +193,6 @@ function toggleFavorites() {
         icon.classList.remove('fill-1');
         btn.innerHTML = `<span class="material-symbols-outlined">favorite</span> FAVORITEN`;
     }
-
-    fetchImages(true);
 }
 
 // --- Upload Logic ---
@@ -145,7 +216,7 @@ async function handleFiles(files) {
 
         if (result.count > 0) {
             showToast(`${result.count} Momente erfolgreich hinzugefügt!`, 'success');
-            fetchImages(true); // Refresh for now, or could prepend
+            fetchImages(true);
         }
     } catch (err) {
         showToast("Upload fehlgeschlagen", "error");
@@ -165,7 +236,6 @@ async function toggleFavorite(id, btn) {
             btn.classList.remove('active');
         }
 
-        // Update local state
         const imgIdx = images.findIndex(i => i.id == id);
         if (imgIdx !== -1) images[imgIdx].is_favorite = data.is_favorite;
 
@@ -176,16 +246,21 @@ async function toggleFavorite(id, btn) {
 
 // --- Viewer / Modal ---
 
-function openViewer(id, filename, type) {
+function openViewer(id, filename, type, updateHistory = true) {
     const modal = document.getElementById('viewer-modal');
-    const modalImg = document.getElementById('viewer-img');
-    const modalVid = document.getElementById('viewer-video');
+    if (!modal) return;
 
     currentIndex = images.findIndex(i => i.id == id);
-    const imgData = images[currentIndex];
+    if (currentIndex === -1) return;
 
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    if (updateHistory) {
+        const url = new URL(window.location);
+        url.searchParams.set('view', id);
+        window.history.pushState({ view: id }, '', url);
+    }
 
     updateViewerContent();
 }
@@ -206,14 +281,12 @@ function updateViewerContent() {
         modalVid.pause();
         modalImg.style.display = 'block';
         modalImg.src = `/previews/${imgData.filename}.webp`;
-        // Fallback if preview doesn't exist
         modalImg.onerror = () => {
             modalImg.src = `/uploads/${imgData.filename}`;
             modalImg.onerror = null;
         };
     }
 
-    // Update favorite button
     if (imgData.is_favorite) {
         favBtn.classList.add('active');
         favBtn.querySelector('span').classList.add('fill-1');
@@ -223,21 +296,38 @@ function updateViewerContent() {
     }
 }
 
-function closeViewer() {
+function closeViewer(updateHistory = true) {
     const modal = document.getElementById('viewer-modal');
+    if (!modal) return;
+
     modal.classList.remove('active');
     document.body.style.overflow = 'auto';
-    document.getElementById('viewer-video').pause();
+    const video = document.getElementById('viewer-video');
+    if (video) video.pause();
+
+    if (updateHistory) {
+        const url = new URL(window.location);
+        url.searchParams.delete('view');
+        window.history.pushState({}, '', url);
+    }
 }
 
 function nextMedia() {
     if (currentIndex < images.length - 1) {
         currentIndex++;
+        const id = images[currentIndex].id;
+        const url = new URL(window.location);
+        url.searchParams.set('view', id);
+        window.history.replaceState({ view: id }, '', url);
         updateViewerContent();
     } else if (hasMore) {
         fetchImages().then(() => {
             if (currentIndex < images.length - 1) {
                 currentIndex++;
+                const id = images[currentIndex].id;
+                const url = new URL(window.location);
+                url.searchParams.set('view', id);
+                window.history.replaceState({ view: id }, '', url);
                 updateViewerContent();
             }
         });
@@ -247,6 +337,10 @@ function nextMedia() {
 function prevMedia() {
     if (currentIndex > 0) {
         currentIndex--;
+        const id = images[currentIndex].id;
+        const url = new URL(window.location);
+        url.searchParams.set('view', id);
+        window.history.replaceState({ view: id }, '', url);
         updateViewerContent();
     }
 }
@@ -254,14 +348,13 @@ function prevMedia() {
 function toggleViewerFavorite() {
     const imgData = images[currentIndex];
     const favBtn = document.getElementById('viewer-fav-btn');
-    toggleFavorite(imgData.id, favBtn);
-
-    // Sync with gallery card
-    const card = document.querySelector(`.image-card[data-id="${imgData.id}"] .btn-fav`);
-    if (card) {
-        if (imgData.is_favorite) card.classList.add('active');
-        else card.classList.remove('active');
-    }
+    toggleFavorite(imgData.id, favBtn).then(() => {
+        const card = document.querySelector(`.image-card[data-id="${imgData.id}"] .btn-fav`);
+        if (card) {
+            if (imgData.is_favorite) card.classList.add('active');
+            else card.classList.remove('active');
+        }
+    });
 }
 
 async function deleteCurrent() {
@@ -272,22 +365,28 @@ async function deleteCurrent() {
         await fetch(`/delete/${imgData.id}`, { method: 'DELETE' });
         showToast("Moment gelöscht", "info");
 
-        // Remove from local and gallery
         images.splice(currentIndex, 1);
         const card = document.querySelector(`.image-card[data-id="${imgData.id}"]`);
         if (card) card.remove();
 
         if (images.length === 0) {
             closeViewer();
-            document.getElementById('gallery').innerHTML = `
-                <div class="empty-state">
-                    <span class="material-symbols-outlined">photo_library</span>
-                    <p>DEINE GALERIE IST NOCH LEER</p>
-                    <button class="btn-action" onclick="document.getElementById('file-input').click()">ERSTEN MOMENT HOCHLADEN</button>
-                </div>
-            `;
+            const gallery = document.getElementById('gallery');
+            if (gallery) {
+                gallery.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-symbols-outlined">photo_library</span>
+                        <p>DEINE GALERIE IST NOCH LEER</p>
+                        <button class="btn-action" onclick="document.getElementById('file-input').click()">ERSTEN MOMENT HOCHLADEN</button>
+                    </div>
+                `;
+            }
         } else {
             if (currentIndex >= images.length) currentIndex = images.length - 1;
+            const nextId = images[currentIndex].id;
+            const url = new URL(window.location);
+            url.searchParams.set('view', nextId);
+            window.history.replaceState({ view: nextId }, '', url);
             updateViewerContent();
         }
     } catch (err) {
