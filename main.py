@@ -253,78 +253,29 @@ async def service_worker():
     return FileResponse("static/sw.js", media_type="application/javascript")
 
 @app.get("/")
-async def read_root(request: Request, db: Session = Depends(get_db), search: str = "", favorites: bool = False):
+async def read_root(request: Request, db: Session = Depends(get_db), favorites: bool = False):
     try:
         query = db.query(models.Image).order_by(models.Image.upload_date.desc())
-        if search:
-            query = apply_filters(query, search)
         if favorites:
             query = query.filter(models.Image.is_favorite == True)
         
-        # Load first 50 images for initial landing
         images = query.limit(50).all()
-        return templates.TemplateResponse("index.html", {"request": request, "images": images, "search": search, "favorites": favorites})
+        return templates.TemplateResponse("index.html", {"request": request, "images": images, "favorites": favorites})
     except Exception as e:
         logger.error(f"Error loading images for root: {e}")
-        return templates.TemplateResponse("index.html", {"request": request, "images": [], "search": "", "favorites": False})
+        return templates.TemplateResponse("index.html", {"request": request, "images": [], "favorites": False})
 
 @app.get("/gallery")
 async def gallery_redirect():
     from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/")
 
-def apply_filters(query, search_str):
-    if not search_str:
-        return query
-    
-    import re
-    # Look for key:value patterns
-    filters = re.findall(r'(\w+):([\w\-\.]+)', search_str)
-    
-    remaining_search = search_str
-    for key, value in filters:
-        key = key.lower()
-        # Remove the filter from the search string to use the rest for name matching
-        remaining_search = remaining_search.replace(f"{key}:{value}", "").strip()
-        
-        if key == "faces":
-            try:
-                query = query.filter(models.Image.face_count >= int(value))
-            except: pass
-        elif key == "people":
-            if value.lower() == "true":
-                query = query.filter(models.Image.has_people == True)
-            else:
-                query = query.filter(models.Image.has_people == False)
-        elif key == "tag":
-            # JSON contains tags, so we use a contains-like check
-            query = query.filter(models.Image.tags.contains([value]))
-        elif key == "date":
-            # Simple date match
-            query = query.filter(models.Image.upload_date.ilike(f"%{value}%"))
-        elif key == "brightness":
-            try:
-                # Support brightness:dark, brightness:bright, or brightness:0.5
-                if value == "dark":
-                    query = query.filter(models.Image.brightness < 0.3)
-                elif value == "bright":
-                    query = query.filter(models.Image.brightness > 0.7)
-                else:
-                    query = query.filter(models.Image.brightness >= float(value))
-            except: pass
-            
-    if remaining_search:
-        query = query.filter(models.Image.original_name.ilike(f"%{remaining_search}%"))
-    
-    return query
 
 @app.get("/api/images")
-async def get_images_api(db: Session = Depends(get_db), offset: int = 0, limit: int = 50, search: str = "", favorites: bool = False):
+async def get_images_api(db: Session = Depends(get_db), offset: int = 0, limit: int = 50, favorites: bool = False):
     """API endpoint for infinite scrolling and efficient image fetching."""
     query = db.query(models.Image).order_by(models.Image.upload_date.desc())
     
-    if search:
-        query = apply_filters(query, search)
     if favorites:
         query = query.filter(models.Image.is_favorite == True)
     

@@ -8,7 +8,7 @@ let offset = 50;
 const limit = 50;
 let isLoading = false;
 let hasMore = true;
-let search = new URLSearchParams(window.location.search).get('search') || "";
+let search = "";
 let favoritesOnly = new URLSearchParams(window.location.search).get('favorites') === "true";
 
 // --- Slideshow Config ---
@@ -45,13 +45,6 @@ function handleUrlState() {
 
     let needsFetch = false;
 
-    // Sync search
-    if (searchTerm !== search) {
-        search = searchTerm;
-        const searchInput = document.querySelector('.search-input');
-        if (searchInput) searchInput.value = search;
-        needsFetch = true;
-    }
 
     // Sync favorites
     if (fav !== favoritesOnly) {
@@ -111,7 +104,7 @@ async function fetchImages(reset = false) {
     }
 
     try {
-        const response = await fetch(`/api/images?offset=${offset}&limit=${limit}&search=${encodeURIComponent(search)}&favorites=${favoritesOnly}`);
+        const response = await fetch(`/api/images?offset=${offset}&limit=${limit}&favorites=${favoritesOnly}`);
         const data = await response.json();
 
         if (data.length < limit) hasMore = false;
@@ -160,22 +153,7 @@ function appendImageToGallery(img) {
     gallery.appendChild(card);
 }
 
-// --- Searching & Filtering ---
-
-let searchTimer;
-function debounceSearch(val) {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
-        search = val;
-
-        const url = new URL(window.location);
-        if (search) url.searchParams.set('search', search);
-        else url.searchParams.delete('search');
-        window.history.pushState({}, '', url);
-
-        fetchImages(true);
-    }, 400);
-}
+// --- Filtering ---
 
 function toggleFavorites() {
     favoritesOnly = !favoritesOnly;
