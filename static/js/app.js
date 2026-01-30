@@ -189,7 +189,13 @@ function updateFavoritesBtnUi() {
 async function handleFiles(files) {
     if (!files || files.length === 0) return;
 
-    showToast(`Lade ${files.length} Momente hoch...`, 'info');
+    const pill = document.getElementById('upload-status-pill');
+    const statusText = document.getElementById('upload-status-text');
+    const statusCount = document.getElementById('upload-status-count');
+
+    if (pill) pill.classList.add('active');
+    if (statusText) statusText.innerText = 'BEREITE VOR...';
+    if (statusCount) statusCount.innerText = `0/${files.length}`;
 
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
@@ -197,18 +203,39 @@ async function handleFiles(files) {
     }
 
     try {
-        const response = await fetch('/upload', {
-            method: 'POST',
-            body: formData
-        });
-        const result = await response.json();
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload', true);
 
-        if (result.count > 0) {
-            showToast(`${result.count} Momente erfolgreich hinzugefügt!`, 'success');
-            fetchImages(true);
-        }
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                if (statusText) statusText.innerText = `HOCHLADEN ${percent}%`;
+            }
+        };
+
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                const result = JSON.parse(xhr.responseText);
+                if (result.count > 0) {
+                    showToast(`${result.count} Momente erfolgreich hinzugefügt!`, 'success');
+                    fetchImages(true);
+                }
+            } else {
+                showToast("Upload fehlgeschlagen", "error");
+            }
+            if (pill) pill.classList.remove('active');
+        };
+
+        xhr.onerror = function () {
+            showToast("Netzwerkfehler beim Upload", "error");
+            if (pill) pill.classList.remove('active');
+        };
+
+        xhr.send(formData);
+
     } catch (err) {
-        showToast("Upload fehlgeschlagen", "error");
+        showToast("Fehler beim Verarbeiten", "error");
+        if (pill) pill.classList.remove('active');
     }
 }
 
