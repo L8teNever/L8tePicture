@@ -31,7 +31,7 @@ try:
 except Exception as e:
     logger.error(f"Error creating database tables or running migrations: {e}")
 
-app = FastAPI(title="L8tePicture")
+app = FastAPI(title="P.I.X.I.")
 
 # Setup directories
 UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
