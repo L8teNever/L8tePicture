@@ -214,10 +214,18 @@ async function loadNextBatch(reset = false) {
             const gallery = document.getElementById('image-gallery');
             const fragment = document.createDocumentFragment();
 
-            newImages.forEach(img => {
+            newImages.forEach((img, index) => {
                 if (currentImages.find(existing => existing.id === img.id)) return;
 
                 const item = createGalleryItem(img);
+
+                // Add initial hidden state for animation
+                item.style.opacity = '0';
+                item.style.transform = 'scale(0.8) translateY(30px)';
+
+                // Calculate stagger delay based on position in batch
+                const delay = index * 50; // 50ms between each item
+
                 fragment.appendChild(item);
 
                 currentImages.push({
@@ -232,6 +240,13 @@ async function loadNextBatch(reset = false) {
                     faces_count: img.faces_count || 0,
                     pose: img.pose || ""
                 });
+
+                // Trigger animation after a delay
+                setTimeout(() => {
+                    item.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    item.style.opacity = '1';
+                    item.style.transform = 'scale(1) translateY(0)';
+                }, delay);
             });
 
             gallery.appendChild(fragment);
