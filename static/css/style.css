@@ -863,7 +863,14 @@ input:focus {
     z-index: 25;
     display: flex;
     /* Changed from column to row to prevent vertical stretching */
-    flex-direction: row;
+    flex-direction: row !important;
+    /* Force row layout */
+    align-items: flex-start !important;
+    /* Force items to top */
+    height: auto !important;
+    /* Prevent full height */
+    bottom: auto !important;
+    /* Ensure it doesn't stretch to bottom */
     gap: 6px;
     pointer-events: none;
     opacity: 0;
