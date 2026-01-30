@@ -772,56 +772,94 @@ input:focus {
     animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Tablet & Desktop Optimizations */
+/* Responsive Adjustments & Mobile Optimization */
+
+/* Mobile First (Default) */
+.modal-content-container {
+    padding-top: 70px;
+    padding-bottom: 110px;
+    /* Space for dock */
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.glass-dock {
+    bottom: 30px;
+    padding: 0.8rem 1.5rem;
+    gap: 1.5rem;
+    width: 90%;
+    max-width: 360px;
+    justify-content: space-between;
+}
+
+.thumb-strip-container {
+    display: none;
+    /* Hide strip on mobile/portrait for cleaner view */
+}
+
+/* Tablet (Landscape & larger screens) */
 @media (min-width: 768px) {
-    header {
-        padding-top: 1.5rem;
-        padding-bottom: 1.5rem;
-    }
-
     .modal-content-container {
-        padding-bottom: 220px;
-    }
-
-    .modal-img {
-        max-width: 90vw;
+        padding-top: 80px;
+        padding-bottom: 140px;
     }
 
     .glass-dock {
-        bottom: 120px;
+        bottom: 110px;
+        width: auto;
+        max-width: none;
+        gap: 1.5rem;
+        padding: 0.6rem 1.5rem;
     }
 
-    .gallery.masonry-view {
-        columns: var(--masonry-cols, 4);
+    .thumb-strip-container {
+        display: flex;
+        /* Show on tablet+ */
     }
 
-    .gallery.grid-view {
-        grid-template-columns: repeat(var(--grid-cols, 5), 1fr);
+    .modal-img {
+        max-height: 85vh;
     }
 }
 
-@media (min-width: 1280px) {
-    header {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
+/* Desktop */
+@media (min-width: 1024px) {
+    .modal-content-container {
+        padding-bottom: 160px;
     }
 
-    .gallery.masonry-view {
-        columns: var(--masonry-cols, 6);
+    .modal-img {
+        max-width: 85vw;
+        max-height: 80vh;
+    }
+}
+
+/* Safe Area Support for iOS Devices with notch */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .glass-dock {
+        margin-bottom: env(safe-area-inset-bottom);
     }
 
-    .gallery.grid-view {
-        grid-template-columns: repeat(var(--grid-cols, 8), 1fr);
+    #landing-overlay {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* Fix for horizontal rotation on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+    .glass-dock {
+        bottom: 10px;
+        padding: 0.4rem 1rem;
+        transform: translateX(-50%) scale(0.8);
     }
 
-    header {
-        padding-left: 5%;
-        padding-right: 5%;
+    .modal-header-glass {
+        height: 50px;
     }
 
-    main {
-        padding-left: 5%;
-        padding-right: 5%;
+    .modal-content-container {
+        padding-top: 50px;
+        padding-bottom: 60px;
     }
 }
 

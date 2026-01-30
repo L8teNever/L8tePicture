@@ -1137,40 +1137,71 @@ function initPinchToZoom() {
 }
 
 // Swipe Navigation for Modal
-let touchStartX = 0;
-let touchStartY = 0;
-let touchEndX = 0;
-let touchEndY = 0;
+const el = document.querySelector('.floating-image-card');
+if (!el) return;
 
-function initSwipeNavigation() {
-    const modal = document.getElementById('slideshow-modal');
-    if (!modal) return;
+let scale = 1;
+let pointX = 0;
+let pointY = 0;
+let start = { x: 0, y: 0 };
+let panning = false;
 
-    modal.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-        touchStartY = e.changedTouches[0].screenY;
-    }, { passive: true });
+// Double tap to zoom
+let lastTap = 0;
+el.addEventListener('touchend', (e) => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTap;
+    if (tapLength < 500 && tapLength > 0) {
+        e.preventDefault();
+        // Reset zoom
+        if (scale !== 1) {
+            scale = 1; pointX = 0; pointY = 0;
+            setTransform();
+        } else {
+            scale = 2;
+            setTransform();
+        }
+    }
+    lastTap = currentTime;
+});
 
-    modal.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        touchEndY = e.changedTouches[0].screenY;
-        handleSwipe();
-    }, { passive: true });
+function setTransform() {
+    el.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
 }
 
-function handleSwipe() {
-    const swipeX = touchEndX - touchStartX;
-    const swipeY = touchEndY - touchStartY;
-    const threshold = 50;
+    // Basic pinch gesture support (simplified)
+    // Note: Full multi-touch pinch-zoom requires complex math (distance delta), 
+    // for this iteration we focus on the double-tap and robust UI layout.
+    // Hammer.js or similar would be better for full pinch support.
+}
 
-    // Horizontal Swipe
-    if (Math.abs(swipeX) > Math.abs(swipeY)) {
-        if (swipeX > threshold) changeSlide(-1);
-        else if (swipeX < -threshold) changeSlide(1);
-    }
-    // Vertical Swipe (Down to close)
-    else if (swipeY > threshold * 1.5) {
-        closeSlideshow();
+function initSwipeNavigation() {
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const swipeThreshold = 50;
+
+    document.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    document.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+        const modal = document.getElementById('slideshow-modal');
+        // Only swipe if modal is active AND we are not zoomed in
+        if (modal && modal.style.display !== 'none') {
+            const card = document.querySelector('.floating-image-card');
+            const currentScale = new WebKitCSSMatrix(window.getComputedStyle(card).transform).a;
+
+            // Only swipe if roughly at scale 1 (not zoomed)
+            if (Math.abs(currentScale - 1) < 0.1) {
+                if (touchEndX < touchStartX - swipeThreshold) changeSlide(1);
+                if (touchEndX > touchStartX + swipeThreshold) changeSlide(-1);
+            }
+        }
     }
 }
 
