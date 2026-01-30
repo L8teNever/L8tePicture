@@ -104,8 +104,9 @@
                 <span class="material-symbols-outlined">chevron_left</span>
             </button>
             <div class="modal-image-wrapper">
-                <img id="viewer-img" src="" alt="Full View" class="modal-image">
-                <video id="viewer-video" class="modal-image" controls style="display: none;"></video>
+                <img id="viewer-img" src="" alt="Full View" class="modal-image" onclick="toggleImmersiveMode()">
+                <video id="viewer-video" class="modal-image" controls style="display: none;"
+                    onclick="toggleImmersiveMode()"></video>
             </div>
             <button class="nav-arrow nav-next" onclick="nextMedia()">
                 <span class="material-symbols-outlined">chevron_right</span>

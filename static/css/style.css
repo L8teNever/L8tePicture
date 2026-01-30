@@ -597,7 +597,38 @@ header {
     max-width: 100%;
     max-height: 80vh;
     object-fit: contain;
+    border-radius: 20px;
     animation: zoomIn 0.5s var(--spring-easing);
+    transition: all 0.5s var(--spring-easing);
+    cursor: zoom-in;
+}
+
+/* Immersive Mode */
+.modal-overlay.immersive .viewer-controls,
+.modal-overlay.immersive .nav-arrow,
+.modal-overlay.immersive .modal-close {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.modal-overlay.immersive .modal-image-wrapper {
+    max-width: 100%;
+    max-height: 100vh;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.modal-overlay.immersive .modal-image {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+    cursor: zoom-out;
 }
 
 .nav-arrow {
@@ -724,8 +755,8 @@ header {
 
     .modal-image-wrapper {
         max-width: 100%;
-        max-height: 80vh;
-        border-radius: 0;
+        max-height: 85vh;
+        border-radius: 20px;
     }
 
     .grid-settings-popup {

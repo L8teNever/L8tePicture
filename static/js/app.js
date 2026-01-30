@@ -339,11 +339,17 @@ function preloadMedia(data) {
     }
 }
 
+function toggleImmersiveMode() {
+    const modal = document.getElementById('viewer-modal');
+    if (modal) modal.classList.toggle('immersive');
+}
+
 function closeViewer(updateHistory = true) {
     const modal = document.getElementById('viewer-modal');
     if (!modal) return;
 
     stopSlideshow();
+    modal.classList.remove('immersive');
 
     modal.classList.remove('active');
     document.body.style.overflow = 'auto';
