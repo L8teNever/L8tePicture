@@ -286,6 +286,30 @@ function updateViewerContent() {
         favBtn.classList.remove('active');
         favBtn.querySelector('span').classList.remove('fill-1');
     }
+
+    // Preload neighbors for instant switching
+    preloadNeighbors();
+}
+
+function preloadNeighbors() {
+    const nextIdx = currentIndex + 1;
+    const prevIdx = currentIndex - 1;
+
+    if (nextIdx < images.length) preloadMedia(images[nextIdx]);
+    if (prevIdx >= 0) preloadMedia(images[prevIdx]);
+}
+
+function preloadMedia(data) {
+    if (!data) return;
+
+    if (data.media_type === 'image') {
+        const img = new Image();
+        img.src = `/previews/${data.filename}.webp`;
+    } else if (data.media_type === 'video') {
+        const vid = document.createElement('video');
+        vid.preload = 'auto';
+        vid.src = `/uploads/${data.filename}`;
+    }
 }
 
 function closeViewer(updateHistory = true) {
@@ -510,7 +534,8 @@ function initGridControls() {
     if (!gallery) return;
 
     // Save/Load preference
-    const saved = localStorage.getItem('pixi_cols');
+    let saved = localStorage.getItem('pixi_cols');
+    if (!saved && window.innerWidth <= 768) saved = 2;
     if (saved) updateGridCols(saved);
 
     // Touch Support for Pinch
@@ -563,6 +588,13 @@ function updateGridCols(val) {
     document.getElementById('grid-col-val').innerText = currentCols;
     document.getElementById('grid-col-range').value = currentCols;
     localStorage.setItem('pixi_cols', currentCols);
+
+    // Performance Optimization: high density = low res mode
+    const gallery = document.getElementById('gallery');
+    if (gallery) {
+        if (currentCols >= 5) gallery.dataset.density = 'high';
+        else gallery.dataset.density = 'normal';
+    }
 }
 
 function showToast(msg, type = 'info') {
