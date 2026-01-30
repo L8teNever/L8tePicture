@@ -596,7 +596,7 @@ function initGridControls() {
             if (Math.abs(diff) > 50) { // Threshold for change
                 if (diff > 0 && currentCols > 1) {
                     updateGridCols(currentCols - 1); // Zoom in -> fewer cols
-                } else if (diff < 0 && currentCols < 6) {
+                } else if (diff < 0 && currentCols < 10) {
                     updateGridCols(currentCols + 1); // Zoom out -> more cols
                 }
                 initialPinchDistance = currentDist;

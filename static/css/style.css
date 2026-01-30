@@ -266,6 +266,10 @@ header {
     padding-bottom: 5rem;
 }
 
+.gallery-grid[data-density="high"] {
+    gap: 0.75rem !important;
+}
+
 /* High Density Performance Tweaks */
 .gallery-grid[data-density="high"] .image-card {
     border-radius: 8px !important;
