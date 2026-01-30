@@ -331,6 +331,121 @@ header {
     color: #ff4757;
 }
 
+/* Slideshow Settings Panel */
+.ss-settings-panel {
+    position: fixed;
+    top: 50%;
+    right: 2rem;
+    transform: translateY(-50%) translateX(120%);
+    width: 300px;
+    padding: 2rem;
+    z-index: 1005;
+    transition: transform 0.6s var(--spring-easing);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+}
+
+.ss-settings-panel.active {
+    transform: translateY(-50%) translateX(0);
+}
+
+.ss-settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.ss-settings-header h3 {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+}
+
+.ss-settings-header button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.ss-setting-item {
+    margin-bottom: 1.5rem;
+}
+
+.ss-setting-item label {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.ss-setting-item input[type="range"] {
+    width: 100%;
+}
+
+.ss-setting-item select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.8rem;
+}
+
+/* Transitions */
+.modal-image.transition-fade {
+    animation: fadeBlurOut 0.4s ease forwards;
+}
+
+.modal-image.transition-zoom {
+    animation: zoomBlurOut 0.4s ease forwards;
+}
+
+.modal-image.transition-slide {
+    animation: slideOutLeft 0.4s ease forwards;
+}
+
+@keyframes fadeBlurOut {
+    from {
+        opacity: 1;
+        filter: blur(0);
+    }
+
+    to {
+        opacity: 0;
+        filter: blur(10px);
+    }
+}
+
+@keyframes zoomBlurOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(1.1);
+        filter: blur(10px);
+    }
+}
+
+@keyframes slideOutLeft {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+}
+
 /* Modal - Immersive Viewer */
 .modal-overlay {
     position: fixed;

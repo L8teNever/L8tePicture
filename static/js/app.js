@@ -11,6 +11,14 @@ let hasMore = true;
 let search = new URLSearchParams(window.location.search).get('search') || "";
 let favoritesOnly = new URLSearchParams(window.location.search).get('favorites') === "true";
 
+// --- Slideshow Config ---
+let ssInterval = null;
+let ssIsPlaying = false;
+let ssConfig = {
+    interval: 3000,
+    effect: 'fade'
+};
+
 // --- Initialization ---
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -300,6 +308,8 @@ function closeViewer(updateHistory = true) {
     const modal = document.getElementById('viewer-modal');
     if (!modal) return;
 
+    stopSlideshow();
+
     modal.classList.remove('active');
     document.body.style.overflow = 'auto';
     const video = document.getElementById('viewer-video');
@@ -410,6 +420,66 @@ function initInfiniteScroll() {
             fetchImages();
         }
     });
+}
+
+// --- Slideshow Logic ---
+
+function toggleSlideshow() {
+    ssIsPlaying = !ssIsPlaying;
+    const btn = document.getElementById('slideshow-toggle');
+    const icon = btn.querySelector('.material-symbols-outlined');
+
+    if (ssIsPlaying) {
+        icon.innerText = 'pause_circle';
+        btn.classList.add('active');
+        startSlideshow();
+    } else {
+        icon.innerText = 'play_circle';
+        btn.classList.remove('active');
+        stopSlideshow();
+    }
+}
+
+function startSlideshow() {
+    stopSlideshow();
+    ssInterval = setInterval(() => {
+        nextMediaWithTransition();
+    }, ssConfig.interval);
+}
+
+function stopSlideshow() {
+    if (ssInterval) {
+        clearInterval(ssInterval);
+        ssInterval = null;
+    }
+}
+
+function nextMediaWithTransition() {
+    const effect = document.getElementById('ss-effect-select')?.value || 'fade';
+    const modalImg = document.getElementById('viewer-img');
+    const modalVid = document.getElementById('viewer-video');
+    const currentMedia = modalImg.style.display !== 'none' ? modalImg : modalVid;
+
+    if (effect !== 'none') {
+        currentMedia.classList.add(`transition-${effect}`);
+        setTimeout(() => {
+            nextMedia();
+            currentMedia.classList.remove(`transition-${effect}`);
+        }, 400);
+    } else {
+        nextMedia();
+    }
+}
+
+function toggleSlideshowSettings() {
+    const panel = document.getElementById('ss-settings');
+    panel.classList.toggle('active');
+}
+
+function updateIntervalLabel(val) {
+    document.getElementById('ss-interval-val').innerText = val;
+    ssConfig.interval = val * 1000;
+    if (ssIsPlaying) startSlideshow(); // Restart with new speed
 }
 
 function showToast(msg, type = 'info') {

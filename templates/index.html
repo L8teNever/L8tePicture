@@ -26,12 +26,6 @@
         <header class="glass">
             <div class="logo">P.I.X.I.</div>
 
-            <div class="search-wrapper">
-                <span class="material-symbols-outlined search-icon">search</span>
-                <input type="text" class="search-input" placeholder="ENTDECKE DEINE MOMENTE..." value="{{ search }}"
-                    oninput="debounceSearch(this.value)">
-            </div>
-
             <div class="header-actions">
                 <button class="btn-action" onclick="document.getElementById('file-input').click()">
                     <span class="material-symbols-outlined">add_circle</span>
@@ -101,12 +95,40 @@
                 <button class="btn-action" id="viewer-fav-btn" onclick="toggleViewerFavorite()">
                     <span class="material-symbols-outlined">favorite</span>
                 </button>
+                <button class="btn-action" id="slideshow-toggle" onclick="toggleSlideshow()">
+                    <span class="material-symbols-outlined">play_circle</span>
+                </button>
+                <button class="btn-action" onclick="toggleSlideshowSettings()">
+                    <span class="material-symbols-outlined">settings</span>
+                </button>
                 <button class="btn-action" onclick="downloadCurrent()">
                     <span class="material-symbols-outlined">download</span>
                 </button>
                 <button class="btn-action btn-delete" onclick="deleteCurrent()" style="color: #ff4757;">
                     <span class="material-symbols-outlined">delete</span>
                 </button>
+            </div>
+
+            <!-- Slideshow Settings Panel -->
+            <div id="ss-settings" class="glass ss-settings-panel">
+                <div class="ss-settings-header">
+                    <h3>DIASHOW SETTINGS</h3>
+                    <button onclick="toggleSlideshowSettings()">&times;</button>
+                </div>
+                <div class="ss-setting-item">
+                    <label>INTERVALL (SEK): <span id="ss-interval-val">3</span>s</label>
+                    <input type="range" id="ss-interval-range" min="1" max="10" value="3"
+                        oninput="updateIntervalLabel(this.value)">
+                </div>
+                <div class="ss-setting-item">
+                    <label>EFFEKT</label>
+                    <select id="ss-effect-select">
+                        <option value="fade">FADE</option>
+                        <option value="zoom">ZOOM</option>
+                        <option value="slide">SLIDE</option>
+                        <option value="none">KEINER</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
