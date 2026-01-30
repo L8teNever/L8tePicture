@@ -115,6 +115,9 @@ body {
 /* Dynamic Gallery Styles */
 .gallery {
     transition: opacity 0.4s var(--fluid-easing), transform 0.4s var(--fluid-easing);
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
 }
 
 @keyframes fadeIn {
@@ -136,6 +139,8 @@ body {
     animation: fadeIn 0.6s var(--fluid-easing) backwards;
     content-visibility: auto;
     contain-intrinsic-size: 1000px;
+    justify-items: center;
+    align-items: start;
 }
 
 
@@ -147,6 +152,8 @@ body {
     animation: fadeIn 0.6s var(--fluid-easing) backwards;
     content-visibility: auto;
     contain-intrinsic-size: 1000px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .masonry-item {

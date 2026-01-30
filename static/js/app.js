@@ -45,15 +45,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('file-input');
     if (fileInput) fileInput.addEventListener('change', handleUpload);
 
+    // Initial responsive column calculation
+    updateColumnsResponsive();
+
     const slider = document.getElementById('zoom-slider');
     if (slider) {
-        let val;
-        if (window.innerWidth < 768) { val = 2; }
-        else if (window.innerWidth < 1280) { val = 4; }
-        else { val = 6; }
-        slider.value = val;
-        updateZoom(val);
+        slider.addEventListener('input', (e) => {
+            // Disable auto-resize if user manually touches slider
+            window.isManualZoom = true;
+        });
     }
+
+    // Dynamic resize listener
+    window.addEventListener('resize', () => {
+        if (!window.isManualZoom) {
+            updateColumnsResponsive();
+        }
+    });
+
+    // Initially disable scrolling while on landing
 
     // Initially disable scrolling while on landing
     const isLandingVisible = !document.getElementById('landing-overlay')?.classList.contains('hidden');
@@ -1320,3 +1330,33 @@ document.addEventListener('click', (e) => {
         }
     }
 });
+
+// Responsive Column Logic
+function updateColumnsResponsive() {
+    const w = window.innerWidth;
+    let cols;
+
+    // Smooth stepping for columns based on width
+    if (w < 480) cols = 2;       // Mobile portrait
+    else if (w < 768) cols = 3;  // Mobile landscape / Phablet
+    else if (w < 1024) cols = 4; // Tablet portrait
+    else if (w < 1280) cols = 5; // Tablet landscape / Small laptop
+    else if (w < 1600) cols = 6; // Desktop
+    else if (w < 1920) cols = 7; // Large Desktop
+    else cols = 8;               // Ultra Wide
+
+    // Update state without setting manual flag
+    const slider = document.getElementById('zoom-slider');
+    if (slider) slider.value = cols;
+
+    updateZoom(cols);
+}
+        }
+
+// Close settings popup if clicking outside
+if (settingsPopup && !settingsPopup.classList.contains('opacity-0')) {
+    if (!settingsPopup.contains(e.target) && !settingsBtn.contains(e.target)) {
+        toggleSettings();
+    }
+}
+    });
