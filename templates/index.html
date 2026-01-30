@@ -90,7 +90,9 @@
 
     <!-- Immersive Viewer Modal -->
     <div class="modal-overlay" id="viewer-modal" onclick="closeViewer()">
-        <button class="modal-close" onclick="closeViewer()">&times;</button>
+        <button class="modal-close" onclick="closeViewer()">
+            <span class="material-symbols-outlined">close</span>
+        </button>
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-image-wrapper">
                 <img id="viewer-img" src="" alt="Full View" class="modal-image">
@@ -104,7 +106,7 @@
                 <button class="btn-action" onclick="downloadCurrent()">
                     <span class="material-symbols-outlined">download</span>
                 </button>
-                <button class="btn-action" onclick="deleteCurrent()" style="color: #ff4757;">
+                <button class="btn-action btn-delete" onclick="deleteCurrent()" style="color: #ff4757;">
                     <span class="material-symbols-outlined">delete</span>
                 </button>
             </div>
