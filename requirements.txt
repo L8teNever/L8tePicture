@@ -6,5 +6,4 @@ pillow
 sqlalchemy
 watchdog
 opencv-python-headless
-mediapipe
 numpy

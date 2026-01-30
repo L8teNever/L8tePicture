@@ -130,8 +130,10 @@ function createGalleryItem(img) {
 
         // Primary tag badge
         if (img.tags && img.tags.length > 0) {
+            // Take only the first tag for the card view to keep it clean
             badges.push(`
                 <div class="ai-badge-item ai-badge-tag">
+                    <span class="material-symbols-outlined">label</span>
                     <span>${img.tags[0]}</span>
                 </div>
             `);
@@ -651,12 +653,15 @@ function updateModalImage() {
             tagsContainer.appendChild(badge);
         }
         if (media.tags && media.tags.length > 0) {
-            media.tags.forEach(tag => {
-                const badge = document.createElement('span');
-                badge.className = "text-[8px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold uppercase";
-                badge.innerText = tag;
-                tagsContainer.appendChild(badge);
-            });
+            if (media.tags && media.tags.length > 0) {
+                // Limit to top 4 tags to avoid clutter
+                media.tags.slice(0, 4).forEach(tag => {
+                    const badge = document.createElement('span');
+                    badge.className = "modal-tag-pill";
+                    badge.innerText = tag;
+                    tagsContainer.appendChild(badge);
+                });
+            }
         }
     }
 

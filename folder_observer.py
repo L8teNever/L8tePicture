@@ -159,9 +159,9 @@ class ImageHandler(FileSystemEventHandler):
                     results = analyze_image(file_path)
                     if results:
                         db_image.analyzed = True
-                        db_image.faces_count = results["faces_count"]
+                        db_image.face_count = results["face_count"]
                         db_image.has_people = results["has_people"]
-                        db_image.pose_info = results["pose_info"]
+                        # db_image.pose_info = results["pose_info"] # Not supported currently
                         db_image.brightness = results["brightness"]
                         db_image.dominant_colors = results["dominant_colors"]
                         db_image.tags = results["tags"]
@@ -254,9 +254,9 @@ def sync_existing_files():
                         results = analyze_image(file_path)
                         if results:
                             db_image.analyzed = True
-                            db_image.faces_count = results["faces_count"]
+                            db_image.face_count = results["face_count"]
                             db_image.has_people = results["has_people"]
-                            db_image.pose_info = results["pose_info"]
+                            # db_image.pose_info = results["pose_info"]
                             db_image.brightness = results["brightness"]
                             db_image.dominant_colors = results["dominant_colors"]
                             db_image.tags = results["tags"]

@@ -17,6 +17,13 @@ services:
       retries: 3
     networks:
       - l8te_network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 256M
 
 networks:
   l8te_network:

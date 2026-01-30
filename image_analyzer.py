@@ -46,6 +46,14 @@ class ImageAnalyzer:
             if img_cv is None:
                 logger.error(f"Failed to load image: {image_path}")
                 return self._empty_result()
+
+            # Resize huge images for analysis to save RAM and CPU
+            # Max width 1280px is sufficient for detection
+            height, width = img_cv.shape[:2]
+            if width > 1280:
+                scale = 1280 / width
+                new_height = int(height * scale)
+                img_cv = cv2.resize(img_cv, (1280, new_height))
             
             # Convert to RGB for PIL operations
             img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
