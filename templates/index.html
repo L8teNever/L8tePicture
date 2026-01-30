@@ -2,473 +2,119 @@
 <html lang="de">
 
 <head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>L8tePicture - Clean iOS 26 Gallery</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/tailwind-utilities.css">
-    <link rel="stylesheet" href="/static/css/style.css?v=6">
-    <link rel="stylesheet" href="/static/css/upload.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA - High-End Gallery</title>
+
+    <!-- Fonts & Icons -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@100;300;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/style.css?v={{ range(1, 9999) | random }}">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#007AFF">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3342/3342137.png">
+    <meta name="theme-color" content="#0a0a0c">
 </head>
 
-<body class="text-slate-800 antialiased font-display">
-    <!-- Immersive Landing Overlay -->
-    <div id="landing-overlay">
-        <div class="landing-bg"></div>
-        <div class="landing-glass">
-            <div class="mb-8 flex justify-center">
-                <div
-                    class="h-24 w-24 bg-white/20 rounded-[32px] flex items-center justify-center backdrop-blur-xl border border-white/30 rotate-12 shadow-2xl">
-                    <span class="material-symbols-outlined text-white text-5xl font-extralight">photo_library</span>
-                </div>
+<body>
+    <div class="nebula-bg"></div>
+
+    <div class="app-container">
+        <header class="glass">
+            <div class="logo">AURA</div>
+
+            <div class="search-wrapper">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" class="search-input" placeholder="ENTDECKE DEINE MOMENTE..." value="{{ search }}"
+                    oninput="debounceSearch(this.value)">
             </div>
-            <h1 class="text-5xl md:text-6xl font-extrabold tracking-tighter mb-6">L8tePicture</h1>
-            <p class="text-white/80 text-xl font-light leading-relaxed mb-12">
-                Willkommen bei L8tePicture.<br>Deine Erinnerungen in modernem Licht.
-            </p>
-            <button onclick="enterGallery()" class="enter-btn-ios">
-                Hier geht's weiter
-            </button>
-            <p class="mt-8 text-white/40 text-[10px] uppercase tracking-[0.4em] font-bold">iOS 26 Aesthetic Edition</p>
-        </div>
-    </div>
 
-    <header class="sticky top-0 z-50 pt-12 pb-6 px-4 light-glass rounded-b-[42px]">
-        <div class="flex items-center justify-between mb-5 px-2">
-            <div class="flex flex-col">
-                <h1 class="text-xl font-light tracking-tight text-slate-900 leading-none">L8tePicture</h1>
-                <p class="text-[9px] font-semibold opacity-40 uppercase tracking-[0.2em] mt-1">Clean Gallery</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <div class="flex bg-white/40 p-1 rounded-full border border-white/60">
-                    <button id="grid-mode-btn" class="px-4 py-1.5 rounded-full text-xs font-medium transition-all"
-                        onclick="setViewMode('grid')">Grid</button>
-                    <button id="masonry-mode-btn"
-                        class="px-4 py-1.5 rounded-full text-xs font-medium transition-all bg-white/60 shadow-sm"
-                        onclick="setViewMode('masonry')">Masonry</button>
-                </div>
-                <button
-                    class="h-10 w-10 flex items-center justify-center rounded-full bg-white/80 border border-white/90 shadow-sm active:scale-95 transition-transform"
-                    onclick="document.getElementById('file-input').click()">
-                    <span class="material-symbols-outlined text-ios-accent font-light text-2xl">add</span>
-                </button>
-            </div>
-        </div>
-        <div class="px-2">
-            <div
-                class="relative flex items-center h-12 w-full rounded-2xl bg-white/70 border border-white/80 px-4 shadow-sm backdrop-blur-md">
-                <span class="material-symbols-outlined text-slate-400 font-extralight mr-2">search</span>
-                <input id="search-input"
-                    class="w-full bg-transparent border-none focus:ring-0 text-slate-800 placeholder:text-slate-400 font-light text-sm"
-                    placeholder="Search memories, dates or tags..." type="text" value="{{ search }}"
-                    oninput="debounceSearch(this.value)" />
-
-                <!-- Smart Search Helper -->
-                <div class="group relative mr-2">
-                    <span
-                        class="material-symbols-outlined text-slate-300 text-[18px] cursor-help hover:text-ios-accent transition-colors">info</span>
-                    <div
-                        class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-4 rounded-2xl bg-white/90 backdrop-blur-xl border border-white/40 shadow-2xl opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all z-50">
-                        <h4 class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Smart Filters
-                        </h4>
-                        <ul class="text-[11px] text-slate-600 space-y-2">
-                            <li class="flex justify-between"><span>Faces:</span> <code
-                                    class="bg-slate-100 px-1 rounded text-ios-accent">faces:2</code></li>
-                            <li class="flex justify-between"><span>Person:</span> <code
-                                    class="bg-slate-100 px-1 rounded text-ios-accent">people:true</code></li>
-                            <li class="flex justify-between"><span>Brightness:</span> <code
-                                    class="bg-slate-100 px-1 rounded text-ios-accent">brightness:bright</code></li>
-                            <li class="flex justify-between"><span>Date:</span> <code
-                                    class="bg-slate-100 px-1 rounded text-ios-accent">date:2024</code></li>
-                            <li class="flex justify-between"><span>Auto-Tags:</span> <code
-                                    class="bg-slate-100 px-1 rounded text-ios-accent">tag:portrait</code></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- AI Filter Dropdown -->
-                <div class="relative">
-                    <button id="ai-filter-btn"
-                        class="flex items-center justify-center gap-1 px-3 py-2 rounded-full hover:bg-white/40 transition-colors text-slate-600"
-                        onclick="toggleAIFilters()">
-                        <span class="material-symbols-outlined font-extralight text-[20px]">filter_alt</span>
-                        <span class="text-xs font-medium">Filter</span>
-                    </button>
-
-                    <!-- AI Filter Popup -->
-                    <div id="ai-filter-popup"
-                        class="absolute top-14 right-0 w-72 p-5 light-glass border border-white/80 rounded-[32px] shadow-xl z-[60] opacity-0 pointer-events-none transition-all scale-95 origin-top-right">
-                        <h3 class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-4">Smart Filters
-                        </h3>
-                        <div class="flex flex-col gap-3">
-                            <!-- People Filters -->
-                            <div class="border-b border-slate-200 pb-3">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">People</p>
-                                <div class="flex flex-wrap gap-2">
-                                    <button onclick="applyQuickFilter('people:true')"
-                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
-                                        <span class="material-symbols-outlined text-[14px] mr-1">person</span>
-                                        With People
-                                    </button>
-                                    <button onclick="applyQuickFilter('faces:1')"
-                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
-                                        <span class="material-symbols-outlined text-[14px] mr-1">face</span>
-                                        Portraits
-                                    </button>
-                                    <button onclick="applyQuickFilter('faces:2')"
-                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
-                                        <span class="material-symbols-outlined text-[14px] mr-1">group</span>
-                                        Groups (2+)
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Brightness Filters -->
-                            <div class="border-b border-slate-200 pb-3">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Brightness
-                                </p>
-                                <div class="flex flex-wrap gap-2">
-                                    <button onclick="applyQuickFilter('brightness:bright')"
-                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
-                                        <span class="material-symbols-outlined text-[14px] mr-1">light_mode</span>
-                                        Bright
-                                    </button>
-                                    <button onclick="applyQuickFilter('brightness:dark')"
-                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
-                                        <span class="material-symbols-outlined text-[14px] mr-1">dark_mode</span>
-                                        Dark
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Tag Filters -->
-                            <div class="pb-2">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Tags</p>
-                                <div class="flex flex-wrap gap-2">
-                                    <button onclick="applyQuickFilter('tag:portrait')"
-                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
-                                        Portrait
-                                    </button>
-                                    <button onclick="applyQuickFilter('tag:duo')"
-                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
-                                        Duo
-                                    </button>
-                                    <button onclick="applyQuickFilter('tag:group')"
-                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
-                                        Group
-                                    </button>
-                                    <button onclick="applyQuickFilter('tag:daylight')"
-                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
-                                        Daylight
-                                    </button>
-                                    <button onclick="applyQuickFilter('tag:night')"
-                                        class="quick-filter-btn px-3 py-1.5 text-xs rounded-full bg-white/60 hover:bg-ios-accent hover:text-white transition-all">
-                                        Night
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Clear Filter -->
-                            <button onclick="clearFilters()"
-                                class="w-full py-2 text-xs font-medium text-red-500 hover:bg-red-50 rounded-xl transition-all">
-                                Clear All Filters
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <button id="favorites-filter-btn"
-                    class="flex items-center justify-center p-2 rounded-full hover:bg-white/40 transition-colors mr-1 {% if favorites %}text-ios-accent bg-white/40{% else %}text-slate-400{% endif %}"
-                    onclick="toggleFavoritesFilter()">
-                    <span
-                        class="material-symbols-outlined font-extralight {% if favorites %}fill-1{% endif %}">favorite</span>
-                </button>
-                <button class="flex items-center justify-center p-2 rounded-full hover:bg-white/40 transition-colors"
-                    onclick="toggleSettings()">
-                    <span class="material-symbols-outlined text-slate-400 font-extralight">settings</span>
-                </button>
-
-                <!-- Settings Popup -->
-                <div id="settings-popup"
-                    class="absolute top-14 right-0 w-64 p-5 light-glass border border-white/80 rounded-[32px] shadow-xl z-[60] opacity-0 pointer-events-none transition-all scale-95 origin-top-right">
-                    <h3 class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-4">Gallery Settings
-                    </h3>
-                    <div class="flex flex-col gap-4">
-                        <div class="flex flex-col gap-2">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-medium text-slate-600">Columns</span>
-                                <span id="zoom-label"
-                                    class="text-[10px] font-bold text-ios-accent bg-ios-accent/10 px-2 py-0.5 rounded-full">2</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="material-symbols-outlined text-slate-400 text-sm">zoom_out</span>
-                                <input type="range" id="zoom-slider" min="1" max="10" value="2"
-                                    class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-ios-accent"
-                                    oninput="updateZoom(this.value)">
-                                <span class="material-symbols-outlined text-slate-400 text-sm">zoom_in</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="px-4 pt-6 pb-24 max-w-[2000px] mx-auto" style="width: 100%;">
-        <input type="file" id="file-input" multiple accept="image/*,video/*" style="display: none;">
-
-        <div class="gallery masonry-view" id="image-gallery">
-            {% for image in images %}
-            <div class="masonry-item image-card" data-id="{{ image.id }}" data-filename="{{ image.filename }}"
-                data-name="Private Media" data-media-type="{{ image.media_type }}" data-width="{{ image.width }}"
-                data-height="{{ image.height }}" data-tags='{{ image.tags | tojson if image.tags else "[]" }}'
-                data-faces-count="{{ image.faces_count or 0 }}" data-pose="{{ image.pose_info or "" }}"
-                onclick="openSlideshow('{{ image.id }}')">
-                <div class="glass-card rounded-[28px] overflow-hidden p-1 relative"
-                    style="aspect-ratio: {{ image.width if image.width else 3 }} / {{ image.height if image.height else 2 }};">
-                    {% if image.media_type == 'video' %}
-                    <div class="video-badge-modern">
-                        <div class="badge-blur"></div>
-                        <div class="badge-content">
-                            <span class="material-symbols-outlined">play_circle</span>
-                            <span class="badge-text">VIDEO</span>
-                        </div>
-                    </div>
-                    {% endif %}
-                    <div class="absolute inset-0 z-0 spinner-container bg-slate-100"
-                        style="background-image: url('/thumbnails/{{ image.filename }}.webp'); background-size: cover; background-position: center; filter: blur(20px); opacity: 0.6;">
-                    </div>
-                    <div class="relative rounded-[24px] overflow-hidden w-full h-full z-10 video-preview-container">
-                        <img src="/thumbnails/{{ image.filename }}.webp" alt="{{ image.original_name }}"
-                            class="w-full h-full object-cover image-loading" loading="lazy" decoding="async"
-                            onload="this.classList.add('image-loaded'); this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';"
-                            onerror="this.parentElement.parentElement.querySelector('.spinner-container').style.display='none';">
-
-                        {% if image.media_type == 'video' %}
-                        <img src="/thumbnails/{{ image.filename }}_preview.webp" alt="Preview"
-                            class="preview-animated w-full h-full object-cover" loading="lazy">
-                        {% endif %}
-
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100 flex items-end justify-end p-4 z-20">
-                            <div class="flex gap-2">
-                                <button
-                                    class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30 favorite-btn"
-                                    onclick="event.stopPropagation(); toggleFavorite('{{ image.id }}', this)">
-                                    <span
-                                        class="material-symbols-outlined text-white text-[18px] font-extralight {% if image.is_favorite %}fill-1{% endif %}">favorite</span>
-                                </button>
-                                <button
-                                    class="h-8 w-8 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-lg border border-white/30"
-                                    onclick="event.stopPropagation(); deleteImage('{{ image.id }}')">
-                                    <span
-                                        class="material-symbols-outlined text-white text-[18px] font-extralight">delete</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </main>
-
-    <!-- Modal for Slideshow (Immersive iOS 26 Design) -->
-    <div id="slideshow-modal" class="modal">
-        <div id="modal-bg" class="preview-bg"></div>
-
-        <header class="modal-header-glass">
-            <div>
-                <button class="icon-btn-modal" onclick="closeSlideshow()">
-                    <span class="material-symbols-outlined text-slate-800 font-extralight text-xl">close</span>
-                </button>
-            </div>
-            <div class="flex flex-col items-center">
-                <h2 id="modal-title"
-                    class="text-[15px] font-normal tracking-tight text-slate-900/80 truncate max-w-[200px] md:max-w-md">
-                    Image
-                    Preview</h2>
-                <span id="modal-meta" class="text-[9px] font-semibold opacity-40 uppercase tracking-[0.2em]">Shot on
-                    L8te</span>
-                <div id="modal-ai-tags" class="flex gap-1 mt-1 empty:hidden"></div>
-            </div>
-            <div class="flex gap-2">
-                <button class="icon-btn-modal" onclick="shareImage()">
-                    <span class="material-symbols-outlined text-slate-800 font-extralight text-xl">share</span>
+            <div class="header-actions">
+                <button class="btn-action" onclick="toggleFavorites()">
+                    <span class="material-symbols-outlined {% if favorites %}fill-1{% endif %}">favorite</span>
+                    {{ "ALLE" if favorites else "FAVORITEN" }}
                 </button>
             </div>
         </header>
 
-        <main class="modal-content-container" onclick="if(event.target === this) closeSlideshow()">
-            <div class="floating-image-card">
-                <div class="refraction"></div>
-                <!-- Modal Loading Spinner -->
-                <div id="modal-spinner"
-                    class="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-                    <div class="spinner" style="width: 48px; height: 48px; border-width: 4px;"></div>
-                </div>
-                <img id="modal-img" class="modal-img image-loading z-10" src="" alt="" onload="handleModalImageLoad()"
-                    onerror="document.getElementById('modal-spinner').style.display='none';">
-                <video id="modal-video" class="modal-img z-10 hidden" controls playsinline></video>
+        <main class="gallery-grid" id="gallery">
+            {% if not images %}
+            <div class="empty-state">
+                <span class="material-symbols-outlined">photo_library</span>
+                <p>DEINE GALERIE IST NOCH LEER</p>
+                <button class="btn-action" onclick="document.getElementById('file-input').click()">ERSTEN MOMENT
+                    HOCHLADEN</button>
             </div>
+            {% endif %}
+            {% for image in images %}
+            <div class="image-card glass animate-in" data-id="{{ image.id }}"
+                onclick="openViewer('{{ image.id }}', '{{ image.filename }}', '{{ image.media_type }}')">
+
+                <button class="btn-fav {% if image.is_favorite %}active{% endif %}"
+                    onclick="event.stopPropagation(); toggleFavorite('{{ image.id }}', this)">
+                    <span class="material-symbols-outlined fill-1">favorite</span>
+                </button>
+
+                <img src="/thumbnails/{{ image.filename }}.webp" alt="Memory" class="card-img" loading="lazy">
+
+                <div class="card-overlay">
+                    <div class="card-meta">
+                        <div class="card-title">PRIVATE MOMENT</div>
+                        <div class="card-date">{{ image.upload_date.strftime('%d. %b %Y') if image.upload_date else
+                            'ZEITLOS' }}</div>
+                    </div>
+                </div>
+
+                {% if image.media_type == 'video' %}
+                <div class="video-indicator">
+                    <span class="material-symbols-outlined">play_circle</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
         </main>
-
-        <nav class="glass-dock">
-            <button class="icon-btn-modal group" onclick="toggleFavoriteCurrent()">
-                <span id="modal-fav-icon"
-                    class="material-symbols-outlined text-slate-800 font-extralight text-2xl group-hover:text-ios-accent">favorite</span>
-            </button>
-            <button class="icon-btn-modal group" onclick="downloadCurrent()">
-                <span
-                    class="material-symbols-outlined text-slate-800 font-extralight text-2xl group-hover:text-ios-accent">download</span>
-            </button>
-            <button class="icon-btn-modal group" onclick="toggleSlideshowSettings()">
-                <span id="ss-play-icon"
-                    class="material-symbols-outlined text-slate-800 font-extralight text-2xl group-hover:text-ios-accent">play_circle</span>
-            </button>
-            <button class="icon-btn-modal group" onclick="deleteCurrent()">
-                <span
-                    class="material-symbols-outlined text-slate-800 font-extralight text-2xl group-hover:text-red-500">delete</span>
-            </button>
-        </nav>
-
-        <!-- Thumb Strip -->
-        <div id="thumb-strip" class="thumb-strip-container">
-            <!-- Thumbnails injected via JS -->
-        </div>
-
-        <!-- Slideshow Settings Panel -->
-        <div id="slideshow-settings" class="absolute top-20 right-6 z-[70] hidden">
-            <div class="glass-card p-5 rounded-[32px] w-[260px] flex flex-col gap-5 border border-white/50 shadow-2xl">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-bold text-slate-800">Slideshow Settings</h3>
-                    <button onclick="toggleSlideshowSettings()"
-                        class="h-6 w-6 flex items-center justify-center rounded-full bg-slate-100/50">
-                        <span class="material-symbols-outlined text-xs">close</span>
-                    </button>
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Interval
-                        (seconds)</label>
-                    <div class="flex items-center gap-3 bg-slate-100/30 p-2 rounded-2xl">
-                        <input type="range" id="ss-speed" min="1" max="10" value="3" class="flex-grow accent-ios-accent"
-                            oninput="updateSSLabel(this.value)">
-                        <span id="ss-speed-label" class="text-xs font-bold text-ios-accent w-6">3s</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Transition
-                        Effect</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="setSSEffect('slide')" id="btn-fx-slide"
-                            class="ss-fx-btn active text-[11px] font-medium p-2 rounded-xl border border-white/40 bg-white/40">Slide</button>
-                        <button onclick="setSSEffect('fade')" id="btn-fx-fade"
-                            class="ss-fx-btn text-[11px] font-medium p-2 rounded-xl border border-white/40 bg-white/10">Fade</button>
-                        <button onclick="setSSEffect('zoom')" id="btn-fx-zoom"
-                            class="ss-fx-btn text-[11px] font-medium p-2 rounded-xl border border-white/40 bg-white/10">Zoom</button>
-                        <button onclick="setSSEffect('none')" id="btn-fx-none"
-                            class="ss-fx-btn text-[11px] font-medium p-2 rounded-xl border border-white/40 bg-white/10">None</button>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between p-1">
-                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Auto-Play</label>
-                    <button id="ss-autoplay-toggle" onclick="toggleSlideshow()"
-                        class="h-8 w-14 bg-slate-200/50 rounded-full p-1 transition-all">
-                        <div class="h-6 w-6 bg-white rounded-full shadow-sm translate-x-0 transition-transform"></div>
-                    </button>
-                </div>
-                <div class="flex items-center justify-between p-1 border-t border-slate-100/50 pt-2 opacity-100">
-                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Play Full
-                        Video</label>
-                    <div
-                        class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                        <input type="checkbox" name="toggle" id="ss-video-finish"
-                            class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-200 transition-all duration-300 left-0"
-                            checked onclick="toggleVideoFinishMode()" />
-                        <label for="ss-video-finish"
-                            class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-200 cursor-pointer"></label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Navigation Arrows (Hidden on mobile, use swipe instead) -->
-        <div class="hidden md:block absolute left-6 top-1/2 -translate-y-1/2 z-[60]">
-            <button class="icon-btn-modal" onclick="changeSlide(-1)">
-                <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-        </div>
-        <div class="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 z-[60]">
-            <button class="icon-btn-modal" onclick="changeSlide(1)">
-                <span class="material-symbols-outlined">chevron_right</span>
-            </button>
-        </div>
     </div>
 
-    <!-- Upload Progress Modal -->
-    <div id="upload-modal" class="modal">
-        <div class="upload-card p-10 max-w-lg w-full max-h-[85vh] flex flex-col relative animate-pop-in">
-            <button
-                class="absolute top-6 right-6 h-10 w-10 flex items-center justify-center rounded-full bg-slate-100/50 hover:bg-slate-200/50 transition-all active:scale-90"
-                onclick="closeUploadModal()">
-                <span class="material-symbols-outlined text-slate-500">close</span>
-            </button>
-            <div class="flex flex-col items-center mb-10 text-center">
-                <div
-                    class="h-20 w-20 bg-ios-accent/10 rounded-[30px] flex items-center justify-center mb-6 shadow-inner">
-                    <span class="material-symbols-outlined text-ios-accent text-4xl">cloud_upload</span>
-                </div>
-                <h2 id="overall-status" class="text-2xl font-bold text-slate-900 tracking-tight mb-2">Uploading Images
-                </h2>
-                <div class="flex items-center gap-2">
-                    <span id="file-count"
-                        class="text-xs font-semibold px-3 py-1 bg-slate-100 rounded-full text-slate-500">Preparing
-                        Files...</span>
-                </div>
+    <!-- Persistent Navigation Island -->
+    <div class="upload-island glass">
+        <button class="btn-action" onclick="document.getElementById('file-input').click()">
+            <span class="material-symbols-outlined">add_circle</span>
+            UPLOAD
+        </button>
+        <input type="file" id="file-input" multiple accept="image/*,video/*" style="display: none;"
+            onchange="handleFiles(this.files)">
+    </div>
+
+    <!-- Immersive Viewer Modal -->
+    <div class="modal-overlay" id="viewer-modal" onclick="closeViewer()">
+        <button class="modal-close" onclick="closeViewer()">&times;</button>
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-image-wrapper">
+                <img id="viewer-img" src="" alt="Full View" class="modal-image">
+                <video id="viewer-video" class="modal-image" controls style="display: none;"></video>
             </div>
 
-            <div id="upload-file-list" class="flex-grow overflow-y-auto pr-2 flex flex-col no-scrollbar">
-                <!-- Rows injected via JS -->
-            </div>
-
-            <div class="mt-8 pt-6 border-t border-slate-100/50">
-                <div id="overall-progress-dots" class="flex justify-center gap-2"></div>
+            <div class="viewer-controls glass">
+                <button class="btn-action" id="viewer-fav-btn" onclick="toggleViewerFavorite()">
+                    <span class="material-symbols-outlined">favorite</span>
+                </button>
+                <button class="btn-action" onclick="downloadCurrent()">
+                    <span class="material-symbols-outlined">download</span>
+                </button>
+                <button class="btn-action" onclick="deleteCurrent()" style="color: #ff4757;">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Mini Background Progress (Dynamic Island) -->
-    <div id="upload-mini-progress" class="fixed bottom-8 right-8 z-[2001] hidden" onclick="openUploadModal()">
-        <div class="mini-island cursor-pointer active:scale-95 transition-all">
-            <div class="relative h-6 w-6 flex items-center justify-center">
-                <svg class="w-full h-full -rotate-90">
-                    <circle cx="12" cy="12" r="10" fill="none" stroke="rgba(255,122,255,0.1)" stroke-width="2.5">
-                    </circle>
-                    <circle id="mini-progress-circle" cx="12" cy="12" r="10" fill="none" stroke="#007AFF"
-                        stroke-width="2.5" stroke-dasharray="63" stroke-dashoffset="63" stroke-linecap="round"
-                        class="transition-all duration-500"></circle>
-                </svg>
-                <span class="material-symbols-outlined text-ios-accent text-[12px] absolute">cloud_upload</span>
-            </div>
-            <div class="flex items-baseline gap-2">
-                <span id="mini-status" class="island-text">Uploading</span>
-                <span id="mini-count" class="island-count">0/0 Images</span>
-            </div>
-        </div>
-    </div>
+    <!-- Notification Toast -->
+    <div id="toast-container"></div>
 
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v={{ range(1, 9999) | random }}"></script>
 </body>
 
 </html>
