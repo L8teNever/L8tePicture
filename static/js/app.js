@@ -10,7 +10,8 @@ let slideshowInterval = null;
 let ssConfig = {
     interval: 3000,
     effect: 'slide',
-    isPlaying: false
+    isPlaying: false,
+    playFullVideo: true
 };
 
 // Initialize images from DOM (first batch)
@@ -586,12 +587,24 @@ function updateModalImage() {
     const isVideo = media.media_type === 'video';
     const modalVideo = document.getElementById('modal-video');
 
+    // CLEAR existing interval if we're moving manually or automatically
+    // We will re-establish it at the end of this function if needed
+    if (slideshowInterval) {
+        clearInterval(slideshowInterval);
+        slideshowInterval = null;
+    }
+
     if (isVideo) {
         modalImg.classList.add('hidden');
         if (modalVideo) {
             modalVideo.classList.remove('hidden');
             modalVideo.src = `/uploads/${media.filename}`;
+            modalVideo.onended = onVideoEnded; // Attach listener
+
+            // If slideshow is active, play video. 
+            // If not, allow user to play manually OR auto-play if it's the modal opening
             modalVideo.play().catch(e => console.log("Video autoplay blocked", e));
+
             if (spinner) spinner.style.display = 'none';
         }
     } else {
@@ -599,6 +612,7 @@ function updateModalImage() {
             modalVideo.classList.add('hidden');
             modalVideo.pause();
             modalVideo.src = "";
+            modalVideo.onended = null;
         }
         modalImg.classList.remove('hidden');
         modalImg.classList.remove('image-loaded');
@@ -629,6 +643,17 @@ function updateModalImage() {
         modalImg.src = `/previews/${media.filename}.webp`;
     }
 
+    // RE-START Timers for slideshow if active
+    if (ssConfig.isPlaying) {
+        if (isVideo) {
+            // Do nothing, wait for 'onended'
+        } else {
+            slideshowInterval = setInterval(async () => {
+                await changeSlide(1);
+            }, ssConfig.interval);
+        }
+    }
+
     if (title) title.innerText = "Memory Preview";
 
     if (favIcon) {
@@ -653,22 +678,18 @@ function updateModalImage() {
             tagsContainer.appendChild(badge);
         }
         if (media.tags && media.tags.length > 0) {
-            if (media.tags && media.tags.length > 0) {
-                // Limit to top 4 tags to avoid clutter
-                media.tags.slice(0, 4).forEach(tag => {
-                    const badge = document.createElement('span');
-                    badge.className = "modal-tag-pill";
-                    badge.innerText = tag;
-                    tagsContainer.appendChild(badge);
-                });
-            }
+            // Limit to top 4 tags to avoid clutter
+            media.tags.slice(0, 4).forEach(tag => {
+                const badge = document.createElement('span');
+                badge.className = "modal-tag-pill";
+                badge.innerText = tag;
+                tagsContainer.appendChild(badge);
+            });
         }
     }
 
     // Update thumbnail strip
     const strip = document.getElementById('thumb-strip');
-    const activeThumb = document.getElementById(`thumb-${currentIndex}`);
-
     // Check if we need to regenerate/append thumbs (if loadNextBatch was called)
     if (strip && strip.children.length < currentImages.length) {
         const start = strip.children.length;
@@ -768,40 +789,215 @@ function downloadCurrent() {
     document.body.removeChild(a);
 }
 
+// Slideshow & Video sync logic
 function startSlideshow() {
     if (slideshowInterval) { stopSlideshow(); return; }
 
     ssConfig.isPlaying = true;
     updateSSUI();
 
-    slideshowInterval = setInterval(async () => {
-        await changeSlide(1);
-    }, ssConfig.interval);
+    // Check if current media is video
+    const currentMedia = currentImages[currentIndex];
+    if (currentMedia && currentMedia.media_type === 'video') {
+        // If it's a video, rely on the 'ended' event instead of interval
+        playCurrentVideo();
+    } else {
+        // Standard interval for images
+        slideshowInterval = setInterval(async () => {
+            await changeSlide(1);
+        }, ssConfig.interval);
+    }
 }
 
 function stopSlideshow() {
     if (slideshowInterval) {
         clearInterval(slideshowInterval);
         slideshowInterval = null;
-        ssConfig.isPlaying = false;
-        updateSSUI();
     }
+    ssConfig.isPlaying = false;
+    updateSSUI();
 }
 
-// Slideshow Settings & Control
-function toggleSlideshowSettings() {
-    const panel = document.getElementById('slideshow-settings');
-    if (panel) panel.classList.toggle('hidden');
-}
-
-function updateSSLabel(val) {
-    const label = document.getElementById('ss-speed-label');
-    if (label) label.innerText = val + 's';
-    ssConfig.interval = val * 1000;
+// Called when video ends
+function onVideoEnded() {
     if (ssConfig.isPlaying) {
-        stopSlideshow();
-        startSlideshow();
+        changeSlide(1);
     }
+}
+
+function playCurrentVideo() {
+    const video = document.getElementById('modal-video');
+    if (video) {
+        video.onended = onVideoEnded;
+        video.play().catch(e => console.log("Autoplay blocked/failed", e));
+    }
+}
+
+// ... existing code ...
+
+function updateModalImage() {
+    // ... (keep existing beginning) ...
+    const modalImg = document.getElementById('modal-img');
+    const spinner = document.getElementById('modal-spinner');
+    const title = document.getElementById('modal-title');
+    const favIcon = document.getElementById('modal-fav-icon');
+
+    const media = currentImages[currentIndex];
+    if (!media || !modalImg) return;
+
+    const isVideo = media.media_type === 'video';
+    const modalVideo = document.getElementById('modal-video');
+
+    // CLEAR existing interval if we're moving manually or automatically
+    // We will re-establish it at the end of this function if needed
+    if (slideshowInterval) {
+        clearInterval(slideshowInterval);
+        slideshowInterval = null;
+    }
+
+    if (isVideo) {
+        modalImg.classList.add('hidden');
+        if (modalVideo) {
+            modalVideo.classList.remove('hidden');
+            modalVideo.src = `/uploads/${media.filename}`;
+            modalVideo.onended = onVideoEnded; // Attach listener
+
+            // If slideshow is active, play video. 
+            // If not, allow user to play manually OR auto-play if it's the modal opening
+            // For now, let's auto-play always for better UX per user preference
+            modalVideo.play().catch(e => console.log("Video autoplay blocked", e));
+
+            if (spinner) spinner.style.display = 'none';
+        }
+    } else {
+        if (modalVideo) {
+            modalVideo.classList.add('hidden');
+            modalVideo.pause();
+            modalVideo.src = "";
+            modalVideo.onended = null;
+        }
+        modalImg.classList.remove('hidden');
+        // ... (keep existing image loading logic) ...
+        modalImg.classList.remove('image-loaded');
+        if (spinner) spinner.style.display = 'flex';
+
+        // IMMEDIATE PLACEHOLDER: Use the already-cached thumbnail as a background
+        modalImg.style.backgroundImage = `url('/thumbnails/${media.filename}.webp')`;
+        modalImg.style.backgroundSize = 'contain';
+        modalImg.style.backgroundPosition = 'center';
+        modalImg.style.backgroundRepeat = 'no-repeat';
+
+        // Improve perceived performance: Set aspect ratio if available to prevent jump
+        if (media.width && media.height) {
+            modalImg.style.aspectRatio = `${media.width} / ${media.height}`;
+        } else {
+            modalImg.style.aspectRatio = 'auto';
+        }
+
+        modalImg.decoding = "async";
+
+        // Try preview first, fallback to original if it fails
+        modalImg.onerror = () => {
+            console.log('Preview not found, loading original image');
+            modalImg.onerror = null; // Prevent infinite loop
+            modalImg.src = `/uploads/${media.filename}`;
+        };
+
+        modalImg.src = `/previews/${media.filename}.webp`;
+    }
+
+    // RE-START Timers for slideshow if active
+    if (ssConfig.isPlaying) {
+        if (isVideo) {
+            // Do nothing, wait for 'onended'
+        } else {
+            slideshowInterval = setInterval(async () => {
+                await changeSlide(1);
+            }, ssConfig.interval);
+        }
+    }
+
+    // ... (rest of function updates UI) ...
+    if (title) title.innerText = "Memory Preview";
+
+    if (favIcon) {
+        if (media.is_favorite) favIcon.classList.add('fill-1');
+        else favIcon.classList.remove('fill-1');
+    }
+
+    // ... (rest of existing logic) ...
+    // Update AI Tags
+    const tagsContainer = document.getElementById('modal-ai-tags');
+    if (tagsContainer) {
+        tagsContainer.innerHTML = '';
+        if (media.faces_count > 0) {
+            const badge = document.createElement('span');
+            badge.className = "text-[8px] px-1.5 py-0.5 rounded-full bg-ios-accent/10 text-ios-accent font-bold uppercase";
+            badge.innerText = `${media.faces_count} ${media.faces_count === 1 ? 'Face' : 'Faces'}`;
+            tagsContainer.appendChild(badge);
+        }
+        if (media.pose && media.pose !== 'unknown') {
+            const badge = document.createElement('span');
+            badge.className = "text-[8px] px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-500 font-bold uppercase";
+            badge.innerText = media.pose;
+            tagsContainer.appendChild(badge);
+        }
+        if (media.tags && media.tags.length > 0) {
+            // Limit to top 4 tags to avoid clutter
+            media.tags.slice(0, 4).forEach(tag => {
+                const badge = document.createElement('span');
+                badge.className = "modal-tag-pill";
+                badge.innerText = tag;
+                tagsContainer.appendChild(badge);
+            });
+        }
+    }
+
+    // Update thumbnail strip
+    const strip = document.getElementById('thumb-strip');
+    // ... (keep thumbnail strip update logic) ...
+    // Check if we need to regenerate/append thumbs (if loadNextBatch was called)
+    if (strip && strip.children.length < currentImages.length) {
+        const start = strip.children.length;
+        for (let i = start; i < currentImages.length; i++) {
+            const thumb = document.createElement('img');
+            thumb.src = `/thumbnails/${currentImages[i].filename}.webp`;
+            thumb.className = 'thumb-strip-item';
+            thumb.id = `thumb-${i}`;
+            thumb.onclick = () => jumpToSlide(i);
+            thumb.loading = 'lazy';
+            strip.appendChild(thumb);
+        }
+    }
+
+    document.querySelectorAll('.thumb-strip-item').forEach((item, i) => {
+        if (i === currentIndex) {
+            item.classList.add('active');
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+            item.classList.remove('active');
+        }
+    });
+
+    // ... (keep background scroll sync) ...
+    // Sync background gallery scroll (Disabled on mobile to prevent layout shifts)
+    if (window.innerWidth >= 768) {
+        const galleryItem = document.querySelector(`.image-card[data-id="${currentImages[currentIndex].id}"]`);
+        if (galleryItem) {
+            galleryItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    }
+
+    // ... (keep preload logic) ...
+    // Preload next 2 and previous 1 images
+    [currentIndex + 1, currentIndex + 2, currentIndex - 1].forEach(idx => {
+        const i = (idx + currentImages.length) % currentImages.length;
+        if (currentImages[i] && currentImages[i].media_type === 'image') {
+            const img = new Image();
+            img.src = `/previews/${currentImages[i].filename}.webp`;
+        }
+    });
+
 }
 
 function setSSEffect(fx) {
@@ -815,6 +1011,22 @@ function setSSEffect(fx) {
         activeBtn.classList.add('active', 'bg-white/40');
         activeBtn.classList.remove('bg-white/10');
     }
+}
+
+// Assuming ssConfig is defined globally or in an accessible scope,
+// add playFullVideo property to it.
+// Example:
+// const ssConfig = {
+//     interval: 5000,
+//     effect: 'fade',
+//     isPlaying: false,
+//     playFullVideo: true // Added property
+// };
+
+function toggleVideoFinishMode() {
+    ssConfig.playFullVideo = !ssConfig.playFullVideo;
+    const checkbox = document.getElementById('ss-video-finish');
+    if (checkbox) checkbox.checked = ssConfig.playFullVideo;
 }
 
 function toggleSlideshow() {
