@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle initial URL state
     handleUrlState();
 
+    // Init Grid Controls
+    initGridControls();
+
     // Global listeners
     window.addEventListener('popstate', handleUrlState);
     window.addEventListener('keydown', (e) => {
@@ -242,6 +245,9 @@ function openViewer(id, filename, type, updateHistory = true) {
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 
+    // Swipe Support
+    initViewerSwipe();
+
     if (updateHistory) {
         const url = new URL(window.location);
         url.searchParams.set('view', id);
@@ -297,6 +303,39 @@ function closeViewer(updateHistory = true) {
         const url = new URL(window.location);
         url.searchParams.delete('view');
         window.history.pushState({}, '', url);
+    }
+}
+
+// --- Swipe Logic for Viewer ---
+let touchStartX = 0;
+let touchEndX = 0;
+
+function initViewerSwipe() {
+    const modal = document.getElementById('viewer-modal');
+    if (!modal) return;
+
+    modal.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    modal.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, { passive: true });
+}
+
+function handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchEndX - touchStartX;
+
+    if (Math.abs(diff) > swipeThreshold) {
+        if (diff < 0) {
+            // Swiped left -> Next
+            nextMedia();
+        } else {
+            // Swiped right -> Previous
+            prevMedia();
+        }
     }
 }
 
@@ -458,6 +497,72 @@ function updateIntervalLabel(val) {
     document.getElementById('ss-interval-val').innerText = val;
     ssConfig.interval = val * 1000;
     if (ssIsPlaying) startSlideshow(); // Restart with new speed
+}
+
+// --- Grid Column Controls (Pinch & Settings) ---
+
+let currentCols = 3;
+let initialPinchDistance = null;
+let lastPinchUpdateTime = 0;
+
+function initGridControls() {
+    const gallery = document.getElementById('gallery');
+    if (!gallery) return;
+
+    // Save/Load preference
+    const saved = localStorage.getItem('pixi_cols');
+    if (saved) updateGridCols(saved);
+
+    // Touch Support for Pinch
+    gallery.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            initialPinchDistance = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+        }
+    }, { passive: true });
+
+    gallery.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialPinchDistance) {
+            const now = Date.now();
+            if (now - lastPinchUpdateTime < 150) return; // Throttle change
+
+            const currentDist = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+
+            const diff = currentDist - initialPinchDistance;
+
+            if (Math.abs(diff) > 50) { // Threshold for change
+                if (diff > 0 && currentCols > 1) {
+                    updateGridCols(currentCols - 1); // Zoom in -> fewer cols
+                } else if (diff < 0 && currentCols < 6) {
+                    updateGridCols(currentCols + 1); // Zoom out -> more cols
+                }
+                initialPinchDistance = currentDist;
+                lastPinchUpdateTime = now;
+            }
+        }
+    }, { passive: true });
+
+    gallery.addEventListener('touchend', () => {
+        initialPinchDistance = null;
+    });
+}
+
+function toggleGridSettings() {
+    const popup = document.getElementById('grid-settings');
+    popup.classList.toggle('active');
+}
+
+function updateGridCols(val) {
+    currentCols = parseInt(val);
+    document.documentElement.style.setProperty('--grid-cols', currentCols);
+    document.getElementById('grid-col-val').innerText = currentCols;
+    document.getElementById('grid-col-range').value = currentCols;
+    localStorage.setItem('pixi_cols', currentCols);
 }
 
 function showToast(msg, type = 'info') {

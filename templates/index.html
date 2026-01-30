@@ -31,6 +31,14 @@
                     <span class="material-symbols-outlined">add_circle</span>
                     UPLOAD
                 </button>
+                <button class="btn-action" onclick="toggleGridSettings()">
+                    <span class="material-symbols-outlined">grid_view</span>
+                </button>
+                <div id="grid-settings" class="glass grid-settings-popup">
+                    <label>SPALTEN: <span id="grid-col-val">3</span></label>
+                    <input type="range" id="grid-col-range" min="1" max="6" value="3"
+                        oninput="updateGridCols(this.value)">
+                </div>
                 <button class="btn-action" onclick="toggleFavorites()">
                     <span class="material-symbols-outlined {% if favorites %}fill-1{% endif %}">favorite</span>
                     {{ "ALLE" if favorites else "FAVORITEN" }}
@@ -86,10 +94,16 @@
             <span class="material-symbols-outlined">close</span>
         </button>
         <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="nav-arrow nav-prev" onclick="prevMedia()">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
             <div class="modal-image-wrapper">
                 <img id="viewer-img" src="" alt="Full View" class="modal-image">
                 <video id="viewer-video" class="modal-image" controls style="display: none;"></video>
             </div>
+            <button class="nav-arrow nav-next" onclick="nextMedia()">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
 
             <div class="viewer-controls glass">
                 <button class="btn-action" id="viewer-fav-btn" onclick="toggleViewerFavorite()">
