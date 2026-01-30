@@ -543,64 +543,58 @@ input[type="range"] {
     contain: layout style;
 }
 
-/* Modern Video Badge - iOS 26 Inspired */
+/* Modern Video Badge - Compact Pill Design */
 .video-badge-modern {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    bottom: 12px;
-    width: 38px;
+    top: 10px;
+    left: 10px;
     z-index: 25;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 20px;
-    overflow: hidden;
+    padding: 6px 12px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
     pointer-events: none;
-    transition: all 0.5s var(--spring-easing);
-    opacity: 0.9;
+    transition: all 0.3s var(--fluid-easing);
+    opacity: 0;
+    transform: translateY(-5px);
 }
 
 .image-card:hover .video-badge-modern {
-    width: 44px;
     opacity: 1;
-    transform: translateX(4px);
+    transform: translateY(0);
 }
 
 .badge-blur {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.25);
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: none;
+    /* Not needed anymore */
 }
 
 .badge-content {
-    position: relative;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
     color: white;
 }
 
 .badge-content .material-symbols-outlined {
-    font-size: 20px;
+    font-size: 16px;
     font-variation-settings: 'FILL' 1;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .badge-text {
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.25em;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
-    opacity: 0.9;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    writing-mode: horizontal-tb;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* Hover Preview Logic */
