@@ -149,15 +149,16 @@ class GalleryManager {
 
     setColumns(cols) {
         const grid = this.grid;
-        // Reset classes
-        grid.className = "max-w-7xl mx-auto grid gap-6 sm:gap-8 pb-20 transition-all duration-300";
+        // Reset classes - Use columns-X instead of grid for masonry
+        grid.className = "max-w-7xl mx-auto pb-20 transition-all duration-300 gap-6";
 
         if (cols === 1) {
-            grid.classList.add('grid-cols-1');
+            grid.classList.add('columns-1');
         } else {
-            grid.classList.add('grid-cols-2');
-            if (cols >= 3) grid.classList.add('md:grid-cols-3');
-            grid.classList.add(`lg:grid-cols-${cols}`);
+            grid.classList.add('columns-2');
+            if (cols >= 3) grid.classList.add('md:columns-3');
+            if (cols >= 4) grid.classList.add('lg:columns-4');
+            if (cols >= 5) grid.classList.add('xl:columns-5');
         }
 
         document.getElementById('currentViewLabel').textContent = cols;
