@@ -1,0 +1,10 @@
+.git
+.github
+volumes
+screenshots
+tmp
+backend/__pycache__
+*.pyc
+.gitignore
+.env
+README.md
