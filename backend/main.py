@@ -52,13 +52,13 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     global observer
     
-    # Startup: Initial scan
+    # Startup: Start initial scan in background
     print("🎨 P.I.X.I. Starting up...")
     print(f"📁 Pictures directory: {settings.PICTURES_DIR}")
     print(f"💾 Cache directory: {settings.CACHE_DIR}")
     
-    # Initial processing
-    await processor.scan_directory()
+    # Start processing in background so API becomes available immediately
+    asyncio.create_task(processor.scan_directory())
     
     # Start file watcher
     if settings.ENABLE_WATCH and settings.PICTURES_DIR.exists():
