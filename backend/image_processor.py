@@ -47,39 +47,37 @@ class ImageProcessor:
                 return await self._load_metadata(image_path)
             
             print(f"Processing: {rel_path}")
-            
-            # Open original image
+                    # Open original image
             with Image.open(image_path) as img:
                 # Auto-orient based on EXIF
                 img = ImageOps.exif_transpose(img)
                 
-                # Convert to RGB if necessary
-                if img.mode in ('RGBA', 'LA', 'P'):
-                    background = Image.new('RGB', img.size, (255, 255, 255))
-                    if img.mode == 'P':
-                        img = img.convert('RGBA')
-                    background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
-                    img = background
-                elif img.mode != 'RGB':
+                # Convert to RGB efficiently
+                if img.mode != 'RGB':
                     img = img.convert('RGB')
                 
                 original_size = img.size
                 
-                # Generate Grid Preview (400px)
-                grid_img = img.copy()
-                grid_img.thumbnail((settings.GRID_PREVIEW_SIZE, settings.GRID_PREVIEW_SIZE), 
-                                   Image.Resampling.LANCZOS)
-                grid_path.parent.mkdir(parents=True, exist_ok=True)
-                grid_img.save(grid_path, 'WEBP', quality=settings.WEBP_QUALITY, method=6)
-                
-                # Generate Full Preview (1920px)
+                # Generate Full Preview first (1920px)
+                # We do this first to use the large version once
                 full_img = img.copy()
                 full_img.thumbnail((settings.FULL_PREVIEW_SIZE, settings.FULL_PREVIEW_SIZE), 
                                    Image.Resampling.LANCZOS)
                 full_path.parent.mkdir(parents=True, exist_ok=True)
                 full_img.save(full_path, 'WEBP', quality=settings.WEBP_QUALITY, method=6)
-            
-            # Generate BlurHash
+                
+                # Use the thumbnail for the grid preview (much smaller, saves RAM)
+                grid_img = full_img.copy()
+                grid_img.thumbnail((settings.GRID_PREVIEW_SIZE, settings.GRID_PREVIEW_SIZE), 
+                                   Image.Resampling.LANCZOS)
+                grid_path.parent.mkdir(parents=True, exist_ok=True)
+                grid_img.save(grid_path, 'WEBP', quality=settings.WEBP_QUALITY, method=6)
+                
+                # Explicitly close temporary images
+                full_img.close()
+                grid_img.close()
+
+            # Generate BlurHash (uses a tiny version of the image)
             blurhash_string = self.blurhash_gen.generate(image_path)
             if blurhash_string:
                 blurhash_path.parent.mkdir(parents=True, exist_ok=True)
@@ -100,6 +98,9 @@ class ImageProcessor:
             
             # Cache metadata
             self.metadata_cache[str(rel_path)] = metadata
+            
+            # Give the system/event loop a breath to prevent OOM
+            await asyncio.sleep(0.1)
             
             return metadata
             
