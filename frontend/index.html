@@ -1,174 +1,258 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#1C1B1F">
-    <meta name="description" content="P.I.X.I. - Professional Image X-platform Interface">
-    
-    <!-- PWA Meta Tags -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="P.I.X.I.">
-    
-    <title>P.I.X.I. Gallery</title>
-    
-    <!-- Manifest -->
+    <title>P.I.X.I. | Material You Gallery</title>
+
+    <!-- PWA -->
     <link rel="manifest" href="/static/manifest.json">
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <!-- Styles -->
+    <meta name="theme-color" content="#FEF7FF">
+
+    <!-- External Resources -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Local Styles -->
     <link rel="stylesheet" href="/static/css/material-you.css">
     <link rel="stylesheet" href="/static/css/animations.css">
 </head>
-<body>
-    <!-- App Bar -->
-    <header class="app-bar">
-        <div class="app-bar-content">
-            <h1 class="app-title">P.I.X.I.</h1>
-            <div class="app-bar-actions">
-                <button class="icon-btn" id="gridSizeBtn" aria-label="Grid Size">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="7" height="7"/>
-                        <rect x="14" y="3" width="7" height="7"/>
-                        <rect x="3" y="14" width="7" height="7"/>
-                        <rect x="14" y="14" width="7" height="7"/>
-                    </svg>
-                </button>
-                <button class="icon-btn" id="slideshowBtn" aria-label="Start Slideshow">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="5 3 19 12 5 21 5 3"/>
-                    </svg>
-                </button>
-                <button class="icon-btn" id="rescanBtn" aria-label="Rescan Gallery">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                    </svg>
-                </button>
-            </div>
+
+<body class="px-4 sm:px-8 md:px-12 pb-12">
+
+    <!-- Header -->
+    <header id="mainHeader" class="max-w-7xl mx-auto flex flex-row justify-between items-center gap-4">
+        <div class="text-left">
+            <h1 class="text-4xl sm:text-5xl font-black tracking-tighter select-none">P.I.X.I.</h1>
         </div>
-        
-        <!-- Grid Size Slider (Hidden by default) -->
-        <div class="grid-controls" id="gridControls" style="display: none;">
-            <label for="gridSlider">Spalten: <span id="gridValue">4</span></label>
-            <input type="range" id="gridSlider" min="2" max="8" value="4" step="1">
+
+        <!-- Control Bar -->
+        <div
+            class="flex items-center gap-0.5 sm:gap-1 bg-[var(--md-sys-color-surface-container)] p-1 sm:p-1.5 rounded-full shadow-lg relative flex-shrink-0">
+
+            <!-- Dark Mode Toggle -->
+            <button id="themeToggle" class="click-feedback p-2 sm:p-3 hover:bg-black/5 rounded-full transition-all">
+                <svg id="themeIcon" class="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+            </button>
+
+            <div class="w-[1px] h-4 sm:h-6 bg-gray-400 mx-0.5 sm:mx-1 opacity-20"></div>
+
+            <!-- Grid View Selector -->
+            <div class="relative">
+                <button id="viewToggle"
+                    class="click-feedback flex items-center gap-1 sm:gap-2 hover:bg-black/5 px-2 sm:px-4 py-2 sm:py-2.5 rounded-full transition-all">
+                    <svg class="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px]" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                    <span id="currentViewLabel" class="font-bold text-xs sm:text-sm hidden sm:inline">3</span>
+                </button>
+                <div id="viewPopover">
+                    <button class="view-option click-feedback" data-cols="1">1</button>
+                    <button class="view-option click-feedback" data-cols="2">2</button>
+                    <button class="view-option click-feedback active" data-cols="3">3</button>
+                    <button class="view-option click-feedback" data-cols="4">4</button>
+                    <button class="view-option click-feedback" data-cols="5">5</button>
+                </div>
+            </div>
+
+            <!-- Slideshow Button -->
+            <button id="slideshowBtn"
+                class="click-feedback p-2 sm:p-3 hover:bg-black/5 rounded-full transition-all text-[var(--md-sys-color-primary)]">
+                <svg class="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+            </button>
+
+            <!-- Favorites Filter -->
+            <button id="filterBtn" class="click-feedback p-2 sm:p-3 hover:bg-black/5 rounded-full transition-all">
+                <svg id="filterIcon" class="favorite-icon w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]"
+                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
+            </button>
+
+            <!-- Settings Button -->
+            <button id="settingsBtn" class="click-feedback p-2 sm:p-3 hover:bg-black/5 rounded-full transition-all">
+                <svg class="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+            </button>
         </div>
     </header>
 
-    <!-- Main Gallery Grid -->
-    <main class="gallery-container">
-        <div class="gallery-grid" id="galleryGrid">
-            <!-- Images will be loaded here -->
-        </div>
-        
-        <!-- Loading Indicator -->
-        <div class="loading-indicator" id="loadingIndicator">
-            <div class="spinner"></div>
-            <p>Lade Galerie...</p>
-        </div>
-        
-        <!-- Empty State -->
-        <div class="empty-state" id="emptyState" style="display: none;">
-            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-            </svg>
-            <h2>Keine Bilder gefunden</h2>
-            <p>Lege Bilder in den /pictures Ordner</p>
-        </div>
+    <!-- Photo Grid -->
+    <main id="galleryGrid"
+        class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 sm:gap-8 pb-20 transition-all duration-300">
+        <!-- Photos will be loaded here -->
     </main>
 
-    <!-- Fullscreen Viewer -->
-    <div class="fullscreen-viewer" id="fullscreenViewer">
-        <div class="viewer-header">
-            <button class="icon-btn close-btn" id="closeViewer" aria-label="Close">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-            </button>
-            <div class="viewer-info">
-                <span id="viewerTitle">Image Title</span>
-                <span id="viewerCounter">1 / 100</span>
+    <!-- Lightbox (Unified with Viewer) -->
+    <div id="fullscreenViewer" class="overlay">
+        <button id="closeViewer"
+            class="click-feedback absolute top-6 right-6 text-white p-4 bg-white/10 hover:bg-white/20 rounded-full z-[1100] backdrop-blur-md">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>
+
+        <div id="swipeArea" class="relative w-full h-full flex flex-col items-center justify-center px-4">
+            <img id="viewerImage" src="" alt="Fullscreen image">
+
+            <div id="viewerControls"
+                class="mt-10 flex gap-4 bg-white/10 backdrop-blur-3xl p-3 rounded-full border border-white/20">
+                <button id="viewerSlideshowBtn" class="click-feedback bg-white/10 text-white p-5 rounded-full">
+                    <svg id="viewerPlayIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    <svg id="viewerPauseIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="4" width="4" height="16" />
+                        <rect x="14" y="4" width="4" height="16" />
+                    </svg>
+                </button>
+                <button id="viewerFavBtn" class="click-feedback bg-white/10 text-white p-5 rounded-full">
+                    <svg id="viewerFavIcon" class="favorite-icon" xmlns="http://www.w3.org/2000/svg" width="24"
+                        height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                    </svg>
+                </button>
+                <button id="viewerDeleteBtn" class="click-feedback bg-red-500/80 text-white p-5 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    </svg>
+                </button>
             </div>
         </div>
-        
-        <div class="viewer-content" id="viewerContent">
-            <button class="nav-btn prev-btn" id="prevBtn" aria-label="Previous">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="15 18 9 12 15 6"/>
-                </svg>
-            </button>
-            
-            <div class="image-container" id="imageContainer">
-                <!-- Image will be loaded here -->
+    </div>
+
+    <!-- Settings Dialog -->
+    <div id="settingsDialog" class="dialog-container">
+        <div class="material-dialog">
+            <h3 class="text-3xl font-black mb-8 tracking-tight">Einstellungen</h3>
+
+            <div class="space-y-6">
+                <div class="bg-[var(--md-sys-color-surface-container)] p-6 rounded-3xl">
+                    <div class="flex justify-between text-xs font-bold uppercase text-gray-500 mb-4 tracking-wider">
+                        <span>Tempo</span>
+                        <span id="speedLabel" class="text-[var(--md-sys-color-primary)]">3.5s</span>
+                    </div>
+                    <input type="range" id="slideshowSpeed" min="1" max="10" step="0.5" value="3.5">
+                </div>
+
+                <div
+                    class="flex items-center justify-between p-6 bg-[var(--md-sys-color-surface-container)] rounded-3xl">
+                    <span class="font-bold">Zufallswiedergabe</span>
+                    <label class="switch click-feedback">
+                        <input type="checkbox" id="shuffleToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div
+                    class="flex items-center justify-between p-6 bg-[var(--md-sys-color-surface-container)] rounded-3xl">
+                    <span class="font-bold">Endlosschleife</span>
+                    <label class="switch click-feedback">
+                        <input type="checkbox" id="loopToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div
+                    class="flex items-center justify-between p-6 bg-[var(--md-sys-color-surface-container)] rounded-3xl">
+                    <span class="font-bold">Galerie scannen</span>
+                    <button id="rescanBtn"
+                        class="click-feedback p-2 bg-[var(--md-sys-color-primary)] text-white rounded-xl">
+                        Scan
+                    </button>
+                </div>
             </div>
-            
-            <button class="nav-btn next-btn" id="nextBtn" aria-label="Next">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9 18 15 12 9 6"/>
-                </svg>
+
+            <button id="closeSettingsBtn"
+                class="click-feedback mt-8 w-full py-5 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-bold rounded-3xl shadow-lg">
+                Fertig
             </button>
         </div>
     </div>
 
-    <!-- Slideshow Overlay -->
-    <div class="slideshow-overlay" id="slideshowOverlay">
-        <div class="slideshow-controls">
-            <button class="icon-btn" id="slideshowPlayPause" aria-label="Play/Pause">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <rect x="6" y="4" width="4" height="16"/>
-                    <rect x="14" y="4" width="4" height="16"/>
-                </svg>
-            </button>
-            <button class="icon-btn" id="slideshowEffect" aria-label="Change Effect">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2"/>
-                </svg>
-            </button>
-            <button class="icon-btn" id="slideshowMusic" aria-label="Music">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 18V5l12-2v13"/>
-                    <circle cx="6" cy="18" r="3"/>
-                    <circle cx="18" cy="16" r="3"/>
-                </svg>
-            </button>
-            <button class="icon-btn" id="slideshowClose" aria-label="Close">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-            </button>
+    <!-- Delete Confirmation -->
+    <div id="deleteDialog" class="dialog-container">
+        <div class="material-dialog text-center">
+            <h3 class="text-3xl font-black mb-3">Foto löschen?</h3>
+            <p class="text-[var(--md-sys-color-on-surface-variant)] text-sm mb-8 opacity-70">
+                Das Foto wird dauerhaft aus deiner Sammlung entfernt.
+            </p>
+            <div class="flex flex-col gap-4">
+                <button id="confirmDeleteBtn"
+                    class="click-feedback w-full py-5 bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)] font-bold rounded-3xl shadow-lg">
+                    Löschen
+                </button>
+                <button id="cancelDeleteBtn"
+                    class="click-feedback w-full py-4 text-[var(--md-sys-color-primary)] font-bold">
+                    Abbrechen
+                </button>
+            </div>
         </div>
-        <div class="slideshow-container" id="slideshowContainer">
-            <!-- Slideshow images -->
-        </div>
-        <div class="slideshow-progress" id="slideshowProgress"></div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Slideshow Indicator -->
+    <div id="slideshowIndicator"
+        class="fixed bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 bg-[var(--md-sys-color-primary)] px-6 sm:px-8 py-3 sm:py-4 rounded-full text-[var(--md-sys-color-on-primary)] font-bold text-xs uppercase tracking-wider z-[2000] shadow-2xl hidden items-center gap-3 border border-white/20 backdrop-blur-lg">
+        <span class="relative flex h-3 w-3 flex-shrink-0">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+        </span>
+        <div class="flex flex-col sm:flex-row items-center gap-1 sm:gap-3">
+            <span class="text-[10px] sm:text-xs whitespace-nowrap">Diashow läuft</span>
+            <span id="slideshowProgressLabel" class="text-[10px] sm:text-xs opacity-80 whitespace-nowrap">Foto 1 /
+                9</span>
+        </div>
+        <button id="stopSlideshowBtn"
+            class="click-feedback ml-2 p-1.5 hover:bg-white/20 rounded-full transition-all flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4" width="4" height="16" />
+                <rect x="14" y="4" width="4" height="16" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- App Logic -->
     <script src="/static/js/theme.js"></script>
-    <script src="/static/js/gallery.js"></script>
-    <script src="/static/js/slideshow.js"></script>
     <script src="/static/js/gestures.js"></script>
+    <script src="/static/js/slideshow.js"></script>
+    <script src="/static/js/gallery.js"></script>
     <script src="/static/js/app.js"></script>
-    
-    <!-- Service Worker Registration -->
+
     <script>
+        // Register Service Worker
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/static/sw.js')
-                    .then(reg => console.log('✅ Service Worker registered'))
-                    .catch(err => console.error('❌ Service Worker registration failed:', err));
-            });
+            navigator.serviceWorker.register('/sw.js');
         }
     </script>
 </body>
+
 </html>

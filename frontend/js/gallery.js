@@ -1,138 +1,243 @@
 /**
  * P.I.X.I. Gallery Manager
- * Handles Grid, Progressive Loading & Fullscreen Viewer
  */
 
 class GalleryManager {
     constructor() {
         this.grid = document.getElementById('galleryGrid');
         this.viewer = document.getElementById('fullscreenViewer');
-        this.viewerContent = document.getElementById('imageContainer');
-        this.images = [];
+        this.viewerImage = document.getElementById('viewerImage');
+
+        this.photos = [];
+        this.filteredPhotos = [];
         this.currentIndex = 0;
+        this.showOnlyFavorites = false;
 
         this.init();
     }
 
     async init() {
-        await this.loadImages();
-        this.setupEventListeners();
+        await this.loadPhotos();
+        this.attachEventListeners();
     }
 
-    async loadImages() {
+    async loadPhotos() {
         try {
-            const response = await fetch('/api/gallery');
-            this.images = await response.json();
-            this.renderGrid();
+            const response = await fetch('/api/photos');
+            this.photos = await response.json();
 
-            document.getElementById('loadingIndicator').style.display = 'none';
-            if (this.images.length === 0) {
-                document.getElementById('emptyState').style.display = 'flex';
-            }
+            // Add favorite property locally if not exists
+            this.photos = this.photos.map(p => ({ ...p, isFav: false }));
+
+            this.updateFilteredPhotos();
+            this.render();
         } catch (error) {
-            console.error('Failed to load gallery:', error);
+            console.error('Error loading photos:', error);
+            this.grid.innerHTML = '<div class="empty-state"><p class="text-2xl font-bold">Ladefehler</p></div>';
         }
     }
 
-    renderGrid() {
-        this.grid.innerHTML = '';
-        this.images.forEach((img, index) => {
-            const item = document.createElement('div');
-            item.className = 'grid-item';
-            item.setAttribute('data-index', index);
+    updateFilteredPhotos() {
+        this.filteredPhotos = this.showOnlyFavorites
+            ? this.photos.filter(p => p.isFav)
+            : this.photos;
+    }
 
-            // BlurHash or Small Preview Placeholder
-            const placeholder = document.createElement('div');
-            placeholder.className = 'grid-item-blur';
-            placeholder.style.backgroundColor = 'var(--md-sys-color-surface-container-highest)';
+    render() {
+        if (this.filteredPhotos.length === 0) {
+            this.grid.innerHTML = '<div class="empty-state"><p class="text-2xl font-bold">Keine Fotos gefunden</p></div>';
+            return;
+        }
 
-            // Real Grid Preview
-            const preview = document.createElement('img');
-            preview.className = 'grid-item-img';
-            preview.loading = 'lazy';
-            preview.src = img.grid_preview;
-            preview.onload = () => preview.classList.add('loaded');
+        this.grid.innerHTML = this.filteredPhotos.map((photo, index) => `
+            <div class="photo-card group" data-index="${index}">
+                <img src="${photo.grid_preview}" alt="${photo.original_path}" loading="lazy">
+                <div class="absolute top-4 right-4 flex gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button class="fav-btn p-3 bg-white/90 dark:bg-black/80 backdrop-blur-md rounded-full shadow-lg click-feedback" data-index="${index}">
+                        <svg class="favorite-icon w-5 h-5 ${photo.isFav ? 'active' : ''}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${photo.isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5">
+                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
 
-            item.appendChild(placeholder);
-            item.appendChild(preview);
-            item.onclick = () => this.openViewer(index);
+    attachEventListeners() {
+        // Photo clicks
+        this.grid.addEventListener('click', (e) => {
+            const card = e.target.closest('.photo-card');
+            const favBtn = e.target.closest('.fav-btn');
 
-            this.grid.appendChild(item);
+            if (favBtn) {
+                const index = parseInt(favBtn.dataset.index);
+                this.toggleFavorite(index);
+                return;
+            }
+
+            if (card) {
+                const index = parseInt(card.dataset.index);
+                this.openViewer(index);
+            }
+        });
+
+        // View Toggle Popover
+        const viewToggle = document.getElementById('viewToggle');
+        const viewPopover = document.getElementById('viewPopover');
+
+        viewToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            viewPopover.classList.toggle('active');
+        });
+
+        document.querySelectorAll('.view-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                this.setColumns(parseInt(opt.dataset.cols));
+                viewPopover.classList.remove('active');
+            });
+        });
+
+        // Close Popover on click outside
+        document.addEventListener('click', () => viewPopover.classList.remove('active'));
+
+        // Filter Toggle
+        document.getElementById('filterBtn').addEventListener('click', () => this.toggleFilter());
+
+        // Close Viewer
+        document.getElementById('closeViewer').addEventListener('click', () => this.closeViewer());
+
+        // Settings Dialog
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsDialog').classList.add('active');
+        });
+        document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsDialog').classList.remove('active');
+        });
+
+        // Viewer Fav/Delete
+        document.getElementById('viewerFavBtn').addEventListener('click', () => this.toggleFavorite(this.currentIndex));
+        document.getElementById('viewerDeleteBtn').addEventListener('click', () => this.requestDelete());
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', () => this.confirmDelete());
+        document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+            document.getElementById('deleteDialog').classList.remove('active');
+        });
+    }
+
+    toggleFavorite(index) {
+        const photo = this.filteredPhotos[index];
+        if (photo) {
+            photo.isFav = !photo.isFav;
+            this.render();
+            if (this.viewer.classList.contains('active')) {
+                this.updateViewerUI();
+            }
+        }
+    }
+
+    toggleFilter() {
+        this.showOnlyFavorites = !this.showOnlyFavorites;
+        const btn = document.getElementById('filterBtn');
+        const icon = document.getElementById('filterIcon');
+
+        btn.classList.toggle('bg-[var(--md-sys-color-secondary-container)]', this.showOnlyFavorites);
+        icon.classList.toggle('active', this.showOnlyFavorites);
+
+        this.updateFilteredPhotos();
+        this.render();
+    }
+
+    setColumns(cols) {
+        const grid = this.grid;
+        // Reset classes
+        grid.className = "max-w-7xl mx-auto grid gap-6 sm:gap-8 pb-20 transition-all duration-300";
+
+        if (cols === 1) {
+            grid.classList.add('grid-cols-1');
+        } else {
+            grid.classList.add('grid-cols-2');
+            if (cols >= 3) grid.classList.add('md:grid-cols-3');
+            grid.classList.add(`lg:grid-cols-${cols}`);
+        }
+
+        document.getElementById('currentViewLabel').textContent = cols;
+        document.querySelectorAll('.view-option').forEach(opt => {
+            opt.classList.toggle('active', parseInt(opt.dataset.cols) === cols);
         });
     }
 
     openViewer(index) {
         this.currentIndex = index;
-        const imgData = this.images[index];
+        const photo = this.filteredPhotos[index];
+        if (!photo) return;
 
+        this.viewerImage.src = photo.full_preview;
         this.viewer.classList.add('active');
-        this.updateViewerContent();
+        this.updateViewerUI();
 
-        // Apply theme from current image
-        const tempImg = new Image();
-        tempImg.src = imgData.grid_preview;
-        tempImg.onload = () => window.themeEngine.applyThemeFromImage(tempImg);
-
-        document.body.style.overflow = 'hidden';
-    }
-
-    updateViewerContent() {
-        const imgData = this.images[this.currentIndex];
-        this.viewerContent.innerHTML = '';
-
-        const img = document.createElement('img');
-        img.src = imgData.full_preview;
-        img.alt = imgData.original_path;
-        img.className = 'scale-in';
-
-        this.viewerContent.appendChild(img);
-        document.getElementById('viewerTitle').textContent = imgData.original_path.split('/').pop();
-        document.getElementById('viewerCounter').textContent = `${this.currentIndex + 1} / ${this.images.length}`;
-    }
-
-    next() {
-        if (this.currentIndex < this.images.length - 1) {
-            this.currentIndex++;
-            this.updateViewerContent();
-        }
-    }
-
-    prev() {
-        if (this.currentIndex > 0) {
-            this.currentIndex--;
-            this.updateViewerContent();
+        // Stop slideshow if manually opening
+        if (window.slideshowEngine && !window.slideshowEngine.active) {
+            // No-op
         }
     }
 
     closeViewer() {
         this.viewer.classList.remove('active');
-        document.body.style.overflow = '';
+        if (window.slideshowEngine) {
+            window.slideshowEngine.stop();
+        }
     }
 
-    setupEventListeners() {
-        document.getElementById('closeViewer').onclick = () => this.closeViewer();
-        document.getElementById('nextBtn').onclick = () => this.next();
-        document.getElementById('prevBtn').onclick = () => this.prev();
+    updateViewerUI() {
+        const photo = this.filteredPhotos[this.currentIndex];
+        if (!photo) return;
 
-        document.getElementById('gridSlider').addEventListener('input', (e) => {
-            const val = e.target.value;
-            document.getElementById('gridValue').textContent = val;
-            this.grid.style.gridTemplateColumns = `repeat(${val}, 1fr)`;
-        });
+        const favIcon = document.getElementById('viewerFavIcon');
+        favIcon.classList.toggle('active', photo.isFav);
+        favIcon.setAttribute('fill', photo.isFav ? 'currentColor' : 'none');
+    }
 
-        document.getElementById('gridSizeBtn').onclick = () => {
-            const controls = document.getElementById('gridControls');
-            controls.style.display = controls.style.display === 'none' ? 'flex' : 'none';
-        };
+    navigate(direction) {
+        const len = this.filteredPhotos.length;
+        if (len === 0) return;
 
-        // Keyboard Navigation
-        document.addEventListener('keydown', (e) => {
-            if (!this.viewer.classList.contains('active')) return;
-            if (e.key === 'ArrowRight') this.next();
-            if (e.key === 'ArrowLeft') this.prev();
-            if (e.key === 'Escape') this.closeViewer();
-        });
+        this.currentIndex = (this.currentIndex + direction + len) % len;
+        const photo = this.filteredPhotos[this.currentIndex];
+
+        // Smooth transition
+        this.viewerImage.style.opacity = '0';
+        this.viewerImage.style.transform = 'scale(0.95)';
+
+        setTimeout(() => {
+            this.viewerImage.src = photo.full_preview;
+            this.viewerImage.style.opacity = '1';
+            this.viewerImage.style.transform = 'scale(1)';
+            this.updateViewerUI();
+            if (window.slideshowEngine && window.slideshowEngine.active) {
+                window.slideshowEngine.updateProgress();
+            }
+        }, 150);
+    }
+
+    requestDelete() {
+        document.getElementById('deleteDialog').classList.add('active');
+    }
+
+    confirmDelete() {
+        const photo = this.filteredPhotos[this.currentIndex];
+        // For now, just remove from local state
+        this.photos = this.photos.filter(p => p !== photo);
+        this.updateFilteredPhotos();
+        this.render();
+        document.getElementById('deleteDialog').classList.remove('active');
+
+        if (this.filteredPhotos.length > 0) {
+            this.navigate(0); // Show next available
+        } else {
+            this.closeViewer();
+        }
     }
 }
 
-window.galleryManager = new GalleryManager();
+const galleryManager = new GalleryManager();
+window.galleryManager = galleryManager;

@@ -1,73 +1,73 @@
 /**
  * P.I.X.I. Gesture Support
- * Native JavaScript Touch Navigation
  */
 
 class GestureManager {
-    constructor(elementId, onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown) {
-        this.element = document.getElementById(elementId);
+    constructor() {
         this.touchStartX = 0;
         this.touchStartY = 0;
         this.touchEndX = 0;
         this.touchEndY = 0;
-        this.minSwipeDistance = 50;
-
-        this.onSwipeLeft = onSwipeLeft;
-        this.onSwipeRight = onSwipeRight;
-        this.onSwipeUp = onSwipeUp;
-        this.onSwipeDown = onSwipeDown;
 
         this.init();
     }
 
     init() {
-        if (!this.element) return;
+        const swipeArea = document.getElementById('swipeArea');
+        if (!swipeArea) return;
 
-        this.element.addEventListener('touchstart', (e) => {
+        swipeArea.addEventListener('touchstart', (e) => {
             this.touchStartX = e.changedTouches[0].screenX;
             this.touchStartY = e.changedTouches[0].screenY;
         }, { passive: true });
 
-        this.element.addEventListener('touchend', (e) => {
+        swipeArea.addEventListener('touchend', (e) => {
             this.touchEndX = e.changedTouches[0].screenX;
             this.touchEndY = e.changedTouches[0].screenY;
-            this.handleGesture();
+            this.handleSwipe();
         }, { passive: true });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (!window.galleryManager.viewer.classList.contains('active')) return;
+
+            if (e.key === 'ArrowRight') window.galleryManager.navigate(1);
+            if (e.key === 'ArrowLeft') window.galleryManager.navigate(-1);
+            if (e.key === 'Escape') window.galleryManager.closeViewer();
+            if (e.key === ' ') {
+                e.preventDefault();
+                window.slideshowEngine.toggle();
+            }
+        });
     }
 
-    handleGesture() {
-        const deltaX = this.touchEndX - this.touchStartX;
-        const deltaY = this.touchEndY - this.touchStartY;
+    handleSwipe() {
+        const diffX = this.touchStartX - this.touchEndX;
+        const diffY = this.touchStartY - this.touchEndY;
 
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            // Horizontal Swipe
-            if (Math.abs(deltaX) > this.minSwipeDistance) {
-                if (deltaX > 0) {
-                    this.onSwipeRight && this.onSwipeRight();
+        // Horizontal swipe
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            if (Math.abs(diffX) > 50) {
+                if (diffX > 0) {
+                    // Swipe left -> Next
+                    window.galleryManager.navigate(1);
                 } else {
-                    this.onSwipeLeft && this.onSwipeLeft();
+                    // Swipe right -> Prev
+                    window.galleryManager.navigate(-1);
                 }
             }
         } else {
-            // Vertical Swipe
-            if (Math.abs(deltaY) > this.minSwipeDistance) {
-                if (deltaY > 0) {
-                    this.onSwipeDown && this.onSwipeDown();
-                } else {
-                    this.onSwipeUp && this.onSwipeUp();
+            // Vertical swipe
+            if (Math.abs(diffY) > 100) {
+                if (diffY < 0) {
+                    // Swipe down -> Close
+                    window.galleryManager.closeViewer();
                 }
             }
         }
     }
 }
 
-// Global initialization for the viewer
-window.addEventListener('DOMContentLoaded', () => {
-    new GestureManager(
-        'fullscreenViewer',
-        () => window.galleryManager.next(),
-        () => window.galleryManager.prev(),
-        null,
-        () => window.galleryManager.closeViewer()
-    );
+document.addEventListener('DOMContentLoaded', () => {
+    window.gestureManager = new GestureManager();
 });

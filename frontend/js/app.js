@@ -3,38 +3,36 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 P.I.X.I. Initializing...');
+    console.log('🚀 P.I.X.I. Material You Design UI Initialized');
 
     // Rescan Button Logic
     const rescanBtn = document.getElementById('rescanBtn');
     if (rescanBtn) {
-        rescanBtn.onclick = async () => {
-            rescanBtn.classList.add('pulse');
+        rescanBtn.addEventListener('click', async () => {
+            rescanBtn.disabled = true;
+            rescanBtn.textContent = 'Scanning...';
             try {
-                const response = await fetch('/api/rescan');
-                const result = await response.json();
-                console.log('Rescan completed:', result);
-
-                // Refresh gallery
+                await fetch('/api/scan', { method: 'POST' });
+                // Reload gallery after scan
                 if (window.galleryManager) {
-                    await window.galleryManager.loadImages();
+                    await window.galleryManager.loadPhotos();
                 }
-            } catch (error) {
-                console.error('Rescan failed:', error);
+            } catch (err) {
+                console.error('Scan failed:', err);
             } finally {
-                rescanBtn.classList.remove('pulse');
+                rescanBtn.disabled = false;
+                rescanBtn.textContent = 'Scan';
             }
-        };
+        });
     }
 
-    // Handle offline status
-    window.addEventListener('online', () => {
-        document.body.classList.remove('offline');
-        console.log('Back online');
-    });
-
-    window.addEventListener('offline', () => {
-        document.body.classList.add('offline');
-        console.log('Working offline');
-    });
+    // Global scroll handler for header effect
+    const header = document.getElementById('mainHeader');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 20) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+    }, { passive: true });
 });
