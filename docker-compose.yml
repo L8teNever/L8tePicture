@@ -5,12 +5,14 @@ services:
     build: .
     container_name: pixi-gallery
     ports:
-      - "10.66.66.1:8006:8000"
+      - "10.66.66.1:8000:8000"
     volumes:
-      # Mount your image directories
-      - ./volumes/pictures:/pictures:ro  # Read-only for safety
-      - ./volumes/cache:/cache
-      - ./volumes/music:/music:ro
+      # Mapping your existing data folders correctly
+      - ./uploads:/pictures:ro
+      - ./thumbnails:/cache/grid
+      - ./data:/cache/full
+      - ./cache:/cache
+      - ./music:/music:ro
     environment:
       - PICTURES_DIR=/pictures
       - CACHE_DIR=/cache
