@@ -11,7 +11,7 @@ import aiofiles
 from datetime import datetime
 
 from config import settings
-from blurhash import BlurHashGenerator
+from blur_helper import BlurHashGenerator
 
 
 class ImageProcessor:
