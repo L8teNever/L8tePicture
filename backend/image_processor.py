@@ -95,7 +95,46 @@ class ImageProcessor:
             print(f"Error processing {image_path}: {e}")
             return None
 
-    # ... REST OF THE CLASS ...
+    async def _is_cached(self, original: Path, grid: Path, full: Path, blurhash: Path) -> bool:
+        """Check if cached versions exist and are up to date"""
+        if not (grid.exists() and full.exists() and blurhash.exists()):
+            return False
+        
+        # Check if original is newer than cached versions
+        original_mtime = original.stat().st_mtime
+        return (grid.stat().st_mtime >= original_mtime and
+                full.stat().st_mtime >= original_mtime)
+    
+    async def _load_metadata(self, image_path: Path) -> Dict:
+        """Load metadata for an already processed image"""
+        rel_path = image_path.relative_to(settings.PICTURES_DIR)
+        stem = image_path.stem
+        
+        # Load BlurHash
+        blurhash_path = settings.CACHE_DIR / "blurhash" / f"{stem}.txt"
+        blurhash_string = None
+        if blurhash_path.exists():
+            async with aiofiles.open(blurhash_path, 'r') as f:
+                blurhash_string = await f.read()
+        
+        # Get image dimensions (using original or full preview to be fast)
+        # Using full preview if available is faster than original for big RAWs/JPGs
+        dim_source = settings.CACHE_DIR / "full" / f"{stem}.webp"
+        if not dim_source.exists():
+            dim_source = image_path
+            
+        with Image.open(dim_source) as img:
+            original_size = img.size
+        
+        return {
+            'original_path': str(rel_path),
+            'original_size': original_size,
+            'grid_preview': f"/cache/grid/{stem}.webp",
+            'full_preview': f"/cache/full/{stem}.webp",
+            'blurhash': blurhash_string,
+            'file_size': image_path.stat().st_size,
+            'modified_at': datetime.fromtimestamp(image_path.stat().st_mtime).isoformat()
+        }
 
     async def scan_directory(self) -> List[Dict]:
         """
