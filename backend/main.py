@@ -108,8 +108,8 @@ async def root():
     return {"message": "P.I.X.I. API - Frontend not found"}
 
 
-@app.get("/api/gallery")
-async def get_gallery() -> List[dict]:
+@app.get("/api/photos")
+async def get_photos() -> List[dict]:
     """Get all images with metadata"""
     try:
         gallery = await processor.get_gallery_index()
@@ -118,8 +118,9 @@ async def get_gallery() -> List[dict]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/rescan")
-async def rescan_gallery():
+@app.post("/api/scan")
+@app.get("/api/scan")
+async def scan_gallery():
     """Trigger a manual rescan of the pictures directory"""
     try:
         gallery = await processor.scan_directory()

@@ -14,7 +14,7 @@ const ASSETS = [
     '/static/js/slideshow.js',
     '/static/js/gestures.js',
     '/static/js/app.js',
-    'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap'
+    'https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap'
 ];
 
 self.addEventListener('install', (event) => {
