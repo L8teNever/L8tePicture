@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1C1B1F">
+    <meta name="description" content="P.I.X.I. - Professional Image X-platform Interface">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="P.I.X.I.">
+    
+    <title>P.I.X.I. Gallery</title>
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/material-you.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+</head>
+<body>
+    <!-- App Bar -->
+    <header class="app-bar">
+        <div class="app-bar-content">
+            <h1 class="app-title">P.I.X.I.</h1>
+            <div class="app-bar-actions">
+                <button class="icon-btn" id="gridSizeBtn" aria-label="Grid Size">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="slideshowBtn" aria-label="Start Slideshow">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="rescanBtn" aria-label="Rescan Gallery">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Grid Size Slider (Hidden by default) -->
+        <div class="grid-controls" id="gridControls" style="display: none;">
+            <label for="gridSlider">Spalten: <span id="gridValue">4</span></label>
+            <input type="range" id="gridSlider" min="2" max="8" value="4" step="1">
+        </div>
+    </header>
+
+    <!-- Main Gallery Grid -->
+    <main class="gallery-container">
+        <div class="gallery-grid" id="galleryGrid">
+            <!-- Images will be loaded here -->
+        </div>
+        
+        <!-- Loading Indicator -->
+        <div class="loading-indicator" id="loadingIndicator">
+            <div class="spinner"></div>
+            <p>Lade Galerie...</p>
+        </div>
+        
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <h2>Keine Bilder gefunden</h2>
+            <p>Lege Bilder in den /pictures Ordner</p>
+        </div>
+    </main>
+
+    <!-- Fullscreen Viewer -->
+    <div class="fullscreen-viewer" id="fullscreenViewer">
+        <div class="viewer-header">
+            <button class="icon-btn close-btn" id="closeViewer" aria-label="Close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div class="viewer-info">
+                <span id="viewerTitle">Image Title</span>
+                <span id="viewerCounter">1 / 100</span>
+            </div>
+        </div>
+        
+        <div class="viewer-content" id="viewerContent">
+            <button class="nav-btn prev-btn" id="prevBtn" aria-label="Previous">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </button>
+            
+            <div class="image-container" id="imageContainer">
+                <!-- Image will be loaded here -->
+            </div>
+            
+            <button class="nav-btn next-btn" id="nextBtn" aria-label="Next">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Slideshow Overlay -->
+    <div class="slideshow-overlay" id="slideshowOverlay">
+        <div class="slideshow-controls">
+            <button class="icon-btn" id="slideshowPlayPause" aria-label="Play/Pause">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16"/>
+                    <rect x="14" y="4" width="4" height="16"/>
+                </svg>
+            </button>
+            <button class="icon-btn" id="slideshowEffect" aria-label="Change Effect">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2"/>
+                </svg>
+            </button>
+            <button class="icon-btn" id="slideshowMusic" aria-label="Music">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18V5l12-2v13"/>
+                    <circle cx="6" cy="18" r="3"/>
+                    <circle cx="18" cy="16" r="3"/>
+                </svg>
+            </button>
+            <button class="icon-btn" id="slideshowClose" aria-label="Close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="slideshow-container" id="slideshowContainer">
+            <!-- Slideshow images -->
+        </div>
+        <div class="slideshow-progress" id="slideshowProgress"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/theme.js"></script>
+    <script src="/static/js/gallery.js"></script>
+    <script src="/static/js/slideshow.js"></script>
+    <script src="/static/js/gestures.js"></script>
+    <script src="/static/js/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(reg => console.log('✅ Service Worker registered'))
+                    .catch(err => console.error('❌ Service Worker registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>

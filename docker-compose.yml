@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  pixi:
+    build: .
+    container_name: pixi-gallery
+    ports:
+      - "10.66.66.1:8006:8000"
+    volumes:
+      # Mount your image directories
+      - ./volumes/pictures:/pictures:ro  # Read-only for safety
+      - ./volumes/cache:/cache
+      - ./volumes/music:/music:ro
+    environment:
+      - PICTURES_DIR=/pictures
+      - CACHE_DIR=/cache
+      - MUSIC_DIR=/music
+      - ENABLE_WATCH=true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

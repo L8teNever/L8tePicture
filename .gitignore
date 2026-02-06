@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# P.I.X.I. Volumes (Local Data)
+volumes/pictures/*
+!volumes/pictures/.gitkeep
+volumes/cache/*
+!volumes/cache/.gitkeep
+volumes/music/*
+!volumes/music/.gitkeep
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

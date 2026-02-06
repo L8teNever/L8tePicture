@@ -1,0 +1,461 @@
+/**
+ * P.I.X.I. Animations
+ * Ken Burns Effect, Slideshow Transitions, and Micro-interactions
+ */
+
+/* ========== Slideshow Overlay ========== */
+.slideshow-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: #000;
+    display: none;
+    opacity: 0;
+    transition: opacity var(--transition-slow);
+}
+
+.slideshow-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.slideshow-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.slideshow-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.slideshow-slide.active {
+    opacity: 1;
+}
+
+.slideshow-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* ========== Ken Burns Effect ========== */
+.ken-burns {
+    animation: kenBurns 10s ease-in-out infinite alternate;
+}
+
+@keyframes kenBurns {
+    0% {
+        transform: scale(1) translate(0, 0);
+    }
+
+    100% {
+        transform: scale(1.1) translate(-2%, -2%);
+    }
+}
+
+/* Ken Burns Variants */
+.ken-burns-zoom-in {
+    animation: kenBurnsZoomIn 12s ease-out forwards;
+}
+
+@keyframes kenBurnsZoomIn {
+    0% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(1.15);
+    }
+}
+
+.ken-burns-zoom-out {
+    animation: kenBurnsZoomOut 12s ease-out forwards;
+}
+
+@keyframes kenBurnsZoomOut {
+    0% {
+        transform: scale(1.15);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.ken-burns-pan-right {
+    animation: kenBurnsPanRight 12s ease-in-out forwards;
+}
+
+@keyframes kenBurnsPanRight {
+    0% {
+        transform: scale(1.1) translateX(0);
+    }
+
+    100% {
+        transform: scale(1.1) translateX(-5%);
+    }
+}
+
+.ken-burns-pan-left {
+    animation: kenBurnsPanLeft 12s ease-in-out forwards;
+}
+
+@keyframes kenBurnsPanLeft {
+    0% {
+        transform: scale(1.1) translateX(-5%);
+    }
+
+    100% {
+        transform: scale(1.1) translateX(0);
+    }
+}
+
+/* ========== Slideshow Transitions ========== */
+
+/* Cross-Fade (Default) */
+.transition-fade-enter {
+    opacity: 0;
+}
+
+.transition-fade-enter-active {
+    opacity: 1;
+    transition: opacity 1s ease-in-out;
+}
+
+.transition-fade-exit {
+    opacity: 1;
+}
+
+.transition-fade-exit-active {
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+/* Slide Left */
+.transition-slide-enter {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.transition-slide-enter-active {
+    transform: translateX(0);
+    opacity: 1;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.8s ease-in-out;
+}
+
+.transition-slide-exit {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.transition-slide-exit-active {
+    transform: translateX(-100%);
+    opacity: 0;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.8s ease-in-out;
+}
+
+/* Morph/Scale */
+.transition-morph-enter {
+    transform: scale(0.8);
+    opacity: 0;
+}
+
+.transition-morph-enter-active {
+    transform: scale(1);
+    opacity: 1;
+    transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+        opacity 0.6s ease-in-out;
+}
+
+.transition-morph-exit {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.transition-morph-exit-active {
+    transform: scale(1.2);
+    opacity: 0;
+    transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+        opacity 0.6s ease-in-out;
+}
+
+/* ========== Slideshow Controls ========== */
+.slideshow-controls {
+    position: absolute;
+    bottom: var(--spacing-xl);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: rgba(28, 27, 31, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--md-sys-elevation-3);
+    opacity: 0;
+    transition: opacity var(--transition-medium);
+}
+
+.slideshow-overlay:hover .slideshow-controls,
+.slideshow-controls:focus-within {
+    opacity: 1;
+}
+
+.slideshow-controls .icon-btn {
+    background: transparent;
+    color: var(--md-sys-color-on-surface);
+}
+
+/* Progress Bar */
+.slideshow-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background: var(--md-sys-color-primary);
+    width: 0%;
+    transition: width linear;
+}
+
+/* ========== Progressive Image Loading ========== */
+.progressive-image {
+    position: relative;
+    overflow: hidden;
+}
+
+.progressive-image-blur {
+    filter: blur(20px);
+    transform: scale(1.1);
+    transition: opacity var(--transition-slow);
+}
+
+.progressive-image-blur.hidden {
+    opacity: 0;
+}
+
+.progressive-image-full {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity var(--transition-slow);
+}
+
+.progressive-image-full.loaded {
+    opacity: 1;
+}
+
+/* ========== Ripple Effect ========== */
+.ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.ripple:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* ========== Micro-interactions ========== */
+
+/* Pulse animation for loading */
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Fade in from bottom */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Scale in */
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Shimmer effect for loading placeholders */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.shimmer {
+    background: linear-gradient(90deg,
+            var(--md-sys-color-surface-container) 0%,
+            var(--md-sys-color-surface-container-high) 50%,
+            var(--md-sys-color-surface-container) 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+}
+
+/* ========== Swipe Gestures Visual Feedback ========== */
+.swipe-indicator {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--md-sys-color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    pointer-events: none;
+    z-index: 1001;
+}
+
+.swipe-indicator.left {
+    left: var(--spacing-xl);
+}
+
+.swipe-indicator.right {
+    right: var(--spacing-xl);
+}
+
+.swipe-indicator.active {
+    opacity: 0.8;
+    animation: swipePulse 0.3s ease-out;
+}
+
+@keyframes swipePulse {
+    0% {
+        transform: translateY(-50%) scale(0.8);
+    }
+
+    50% {
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    100% {
+        transform: translateY(-50%) scale(1);
+    }
+}
+
+/* ========== Stagger Animation for Grid Items ========== */
+.grid-item {
+    animation: fadeInUp 0.5s ease-out backwards;
+}
+
+.grid-item:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.grid-item:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.grid-item:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.grid-item:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+.grid-item:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+.grid-item:nth-child(6) {
+    animation-delay: 0.3s;
+}
+
+.grid-item:nth-child(7) {
+    animation-delay: 0.35s;
+}
+
+.grid-item:nth-child(8) {
+    animation-delay: 0.4s;
+}
+
+/* For items beyond 8, no delay to avoid too long loading */
+.grid-item:nth-child(n+9) {
+    animation-delay: 0s;
+}
+
+/* ========== Smooth Scroll ========== */
+html {
+    scroll-behavior: smooth;
+}
+
+/* ========== Reduced Motion Support ========== */
+@media (prefers-reduced-motion: reduce) {
+
+    .ken-burns,
+    .ken-burns-zoom-in,
+    .ken-burns-zoom-out,
+    .ken-burns-pan-right,
+    .ken-burns-pan-left {
+        animation: none !important;
+    }
+
+    .transition-slide-enter-active,
+    .transition-slide-exit-active,
+    .transition-morph-enter-active,
+    .transition-morph-exit-active {
+        transition-duration: 0.01ms !important;
+    }
+}
