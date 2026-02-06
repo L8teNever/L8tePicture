@@ -77,7 +77,6 @@ header.scrolled {
 /* Photo Cards */
 .photo-card {
     border-radius: 24px;
-    /* Slightly smaller radius for masonry */
     overflow: hidden;
     background-color: var(--md-sys-color-surface-container);
     position: relative;
@@ -85,23 +84,16 @@ header.scrolled {
         box-shadow 0.3s ease;
     cursor: pointer;
     margin-bottom: 1.5rem;
-    /* Gap for masonry */
     break-inside: avoid;
-    /* Prevent card from breaking across columns */
+    display: inline-block;
+    width: 100%;
 }
 
 .photo-card img {
     width: 100%;
     height: auto;
-    object-fit: contain;
     display: block;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@media (min-width: 768px) {
-    .photo-card img {
-        aspect-ratio: 4 / 3;
-    }
 }
 
 @media (hover: hover) {
