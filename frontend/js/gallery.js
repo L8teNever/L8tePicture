@@ -175,6 +175,8 @@ class GalleryManager {
         this.viewerImage.src = photo.full_preview;
         this.viewer.classList.add('active');
         this.updateViewerUI();
+        this.updateViewerInfo();
+        this.initAutoHideControls();
 
         // Stop slideshow if manually opening
         if (window.slideshowEngine && !window.slideshowEngine.active) {
@@ -187,6 +189,7 @@ class GalleryManager {
         if (window.slideshowEngine) {
             window.slideshowEngine.stop();
         }
+        this.cleanupAutoHideControls();
     }
 
     updateViewerUI() {
@@ -196,6 +199,56 @@ class GalleryManager {
         const favIcon = document.getElementById('viewerFavIcon');
         favIcon.classList.toggle('active', photo.isFav);
         favIcon.setAttribute('fill', photo.isFav ? 'currentColor' : 'none');
+    }
+
+    updateViewerInfo() {
+        const current = this.currentIndex + 1;
+        const total = this.filteredPhotos.length;
+        const photo = this.filteredPhotos[this.currentIndex];
+
+        const infoText = document.getElementById('viewerInfoText');
+        if (infoText && photo) {
+            infoText.textContent = `${photo.original_path} • Bild ${current} von ${total}`;
+        }
+    }
+
+    initAutoHideControls() {
+        const controls = document.querySelectorAll('.viewer-controls-overlay');
+        let hideTimeout;
+
+        const showControls = () => {
+            controls.forEach(c => c.classList.remove('hidden'));
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                controls.forEach(c => c.classList.add('hidden'));
+            }, 3000);
+        };
+
+        const hideControls = () => {
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                controls.forEach(c => c.classList.add('hidden'));
+            }, 3000);
+        };
+
+        // Show controls initially
+        showControls();
+
+        // Store handlers for cleanup
+        this.viewerMouseMoveHandler = showControls;
+        this.viewerTouchHandler = showControls;
+
+        this.viewer.addEventListener('mousemove', this.viewerMouseMoveHandler);
+        this.viewer.addEventListener('touchstart', this.viewerTouchHandler);
+    }
+
+    cleanupAutoHideControls() {
+        if (this.viewerMouseMoveHandler) {
+            this.viewer.removeEventListener('mousemove', this.viewerMouseMoveHandler);
+        }
+        if (this.viewerTouchHandler) {
+            this.viewer.removeEventListener('touchstart', this.viewerTouchHandler);
+        }
     }
 
     navigate(direction) {
@@ -214,6 +267,7 @@ class GalleryManager {
             this.viewerImage.style.opacity = '1';
             this.viewerImage.style.transform = 'scale(1)';
             this.updateViewerUI();
+            this.updateViewerInfo();
             if (window.slideshowEngine && window.slideshowEngine.active) {
                 window.slideshowEngine.updateProgress();
             }

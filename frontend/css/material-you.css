@@ -120,7 +120,7 @@ header.scrolled {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.95);
     z-index: 1000;
     backdrop-filter: blur(8px);
     animation: fadeIn 0.2s ease;
@@ -131,6 +131,60 @@ header.scrolled {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+/* Fullscreen Viewer Controls */
+.viewer-controls-overlay {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.viewer-controls-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Top Controls (Close Button) */
+.viewer-top-controls {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    z-index: 1100;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
+}
+
+/* Bottom Controls */
+.viewer-bottom-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    z-index: 1100;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
+}
+
+/* Image Info Overlay */
+.viewer-info {
+    position: fixed;
+    bottom: 6rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(20px);
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.875rem;
+    z-index: 1100;
+    max-width: 90vw;
+    text-align: center;
 }
 
 @keyframes fadeIn {
