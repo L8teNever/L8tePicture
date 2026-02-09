@@ -96,6 +96,11 @@ header.scrolled {
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Gallery Grid Spacing */
+#galleryGrid {
+    column-gap: 1.5rem;
+}
+
 @media (hover: hover) {
     .photo-card:hover {
         transform: translateY(-4px);

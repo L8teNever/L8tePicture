@@ -149,16 +149,20 @@ class GalleryManager {
 
     setColumns(cols) {
         const grid = this.grid;
-        // Reset classes - Use columns-X instead of grid for masonry
-        grid.className = "max-w-7xl mx-auto pb-20 transition-all duration-300 gap-6";
+        // Reset classes - Use columns-X for masonry
+        grid.className = "max-w-7xl mx-auto pb-20 transition-all duration-300";
 
+        // Mobile: always 1 column, Tablet: 2 columns, Desktop: user choice
         if (cols === 1) {
             grid.classList.add('columns-1');
-        } else {
-            grid.classList.add('columns-2');
-            if (cols >= 3) grid.classList.add('md:columns-3');
-            if (cols >= 4) grid.classList.add('lg:columns-4');
-            if (cols >= 5) grid.classList.add('xl:columns-5');
+        } else if (cols === 2) {
+            grid.classList.add('columns-1', 'sm:columns-2');
+        } else if (cols === 3) {
+            grid.classList.add('columns-1', 'sm:columns-2', 'md:columns-3');
+        } else if (cols === 4) {
+            grid.classList.add('columns-1', 'sm:columns-2', 'md:columns-3', 'lg:columns-4');
+        } else if (cols === 5) {
+            grid.classList.add('columns-1', 'sm:columns-2', 'md:columns-3', 'lg:columns-4', 'xl:columns-5');
         }
 
         document.getElementById('currentViewLabel').textContent = cols;
