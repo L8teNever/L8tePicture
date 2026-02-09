@@ -145,7 +145,17 @@ class GalleryManager {
     }
 
     toggleFilter() {
-        this.showOnlyFavorites = !this.showOnlyFavorites;
+        if (this.showOnlyFavorites) {
+            window.router.push('#/');
+        } else {
+            window.router.push('#/favorites');
+        }
+    }
+
+    setFilter(onlyFavorites) {
+        if (this.showOnlyFavorites === onlyFavorites) return;
+
+        this.showOnlyFavorites = onlyFavorites;
         document.getElementById('filterBtn').classList.toggle('bg-[var(--md-sys-color-secondary-container)]', this.showOnlyFavorites);
         document.getElementById('filterIcon').classList.toggle('active', this.showOnlyFavorites);
         this.updateFilteredPhotos();

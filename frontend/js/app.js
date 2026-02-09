@@ -33,12 +33,20 @@ class Router {
             if (window.discoveryManager) window.discoveryManager.open(false);
         } else if (hash === '#/stats') {
             if (window.discoveryManager) window.discoveryManager.openStats(false);
+        } else if (hash === '#/favorites') {
+            if (window.galleryManager) {
+                window.galleryManager.closeViewer(false);
+                window.galleryManager.setFilter(true);
+            }
         } else if (hash.startsWith('#/photo/')) {
             const index = parseInt(hash.split('/').pop());
             if (window.galleryManager) window.galleryManager.openViewer(index, false);
         } else {
-            // Default: Gallery
-            if (window.galleryManager) window.galleryManager.closeViewer(false);
+            // Default: Gallery (All)
+            if (window.galleryManager) {
+                window.galleryManager.closeViewer(false);
+                window.galleryManager.setFilter(false);
+            }
         }
 
         this.isNavigating = false;
