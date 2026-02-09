@@ -5,7 +5,7 @@ services:
     image: l8tenever/l8tepicture:latest
     container_name: pixi-gallery
     ports:
-      - "10.66.66.1:8000:8000"
+      - "8000:8000"
     volumes:
       - ./volumes/pictures:/pictures
       - ./volumes/cache:/cache

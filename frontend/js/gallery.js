@@ -18,20 +18,37 @@ class GalleryManager {
     }
 
     async init() {
+        console.log('🖼️ GalleryManager initializing...');
+
+        // Wait for DOM if needed (though scripts are at end of body)
+        if (!this.grid) {
+            console.warn('⚠️ galleryGrid not found yet, retrying in 100ms...');
+            setTimeout(() => {
+                this.grid = document.getElementById('galleryGrid');
+                if (this.grid) this.init();
+            }, 100);
+            return;
+        }
+
         const savedCols = localStorage.getItem('pixi-cols');
         const isMobile = window.innerWidth < 768;
-        // Default to 5 on PC, 2 on Mobile if nothing saved
         const defaultCols = savedCols ? parseInt(savedCols) : (isMobile ? 2 : 5);
 
         this.setColumns(defaultCols);
         await this.loadPhotos();
         this.attachEventListeners();
+        console.log('✅ GalleryManager ready');
     }
 
     async loadPhotos() {
+        console.log('🔄 Loading photos...');
+        if (this.grid) this.grid.innerHTML = '<div class="empty-state"><p class="text-xl opacity-50">Lade Galerie...</p></div>';
+
         try {
             const response = await fetch('/api/photos');
             const data = await response.json();
+
+            console.log(`📥 API returned ${Array.isArray(data) ? data.length : 'error'} items`);
 
             if (!Array.isArray(data)) {
                 console.error('API did not return an array:', data);
