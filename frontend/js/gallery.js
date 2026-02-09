@@ -39,7 +39,13 @@ class GalleryManager {
         if (this.grid) this.grid.innerHTML = '<div class="empty-state"><p class="text-xl opacity-50">Lade Galerie...</p></div>';
 
         try {
-            const response = await fetch('/api/photos');
+            // Build query
+            let url = '/api/photos';
+            if (this.showOnlyFavorites) {
+                url += '?only_favorites=true';
+            }
+
+            const response = await fetch(url);
             const data = await response.json();
 
             if (!Array.isArray(data)) {
@@ -48,17 +54,18 @@ class GalleryManager {
                 this.photos = data.map(p => ({ ...p, isFav: p.isFav || false }));
             }
 
-            this.updateFilteredPhotos();
+            // "filteredPhotos" is now just the photos we got back, 
+            // because the backend did the filtering.
+            this.filteredPhotos = this.photos;
             this.render();
         } catch (error) {
             console.error('Error loading photos:', error);
         }
     }
 
-    updateFilteredPhotos() {
-        this.filteredPhotos = this.showOnlyFavorites
-            ? this.photos.filter(p => p.isFav)
-            : this.photos;
+    // No longer filters locally, just re-fetches
+    async updateFilteredPhotos() {
+        await this.loadPhotos();
     }
 
     render() {
@@ -152,14 +159,13 @@ class GalleryManager {
         }
     }
 
-    setFilter(onlyFavorites) {
+    async setFilter(onlyFavorites) {
         if (this.showOnlyFavorites === onlyFavorites) return;
 
         this.showOnlyFavorites = onlyFavorites;
         document.getElementById('filterBtn').classList.toggle('bg-[var(--md-sys-color-secondary-container)]', this.showOnlyFavorites);
         document.getElementById('filterIcon').classList.toggle('active', this.showOnlyFavorites);
-        this.updateFilteredPhotos();
-        this.render();
+        await this.updateFilteredPhotos();
     }
 
     setColumns(cols) {

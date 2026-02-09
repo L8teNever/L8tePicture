@@ -118,10 +118,10 @@ class VoteRequest(BaseModel):
     delta: int # +1 for like, -1 for dislike
 
 @app.get("/api/photos")
-async def get_photos() -> List[dict]:
-    """Get all images with metadata"""
+async def get_photos(only_favorites: bool = False) -> List[dict]:
+    """Get all images with metadata, optionally filtered by favorites"""
     try:
-        gallery = await processor.get_gallery_index()
+        gallery = await processor.get_gallery_index(only_favorites=only_favorites)
         return gallery
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

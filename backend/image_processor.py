@@ -278,7 +278,7 @@ class ImageProcessor:
         async with aiofiles.open(index_path, 'w') as f:
             await f.write(json.dumps(data, indent=2))
     
-    async def get_gallery_index(self) -> List[Dict]:
+    async def get_gallery_index(self, only_favorites: bool = False) -> List[Dict]:
         """Load or generate gallery index"""
         async with self._index_lock:
              if not self._favorites_loaded:
@@ -286,31 +286,38 @@ class ImageProcessor:
              if not self.scores:
                  await self._load_scores()
 
+        data = []
         if self.gallery_index and self._index_loaded:
-            return self.gallery_index
-            
-        index_path = settings.CACHE_DIR / "gallery_index.json"
-        if index_path.exists():
-            try:
-                async with aiofiles.open(index_path, 'r') as f:
-                    content = await f.read()
-                    data = json.loads(content)
-                    
-                    # If empty file but we haven't scanned yet, scan
-                    if not data and not self._index_loaded:
-                        return await self.scan_directory()
-
-                    # Ensure favorites and scores are synced
-                    for item in data:
-                        item['isFav'] = item['original_path'] in self.favorites
-                        item['score'] = self.scores.get(item['original_path'], 0)
-                    
-                    async with self._index_lock:
-                        self.gallery_index = data
-                        self._index_loaded = True
-                    return data
-            except Exception as e:
-                print(f"Index error: {e}")
-                return await self.scan_directory()
+            data = self.gallery_index
         else:
-            return await self.scan_directory()
+            index_path = settings.CACHE_DIR / "gallery_index.json"
+            if index_path.exists():
+                try:
+                    async with aiofiles.open(index_path, 'r') as f:
+                        content = await f.read()
+                        loaded_data = json.loads(content)
+                        
+                        # If empty file but we haven't scanned yet, scan
+                        if not loaded_data and not self._index_loaded:
+                            data = await self.scan_directory()
+                        else:
+                            data = loaded_data
+                            async with self._index_lock:
+                                self.gallery_index = data
+                                self._index_loaded = True
+                except Exception as e:
+                    print(f"Index error: {e}")
+                    data = await self.scan_directory()
+            else:
+                data = await self.scan_directory()
+
+        # Ensure favorites and scores are synced before filtering
+        for item in data:
+            item['isFav'] = item['original_path'] in self.favorites
+            item['score'] = self.scores.get(item['original_path'], 0)
+
+        # Apply filtering
+        if only_favorites:
+            return [img for img in data if img['isFav']]
+        
+        return data
