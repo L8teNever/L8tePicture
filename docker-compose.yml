@@ -7,12 +7,9 @@ services:
     ports:
       - "10.66.66.1:8000:8000"
     volumes:
-      # Mapping your existing data folders correctly
-      - ./uploads:/pictures
-      - ./thumbnails:/cache/grid
-      - ./data:/cache/full
-      - ./cache:/cache
-      - ./music:/music:ro
+      - ./volumes/pictures:/pictures
+      - ./volumes/cache:/cache
+      - ./volumes/music:/music:ro
     environment:
       - PICTURES_DIR=/pictures
       - CACHE_DIR=/cache
