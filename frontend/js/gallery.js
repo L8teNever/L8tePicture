@@ -12,6 +12,7 @@ class GalleryManager {
         this.filteredPhotos = [];
         this.currentIndex = 0;
         this.showOnlyFavorites = false;
+        this.showInfo = false;
 
         this.init();
     }
@@ -138,7 +139,15 @@ class GalleryManager {
             }
         });
 
-        // Viewer Fav/Delete
+        // Viewer Actions
+        const infoBtn = document.getElementById('viewerInfoBtn');
+        if (infoBtn) {
+            infoBtn.addEventListener('click', () => {
+                this.showInfo = !this.showInfo;
+                this.updateViewerInfo();
+            });
+        }
+
         document.getElementById('viewerFavBtn').addEventListener('click', () => this.toggleFavorite(this.currentIndex));
         document.getElementById('viewerDeleteBtn').addEventListener('click', () => this.requestDelete());
 
@@ -239,9 +248,15 @@ class GalleryManager {
         const total = this.filteredPhotos.length;
         const photo = this.filteredPhotos[this.currentIndex];
 
+        const infoContainer = document.getElementById('viewerInfo');
         const infoText = document.getElementById('viewerInfoText');
+
         if (infoText && photo) {
             infoText.textContent = `${photo.original_path} • Bild ${current} von ${total}`;
+        }
+
+        if (infoContainer) {
+            infoContainer.style.display = this.showInfo ? 'block' : 'none';
         }
     }
 

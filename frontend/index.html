@@ -136,6 +136,17 @@
                 <div id="viewerActionsMenu" class="viewer-actions-menu">
                     <div
                         class="flex flex-col gap-3 bg-white/10 backdrop-blur-3xl p-2 rounded-3xl border border-white/20">
+                        <button id="viewerInfoBtn"
+                            class="viewer-action-btn click-feedback bg-white/10 text-white p-4 rounded-full hover:bg-white/20 transition-all"
+                            title="Info">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="16" x2="12" y2="12" />
+                                <line x1="12" y1="8" x2="12.01" y2="8" />
+                            </svg>
+                        </button>
                         <button id="viewerSlideshowBtn"
                             class="viewer-action-btn click-feedback bg-white/10 text-white p-4 rounded-full hover:bg-white/20 transition-all"
                             title="Diashow">
@@ -175,8 +186,8 @@
             </div>
         </div>
 
-        <!-- Image Info (Auto-hide) -->
-        <div id="viewerInfo" class="viewer-controls-overlay viewer-info">
+        <!-- Image Info (Hidden by default, toggled via i-button) -->
+        <div id="viewerInfo" class="viewer-info" style="display: none;">
             <span id="viewerInfoText">Bild 1 von 100</span>
         </div>
     </div>
