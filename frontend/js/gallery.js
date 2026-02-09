@@ -31,10 +31,14 @@ class GalleryManager {
     async loadPhotos() {
         try {
             const response = await fetch('/api/photos');
-            this.photos = await response.json();
+            const data = await response.json();
 
-            // Ensure isFav property exists
-            this.photos = this.photos.map(p => ({ ...p, isFav: p.isFav || false }));
+            if (!Array.isArray(data)) {
+                console.error('API did not return an array:', data);
+                this.photos = [];
+            } else {
+                this.photos = data.map(p => ({ ...p, isFav: p.isFav || false }));
+            }
 
             // Preserve current image if viewer is open
             let currentPath = null;

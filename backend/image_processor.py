@@ -96,7 +96,7 @@ class ImageProcessor:
             await self._save_index(self.gallery_index)
             return is_fav
 
-    async def process_image(self, image_path: Path) -> Optional[Dict]:
+    async def process_image(self, image_path: Path, update_index: bool = True) -> Optional[Dict]:
         """
         Process a single image and generate all variants
         """
@@ -166,18 +166,20 @@ class ImageProcessor:
                 metadata['isFav'] = str(rel_path) in self.favorites
                 metadata['score'] = self.scores.get(str(rel_path), 0)
                 self.metadata_cache[str(rel_path)] = metadata
+                
                 # Update live index
-                async with self._index_lock:
-                    # Ensure index is loaded from disk if not yet done
-                    if not self._index_loaded:
-                        await self.get_gallery_index()
-                    
-                    # Remove old entry if exists (by original_path)
-                    self.gallery_index = [item for item in self.gallery_index if item['original_path'] != metadata['original_path']]
-                    self.gallery_index.append(metadata)
-                    # Keep it sorted so X von Y is consistent
-                    self.gallery_index.sort(key=lambda x: x['original_path'])
-                    await self._save_index(self.gallery_index)
+                if update_index:
+                    async with self._index_lock:
+                        # Ensure index is loaded from disk if not yet done
+                        if not self._index_loaded:
+                            await self.get_gallery_index()
+                        
+                        # Remove old entry if exists (by original_path)
+                        self.gallery_index = [item for item in self.gallery_index if item['original_path'] != metadata['original_path']]
+                        self.gallery_index.append(metadata)
+                        # Keep it sorted so X von Y is consistent
+                        self.gallery_index.sort(key=lambda x: x['original_path'])
+                        await self._save_index(self.gallery_index)
                 
                 return metadata
             
@@ -249,12 +251,13 @@ class ImageProcessor:
             
             new_index = []
             for i, image_path in enumerate(sorted(image_files)):
-                metadata = await self.process_image(image_path)
+                metadata = await self.process_image(image_path, update_index=False)
                 if metadata:
                     new_index.append(metadata)
             
             async with self._index_lock:
                 self.gallery_index = new_index
+                self._index_loaded = True
                 await self._save_index(self.gallery_index)
             
             print(f"Finished processing {len(self.gallery_index)} images")
@@ -274,23 +277,31 @@ class ImageProcessor:
         if not self.scores:
             await self._load_scores()
 
-        if self.gallery_index:
+        if self.gallery_index and self._index_loaded:
             return self.gallery_index
             
         index_path = settings.CACHE_DIR / "gallery_index.json"
         if index_path.exists():
-            async with aiofiles.open(index_path, 'r') as f:
-                content = await f.read()
-                data = json.loads(content)
-                # Ensure favorites and scores are synced
-                for item in data:
-                    item['isFav'] = item['original_path'] in self.favorites
-                    item['score'] = self.scores.get(item['original_path'], 0)
-                async with self._index_lock:
-                    self.gallery_index = data
-                    self._index_loaded = True
-                return data
+            try:
+                async with aiofiles.open(index_path, 'r') as f:
+                    content = await f.read()
+                    data = json.loads(content)
+                    
+                    # If empty file but we haven't scanned yet, scan
+                    if not data and not self._index_loaded:
+                        return await self.scan_directory()
+
+                    # Ensure favorites and scores are synced
+                    for item in data:
+                        item['isFav'] = item['original_path'] in self.favorites
+                        item['score'] = self.scores.get(item['original_path'], 0)
+                    
+                    async with self._index_lock:
+                        self.gallery_index = data
+                        self._index_loaded = True
+                    return data
+            except Exception as e:
+                print(f"Index error: {e}")
+                return await self.scan_directory()
         else:
-            res = await self.scan_directory()
-            self._index_loaded = True
-            return res
+            return await self.scan_directory()
