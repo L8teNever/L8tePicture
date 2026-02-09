@@ -127,16 +127,50 @@ class GalleryManager {
             document.getElementById('settingsDialog').classList.remove('active');
         });
 
-        document.getElementById('viewerFavBtn').addEventListener('click', () => this.toggleFavorite(this.currentIndex));
+        document.getElementById('viewerFavBtn').addEventListener('click', (e) => {
+            e.stopPropagation(); // prevent menu from closing immediately if inside
+            this.toggleFavorite(this.currentIndex);
+        });
         document.getElementById('viewerDeleteBtn').addEventListener('click', () => this.requestDelete());
+
+        // Viewer Menu Logic
+        const menuToggle = document.getElementById('viewerMenuToggle');
+        const menu = document.getElementById('viewerActionsMenu');
+
+        if (menuToggle && menu) {
+            menuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('active');
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (menu.classList.contains('active') && !menu.contains(e.target) && e.target !== menuToggle) {
+                    menu.classList.remove('active');
+                }
+            });
+        }
     }
 
     async toggleFavorite(index) {
         const photo = this.filteredPhotos[index];
         if (photo) {
+            // Optimistic update
             photo.isFav = !photo.isFav;
-            this.render();
-            if (this.viewer.classList.contains('active')) this.updateViewerUI();
+
+            // Force update viewer UI immediately if active
+            const favIconViewer = document.getElementById('viewerFavIcon');
+            if (this.viewer.classList.contains('active') && favIconViewer) {
+                favIconViewer.classList.toggle('active', photo.isFav);
+                favIconViewer.setAttribute('fill', photo.isFav ? 'currentColor' : 'none');
+            }
+
+            // Force update grid item immediately
+            const gridBtn = document.querySelector(`.fav-btn[data-index="${index}"] svg`);
+            if (gridBtn) {
+                gridBtn.classList.toggle('active', photo.isFav);
+                gridBtn.setAttribute('fill', photo.isFav ? 'currentColor' : 'none');
+            }
 
             try {
                 const response = await fetch('/api/photos/favorite', {
@@ -145,9 +179,19 @@ class GalleryManager {
                     body: JSON.stringify({ original_path: photo.original_path })
                 });
                 const result = await response.json();
-                photo.isFav = result.is_fav;
+
+                // Re-sync if server disagrees (rare)
+                if (photo.isFav !== result.is_fav) {
+                    photo.isFav = result.is_fav;
+                    this.render(); // Full re-render on mismatch
+                    if (this.viewer.classList.contains('active')) this.updateViewerUI();
+                }
+            } catch (err) {
+                console.error(err);
+                // Revert on error
+                photo.isFav = !photo.isFav;
                 this.render();
-            } catch (err) { console.error(err); }
+            }
         }
     }
 
