@@ -114,6 +114,24 @@ class GalleryManager {
             document.getElementById('settingsDialog').classList.remove('active');
         });
 
+        // Viewer Menu Toggle
+        const menuToggle = document.getElementById('viewerMenuToggle');
+        const actionsMenu = document.getElementById('viewerActionsMenu');
+
+        if (menuToggle && actionsMenu) {
+            menuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                actionsMenu.classList.toggle('open');
+            });
+        }
+
+        // Close menu on click outside in viewer
+        this.viewer.addEventListener('click', (e) => {
+            if (!e.target.closest('.viewer-actions-menu') && actionsMenu) {
+                actionsMenu.classList.remove('open');
+            }
+        });
+
         // Viewer Fav/Delete
         document.getElementById('viewerFavBtn').addEventListener('click', () => this.toggleFavorite(this.currentIndex));
         document.getElementById('viewerDeleteBtn').addEventListener('click', () => this.requestDelete());
@@ -175,6 +193,10 @@ class GalleryManager {
         this.currentIndex = index;
         const photo = this.filteredPhotos[index];
         if (!photo) return;
+
+        // Reset menu state
+        const actionsMenu = document.getElementById('viewerActionsMenu');
+        if (actionsMenu) actionsMenu.classList.remove('open');
 
         this.viewerImage.src = photo.full_preview;
         this.viewer.classList.add('active');
@@ -258,6 +280,10 @@ class GalleryManager {
     navigate(direction) {
         const len = this.filteredPhotos.length;
         if (len === 0) return;
+
+        // Reset menu state
+        const actionsMenu = document.getElementById('viewerActionsMenu');
+        if (actionsMenu) actionsMenu.classList.remove('open');
 
         this.currentIndex = (this.currentIndex + direction + len) % len;
         const photo = this.filteredPhotos[this.currentIndex];

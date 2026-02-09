@@ -112,14 +112,25 @@
 
         <!-- Top Controls (Auto-hide) -->
         <div class="viewer-controls-overlay viewer-top-controls">
-            <button id="closeViewer"
-                class="click-feedback text-white p-4 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-            </button>
+            <div class="flex gap-3">
+                <button id="closeViewer"
+                    class="click-feedback text-white p-4 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+                <button id="viewerMenuToggle"
+                    class="click-feedback text-white p-4 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="1" fill="currentColor" />
+                        <circle cx="12" cy="5" r="1" fill="currentColor" />
+                        <circle cx="12" cy="19" r="1" fill="currentColor" />
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <!-- Image Info (Auto-hide) -->
@@ -127,11 +138,11 @@
             <span id="viewerInfoText">Bild 1 von 100</span>
         </div>
 
-        <!-- Bottom Controls (Auto-hide) -->
-        <div class="viewer-controls-overlay viewer-bottom-controls">
+        <!-- Bottom Controls (Collapsible Menu) -->
+        <div id="viewerActionsMenu" class="viewer-controls-overlay viewer-actions-menu">
             <div class="flex gap-4 bg-white/10 backdrop-blur-3xl p-3 rounded-full border border-white/20">
                 <button id="viewerSlideshowBtn"
-                    class="click-feedback bg-white/10 text-white p-5 rounded-full hover:bg-white/20 transition-all">
+                    class="viewer-action-btn click-feedback bg-white/10 text-white p-5 rounded-full hover:bg-white/20 transition-all">
                     <svg id="viewerPlayIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                         viewBox="0 0 24 24" fill="currentColor">
                         <polygon points="5 3 19 12 5 21 5 3" />
@@ -143,7 +154,7 @@
                     </svg>
                 </button>
                 <button id="viewerFavBtn"
-                    class="click-feedback bg-white/10 text-white p-5 rounded-full hover:bg-white/20 transition-all">
+                    class="viewer-action-btn click-feedback bg-white/10 text-white p-5 rounded-full hover:bg-white/20 transition-all">
                     <svg id="viewerFavIcon" class="favorite-icon" xmlns="http://www.w3.org/2000/svg" width="24"
                         height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -152,7 +163,7 @@
                     </svg>
                 </button>
                 <button id="viewerDeleteBtn"
-                    class="click-feedback bg-red-500/80 text-white p-5 rounded-full hover:bg-red-600/80 transition-all">
+                    class="viewer-action-btn click-feedback bg-red-500/80 text-white p-5 rounded-full hover:bg-red-600/80 transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 6h18" />
