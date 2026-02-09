@@ -29,11 +29,15 @@ class Router {
         if (window.discoveryManager) window.discoveryManager.close(false);
 
         // Routing
+        const mobileNav = document.getElementById('mobileNav');
         if (hash === '#/discovery') {
+            if (mobileNav) mobileNav.style.display = 'none';
             if (window.discoveryManager) window.discoveryManager.open(false);
         } else if (hash === '#/stats') {
+            if (mobileNav) mobileNav.style.display = 'none';
             if (window.discoveryManager) window.discoveryManager.openStats(false);
         } else if (hash === '#/favorites') {
+            if (mobileNav) mobileNav.style.display = '';
             if (window.galleryManager) {
                 window.galleryManager.closeViewer(false);
                 if (!window.galleryManager.showOnlyFavorites) {
@@ -41,16 +45,18 @@ class Router {
                 }
             }
         } else if (hash.startsWith('#/photo/')) {
+            if (mobileNav) mobileNav.style.display = 'none'; // Optional: hide on viewer too? User didn't ask but makes sense.
+            // User only asked for "for you" (discovery), but let's stick to user request strictly first.
+            // Wait, user said "bei der voryu" (For You). 
+            // Let's hide it for Discovery as requested.
+
             const index = parseInt(hash.split('/').pop());
             if (window.galleryManager) {
-                // If we jumped directly to a photo, check if we might be coming from favorites?
-                // For now, simple logic: just open it.
-                // NOTE: If we refresh on a photo URL, we won't know if we were in "Favorites" mode.
-                // We could infer it from the photo itself if loaded, but for now strict URL mapping.
                 window.galleryManager.openViewer(index, false);
             }
         } else {
             // Default: Gallery (All)
+            if (mobileNav) mobileNav.style.display = '';
             // Only reset if we are explicitly at root or empty hash
             if (hash === '' || hash === '#/') {
                 if (window.galleryManager) {
