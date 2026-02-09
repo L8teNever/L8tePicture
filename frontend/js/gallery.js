@@ -169,6 +169,10 @@ class GalleryManager {
         this.currentIndex = index;
         const photo = this.filteredPhotos[index];
         if (!photo) return;
+
+        // Reset zoom
+        if (window.gestureManager) window.gestureManager.resetZoom();
+
         this.viewerImage.src = photo.full_preview;
         this.viewer.classList.add('active');
         this.updateViewerUI();
@@ -178,6 +182,7 @@ class GalleryManager {
     closeViewer(updateHash = true) {
         if (updateHash) window.router.push('#/');
         this.viewer.classList.remove('active');
+        if (window.gestureManager) window.gestureManager.resetZoom();
     }
 
     updateViewerUI() {
@@ -195,9 +200,27 @@ class GalleryManager {
         }
     }
 
+    toggleControls() {
+        const controls = document.querySelector('.viewer-top-controls');
+        const info = document.getElementById('viewerInfo');
+        if (controls) {
+            const isHidden = controls.style.opacity === '0';
+            controls.style.opacity = isHidden ? '1' : '0';
+            controls.style.pointerEvents = isHidden ? 'auto' : 'none';
+
+            if (info) {
+                info.style.opacity = isHidden ? '1' : '0';
+            }
+        }
+    }
+
     navigate(direction) {
         const len = this.filteredPhotos.length;
         if (len === 0) return;
+
+        // Reset zoom
+        if (window.gestureManager) window.gestureManager.resetZoom();
+
         const nextIndex = (this.currentIndex + direction + len) % len;
         window.router.push(`#/photo/${nextIndex}`);
     }

@@ -96,9 +96,20 @@ header.scrolled {
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Gallery Grid Spacing */
+/* Folder Grid Spacing */
 #galleryGrid {
     column-gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    #galleryGrid {
+        column-gap: 0.75rem;
+    }
+
+    .photo-card {
+        margin-bottom: 0.75rem;
+        border-radius: 16px;
+    }
 }
 
 @media (hover: hover) {
@@ -128,12 +139,23 @@ header.scrolled {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+    /* Prevent body scroll if not handled */
+}
+
+#viewerImage {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    will-change: transform;
+    transition: transform 0.3s cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 /* Fullscreen Viewer Controls */
 .viewer-controls-overlay {
     opacity: 1;
     transition: opacity 0.3s ease;
+    pointer-events: auto;
 }
 
 .viewer-top-controls {
