@@ -60,18 +60,39 @@ body {
     transform: scale(0.92);
 }
 
-/* Header */
+/* Header / Top App Bar (Android 16 style) */
 header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: var(--md-sys-color-surface);
-    padding: 1rem 0;
-    transition: box-shadow 0.3s ease;
+    background-color: transparent;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding-left: inherit;
+    padding-right: inherit;
 }
 
 header.scrolled {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: var(--md-sys-color-surface-container-high);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+#headerTitleContainer {
+    transform-origin: left center;
+    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+header.scrolled #headerTitleContainer {
+    transform: translateY(-58px) scale(0.4);
+}
+
+header.scrolled #mainTitle {
+    font-weight: 700;
+}
+
+/* Ensure the main grid has enough top margin to clear the large header */
+main#galleryGrid {
+    padding-top: 2rem;
 }
 
 /* Photo Cards */
