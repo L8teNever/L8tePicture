@@ -33,8 +33,8 @@ class GalleryManager {
             const response = await fetch('/api/photos');
             this.photos = await response.json();
 
-            // Add favorite property locally if not exists
-            this.photos = this.photos.map(p => ({ ...p, isFav: false }));
+            // Ensure isFav property exists
+            this.photos = this.photos.map(p => ({ ...p, isFav: p.isFav || false }));
 
             // Preserve current image if viewer is open
             let currentPath = null;
@@ -178,13 +178,34 @@ class GalleryManager {
         });
     }
 
-    toggleFavorite(index) {
+    async toggleFavorite(index) {
         const photo = this.filteredPhotos[index];
         if (photo) {
+            // Optimistic UI update
             photo.isFav = !photo.isFav;
             this.render();
             if (this.viewer.classList.contains('active')) {
                 this.updateViewerUI();
+            }
+
+            try {
+                const response = await fetch('/api/photos/favorite', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ original_path: photo.original_path })
+                });
+                const result = await response.json();
+                // Ensure synced with server
+                photo.isFav = result.is_fav;
+                this.render();
+                if (this.viewer.classList.contains('active')) {
+                    this.updateViewerUI();
+                }
+            } catch (error) {
+                console.error('Error toggling favorite:', error);
+                // Rollback on error
+                photo.isFav = !photo.isFav;
+                this.render();
             }
         }
     }

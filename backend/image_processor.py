@@ -22,8 +22,46 @@ class ImageProcessor:
         self.is_scanning = False
         self.metadata_cache: Dict[str, dict] = {}
         self.gallery_index: List[Dict] = []
+        self.favorites: set[str] = set()
         self._index_lock = asyncio.Lock()
         
+    async def _load_favorites(self):
+        fav_path = settings.CACHE_DIR / "favorites.json"
+        if fav_path.exists():
+            try:
+                async with aiofiles.open(fav_path, 'r') as f:
+                    content = await f.read()
+                    data = json.loads(content)
+                    self.favorites = set(data)
+            except Exception as e:
+                print(f"Error loading favorites: {e}")
+                self.favorites = set()
+
+    async def _save_favorites(self):
+        fav_path = settings.CACHE_DIR / "favorites.json"
+        async with aiofiles.open(fav_path, 'w') as f:
+            await f.write(json.dumps(list(self.favorites)))
+
+    async def toggle_favorite(self, original_path: str) -> bool:
+        """Toggle favorite status for an image and save to disk"""
+        async with self._index_lock:
+            if original_path in self.favorites:
+                self.favorites.remove(original_path)
+                is_fav = False
+            else:
+                self.favorites.add(original_path)
+                is_fav = True
+            
+            # Update live index if it exists
+            for item in self.gallery_index:
+                if item['original_path'] == original_path:
+                    item['isFav'] = is_fav
+                    break
+            
+            await self._save_favorites()
+            await self._save_index(self.gallery_index)
+            return is_fav
+
     async def process_image(self, image_path: Path) -> Optional[Dict]:
         """
         Process a single image and generate all variants
@@ -91,6 +129,7 @@ class ImageProcessor:
                 }
             
             if metadata:
+                metadata['isFav'] = str(rel_path) in self.favorites
                 self.metadata_cache[str(rel_path)] = metadata
                 # Update live index
                 async with self._index_lock:
@@ -145,7 +184,8 @@ class ImageProcessor:
             'full_preview': f"/cache/full/{stem}.webp",
             'blurhash': blurhash_string,
             'file_size': image_path.stat().st_size,
-            'modified_at': datetime.fromtimestamp(image_path.stat().st_mtime).isoformat()
+            'modified_at': datetime.fromtimestamp(image_path.stat().st_mtime).isoformat(),
+            'isFav': str(rel_path) in self.favorites
         }
 
     async def scan_directory(self) -> List[Dict]:
@@ -158,6 +198,7 @@ class ImageProcessor:
             
         self.is_scanning = True
         try:
+            await self._load_favorites()
             image_files = []
             for ext in settings.SUPPORTED_FORMATS:
                 image_files.extend(settings.PICTURES_DIR.rglob(f"*{ext}"))
@@ -187,6 +228,9 @@ class ImageProcessor:
     
     async def get_gallery_index(self) -> List[Dict]:
         """Load or generate gallery index"""
+        if not self.favorites:
+            await self._load_favorites()
+
         if self.gallery_index:
             return self.gallery_index
             
@@ -195,6 +239,9 @@ class ImageProcessor:
             async with aiofiles.open(index_path, 'r') as f:
                 content = await f.read()
                 data = json.loads(content)
+                # Ensure favorites are synced
+                for item in data:
+                    item['isFav'] = item['original_path'] in self.favorites
                 async with self._index_lock:
                     self.gallery_index = data
                 return data

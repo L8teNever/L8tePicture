@@ -108,12 +108,26 @@ async def root():
     return {"message": "P.I.X.I. API - Frontend not found"}
 
 
+from pydantic import BaseModel
+
+class FavoriteRequest(BaseModel):
+    original_path: str
+
 @app.get("/api/photos")
 async def get_photos() -> List[dict]:
     """Get all images with metadata"""
     try:
         gallery = await processor.get_gallery_index()
         return gallery
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/photos/favorite")
+async def toggle_favorite(req: FavoriteRequest):
+    """Toggle favorite status for a photo"""
+    try:
+        is_fav = await processor.toggle_favorite(req.original_path)
+        return {"status": "success", "is_fav": is_fav}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
