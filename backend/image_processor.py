@@ -25,6 +25,7 @@ class ImageProcessor:
         self.favorites: set[str] = set()
         self.scores: Dict[str, int] = {}
         self._index_loaded = False
+        self._favorites_loaded = False
         self._index_lock = asyncio.Lock()
         
     async def _load_favorites(self):
@@ -38,6 +39,9 @@ class ImageProcessor:
             except Exception as e:
                 print(f"Error loading favorites: {e}")
                 self.favorites = set()
+        else:
+             self.favorites = set()
+        self._favorites_loaded = True
 
     async def _save_favorites(self):
         fav_path = settings.CACHE_DIR / "favorites.json"
@@ -103,6 +107,8 @@ class ImageProcessor:
         try:
             rel_path = image_path.relative_to(settings.PICTURES_DIR)
             stem = image_path.stem
+            # Use POSIX path identifiers for consistency across OS
+            path_id = rel_path.as_posix()
             
             grid_path = settings.CACHE_DIR / "grid" / f"{stem}.webp"
             full_path = settings.CACHE_DIR / "full" / f"{stem}.webp"
@@ -112,7 +118,7 @@ class ImageProcessor:
             if await self._is_cached(image_path, grid_path, full_path, blurhash_path):
                 metadata = await self._load_metadata(image_path)
             else:
-                print(f"Processing: {rel_path}")
+                print(f"Processing: {path_id}")
                 
                 blurhash_string = None
                 original_size = (0, 0)
@@ -152,7 +158,7 @@ class ImageProcessor:
                         await f.write(blurhash_string)
                 
                 metadata = {
-                    'original_path': str(rel_path),
+                    'original_path': path_id,
                     'original_size': original_size,
                     'grid_preview': f"/cache/grid/{stem}.webp",
                     'full_preview': f"/cache/full/{stem}.webp",
@@ -163,9 +169,10 @@ class ImageProcessor:
                 }
             
             if metadata:
-                metadata['isFav'] = str(rel_path) in self.favorites
-                metadata['score'] = self.scores.get(str(rel_path), 0)
-                self.metadata_cache[str(rel_path)] = metadata
+                # Ensure path_id serves as key
+                metadata['isFav'] = path_id in self.favorites
+                metadata['score'] = self.scores.get(path_id, 0)
+                self.metadata_cache[path_id] = metadata
                 
                 # Update live index
                 if update_index:
@@ -200,6 +207,7 @@ class ImageProcessor:
     async def _load_metadata(self, image_path: Path) -> Dict:
         """Load metadata for an already processed image"""
         rel_path = image_path.relative_to(settings.PICTURES_DIR)
+        path_id = rel_path.as_posix()
         stem = image_path.stem
         
         # Load BlurHash
@@ -219,15 +227,15 @@ class ImageProcessor:
             original_size = img.size
         
         return {
-            'original_path': str(rel_path),
+            'original_path': path_id,
             'original_size': original_size,
             'grid_preview': f"/cache/grid/{stem}.webp",
             'full_preview': f"/cache/full/{stem}.webp",
             'blurhash': blurhash_string,
             'file_size': image_path.stat().st_size,
             'modified_at': datetime.fromtimestamp(image_path.stat().st_mtime).isoformat(),
-            'isFav': str(rel_path) in self.favorites,
-            'score': self.scores.get(str(rel_path), 0)
+            'isFav': path_id in self.favorites,
+            'score': self.scores.get(path_id, 0)
         }
 
     async def scan_directory(self) -> List[Dict]:
@@ -272,10 +280,11 @@ class ImageProcessor:
     
     async def get_gallery_index(self) -> List[Dict]:
         """Load or generate gallery index"""
-        if not self.favorites:
-            await self._load_favorites()
-        if not self.scores:
-            await self._load_scores()
+        async with self._index_lock:
+             if not self._favorites_loaded:
+                 await self._load_favorites()
+             if not self.scores:
+                 await self._load_scores()
 
         if self.gallery_index and self._index_loaded:
             return self.gallery_index
