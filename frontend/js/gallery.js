@@ -190,7 +190,14 @@ class GalleryManager {
     }
 
     closeViewer(updateHash = true) {
-        if (updateHash) window.router.push('#/');
+        if (updateHash) {
+            // If we are currently on a photo hash, go back or to root
+            if (window.location.hash.startsWith('#/photo/')) {
+                // Determine where to go back to (favorites or root)
+                const fallback = this.showOnlyFavorites ? '#/favorites' : '#/';
+                window.router.push(fallback);
+            }
+        }
         this.viewer.classList.remove('active');
         if (window.gestureManager) window.gestureManager.resetZoom();
     }

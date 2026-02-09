@@ -40,12 +40,21 @@ class Router {
             }
         } else if (hash.startsWith('#/photo/')) {
             const index = parseInt(hash.split('/').pop());
-            if (window.galleryManager) window.galleryManager.openViewer(index, false);
+            if (window.galleryManager) {
+                // If we jumped directly to a photo, check if we might be coming from favorites?
+                // For now, simple logic: just open it.
+                // NOTE: If we refresh on a photo URL, we won't know if we were in "Favorites" mode.
+                // We could infer it from the photo itself if loaded, but for now strict URL mapping.
+                window.galleryManager.openViewer(index, false);
+            }
         } else {
             // Default: Gallery (All)
-            if (window.galleryManager) {
-                window.galleryManager.closeViewer(false);
-                window.galleryManager.setFilter(false);
+            // Only reset if we are explicitly at root or empty hash
+            if (hash === '' || hash === '#/') {
+                if (window.galleryManager) {
+                    window.galleryManager.closeViewer(false);
+                    window.galleryManager.setFilter(false);
+                }
             }
         }
 
