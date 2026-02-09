@@ -21,10 +21,7 @@ class DiscoveryManager {
     init() {
         document.getElementById('discoveryBtn').addEventListener('click', () => this.open());
         document.getElementById('closeDiscovery').addEventListener('click', () => this.close());
-        document.getElementById('restartDiscovery').addEventListener('click', () => {
-            this.currentIndex = 0;
-            this.render();
-        });
+        document.getElementById('restartDiscovery').addEventListener('click', () => this.open());
 
         // Global mouse/touch release for better safety
         window.addEventListener('mouseup', () => this.handleDragEnd());
@@ -40,25 +37,44 @@ class DiscoveryManager {
     }
 
     async open() {
+        this.overlay.classList.add('active');
+        this.emptyState.classList.add('hidden');
+        this.currentIndex = 0;
+
+        // Show loading if empty
+        if (!window.galleryManager.photos || window.galleryManager.photos.length === 0) {
+            this.cardContainer.innerHTML = '<div id="discoveryLoader" class="text-white opacity-50 font-bold flex flex-col items-center gap-4"><div class="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>Bilder werden geladen...</div>';
+            await window.galleryManager.loadPhotos();
+        }
+
         this.photos = [...window.galleryManager.photos];
-        // Sort: show least seen/score 0 first, or shuffle
         this.photos.sort(() => Math.random() - 0.5);
 
-        this.overlay.classList.add('active');
         this.render();
     }
 
     close() {
         this.overlay.classList.remove('active');
-        // Refresh gallery to show updated scores/isFav if filtered
+        // Refresh gallery to show updated scores/isFav
         window.galleryManager.loadPhotos();
     }
 
     render() {
         this.cardContainer.querySelectorAll('.discovery-card').forEach(c => c.remove());
+        const loader = document.getElementById('discoveryLoader');
+        if (loader) loader.remove();
+
+        if (this.photos.length === 0) {
+            this.emptyState.classList.remove('hidden');
+            this.emptyState.querySelector('h3').textContent = 'Keine Bilder gefunden';
+            this.emptyState.querySelector('p').textContent = 'Versuche es später erneut oder scanne deine Ordner.';
+            return;
+        }
 
         if (this.currentIndex >= this.photos.length) {
             this.emptyState.classList.remove('hidden');
+            this.emptyState.querySelector('h3').textContent = 'Keine weiteren Bilder';
+            this.emptyState.querySelector('p').textContent = 'Du hast erst einmal alles gesehen. Komm später wieder!';
             return;
         }
 

@@ -24,6 +24,7 @@ class ImageProcessor:
         self.gallery_index: List[Dict] = []
         self.favorites: set[str] = set()
         self.scores: Dict[str, int] = {}
+        self._index_loaded = False
         self._index_lock = asyncio.Lock()
         
     async def _load_favorites(self):
@@ -167,8 +168,8 @@ class ImageProcessor:
                 self.metadata_cache[str(rel_path)] = metadata
                 # Update live index
                 async with self._index_lock:
-                    # Ensure index is loaded from disk if empty
-                    if not self.gallery_index:
+                    # Ensure index is loaded from disk if not yet done
+                    if not self._index_loaded:
                         await self.get_gallery_index()
                     
                     # Remove old entry if exists (by original_path)
@@ -287,6 +288,9 @@ class ImageProcessor:
                     item['score'] = self.scores.get(item['original_path'], 0)
                 async with self._index_lock:
                     self.gallery_index = data
+                    self._index_loaded = True
                 return data
         else:
-            return await self.scan_directory()
+            res = await self.scan_directory()
+            self._index_loaded = True
+            return res
