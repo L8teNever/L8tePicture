@@ -350,24 +350,45 @@
 
     <!-- Stats Dialog -->
     <div id="statsDialog" class="dialog-container">
-        <div class="material-dialog">
-            <h3 class="text-3xl font-black mb-8 tracking-tight">Galerie Statistik</h3>
+        <div class="material-dialog !max-w-2xl overflow-y-auto max-h-[90vh]">
+            <h3 class="text-4xl font-black mb-2 tracking-tight">Hall of Fame</h3>
+            <p class="opacity-50 text-sm font-bold uppercase tracking-widest mb-8">Deine meistgeliebten Momente</p>
 
-            <div id="statsContent" class="space-y-6">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-[var(--md-sys-color-surface-container)] p-4 rounded-3xl text-center">
-                        <div id="statTotalImages" class="text-2xl font-black text-[var(--md-sys-color-primary)]">-</div>
-                        <div class="text-[10px] font-bold uppercase opacity-50">Bilder</div>
-                    </div>
-                    <div class="bg-[var(--md-sys-color-surface-container)] p-4 rounded-3xl text-center">
-                        <div id="statTotalSize" class="text-2xl font-black text-[var(--md-sys-color-primary)]">-</div>
-                        <div class="text-[10px] font-bold uppercase opacity-50">Größe (MB)</div>
+            <div id="statsContent" class="space-y-8">
+                <!-- Highlight #1 Photo -->
+                <div id="topRankOne"
+                    class="relative group h-64 w-full rounded-[40px] overflow-hidden shadow-2xl bg-black/10 hidden">
+                    <img src=""
+                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div
+                        class="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/80 to-transparent text-white text-left">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span
+                                class="bg-yellow-400 text-black text-[10px] font-black px-2 py-0.5 rounded-full uppercase">Top
+                                1</span>
+                            <span id="rankOneScore" class="text-sm font-bold opacity-80">Score: 0</span>
+                        </div>
+                        <h4 class="text-2xl font-black">Dein absoluter Favorit</h4>
                     </div>
                 </div>
 
-                <div class="bg-[var(--md-sys-color-surface-container)] p-6 rounded-3xl">
-                    <h4 class="text-sm font-bold mb-4 uppercase tracking-widest opacity-50 text-left">Top Favoriten</h4>
-                    <div id="topPhotosList" class="flex flex-wrap gap-2 justify-start">
+                <div class="grid grid-cols-2 gap-4">
+                    <div
+                        class="bg-[var(--md-sys-color-surface-container)] p-6 rounded-[32px] text-center border border-white/5">
+                        <div id="statTotalImages" class="text-3xl font-black text-[var(--md-sys-color-primary)]">-</div>
+                        <div class="text-[10px] font-black uppercase opacity-50 tracking-widest">Bilder gescannt</div>
+                    </div>
+                    <div
+                        class="bg-[var(--md-sys-color-surface-container)] p-6 rounded-[32px] text-center border border-white/5">
+                        <div id="statTotalSize" class="text-3xl font-black text-[var(--md-sys-color-primary)]">-</div>
+                        <div class="text-[10px] font-black uppercase opacity-50 tracking-widest">Größe (MB)</div>
+                    </div>
+                </div>
+
+                <div class="bg-[var(--md-sys-color-surface-container)] p-8 rounded-[40px] border border-white/5">
+                    <h4 class="text-xs font-black mb-6 uppercase tracking-[0.2em] opacity-30 text-left">Top Leaderboard
+                    </h4>
+                    <div id="topPhotosList" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         <!-- Top photos thumbnails here -->
                     </div>
                 </div>
