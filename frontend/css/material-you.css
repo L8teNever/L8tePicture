@@ -365,3 +365,40 @@ input[type="range"]::-webkit-slider-thumb {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     z-index: 10;
 }
+
+/* Bottom Navigation */
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.nav-item .indicator {
+    background: transparent;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.nav-item.active .indicator {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.nav-item.active span {
+    color: var(--md-sys-color-on-surface);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 640px) {
+    #galleryGrid {
+        padding-bottom: 6rem;
+    }
+
+    #discoveryOverlay {
+        padding-bottom: 5rem;
+    }
+
+    /* Adjust viewer controls for mobile */
+    .viewer-top-controls {
+        top: 0;
+        bottom: auto;
+        padding-top: max(1rem, env(safe-area-inset-top));
+    }
+}

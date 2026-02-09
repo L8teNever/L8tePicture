@@ -27,9 +27,9 @@
             <h1 class="text-4xl sm:text-5xl font-black tracking-tighter select-none">P.I.X.I.</h1>
         </div>
 
-        <!-- Control Bar -->
+        <!-- Control Bar (Desktop Only) -->
         <div
-            class="flex items-center gap-0.5 sm:gap-1 bg-[var(--md-sys-color-surface-container)] p-1 sm:p-1.5 rounded-full shadow-lg relative flex-shrink-0">
+            class="hidden sm:flex items-center gap-0.5 sm:gap-1 bg-[var(--md-sys-color-surface-container)] p-1 sm:p-1.5 rounded-full shadow-lg relative flex-shrink-0">
 
             <!-- Dark Mode Toggle -->
             <button id="themeToggle" class="click-feedback p-2 sm:p-3 hover:bg-black/5 rounded-full transition-all">
@@ -114,6 +114,26 @@
                     <circle cx="12" cy="12" r="3" />
                     <path
                         d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Mobile Header Actions -->
+        <div class="flex sm:hidden items-center gap-2">
+            <button id="mobileSearchBtn" class="p-3 bg-[var(--md-sys-color-surface-container)] rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+            <button id="mobileSettingsBtn" class="p-3 bg-[var(--md-sys-color-surface-container)] rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
                 </svg>
             </button>
         </div>
@@ -398,6 +418,59 @@
                 class="click-feedback mt-8 w-full py-5 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-bold rounded-3xl">Schließen</button>
         </div>
     </div>
+
+    <!-- Bottom Navigation (Mobile Only) -->
+    <nav id="mobileNav"
+        class="fixed bottom-0 left-0 right-0 bg-[var(--md-sys-color-surface)] border-t border-[var(--md-sys-color-outline)]/20 sm:hidden z-[150] pb-safe">
+        <div class="flex justify-around items-center h-16">
+            <button data-nav="gallery"
+                class="nav-item active flex flex-col items-center gap-1 p-2 w-full text-[var(--md-sys-color-on-surface-variant)]">
+                <div class="indicator px-5 py-1 rounded-full transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                        <circle cx="9" cy="9" r="2" />
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                    </svg>
+                </div>
+                <span class="text-[10px] font-bold">Fotos</span>
+            </button>
+            <button data-nav="favorites"
+                class="nav-item flex flex-col items-center gap-1 p-2 w-full text-[var(--md-sys-color-on-surface-variant)]">
+                <div class="indicator px-5 py-1 rounded-full transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                    </svg>
+                </div>
+                <span class="text-[10px] font-bold">Favoriten</span>
+            </button>
+            <button data-nav="discovery"
+                class="nav-item flex flex-col items-center gap-1 p-2 w-full text-[var(--md-sys-color-on-surface-variant)]">
+                <div class="indicator px-5 py-1 rounded-full transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                </div>
+                <span class="text-[10px] font-bold">For You</span>
+            </button>
+            <button data-nav="stats"
+                class="nav-item flex flex-col items-center gap-1 p-2 w-full text-[var(--md-sys-color-on-surface-variant)]">
+                <div class="indicator px-5 py-1 rounded-full transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" x2="18" y1="20" y2="10" />
+                        <line x1="12" x2="12" y1="20" y2="4" />
+                        <line x1="6" x2="6" y1="20" y2="14" />
+                    </svg>
+                </div>
+                <span class="text-[10px] font-bold">Stats</span>
+            </button>
+        </div>
+    </nav>
 
     <!-- App Logic -->
     <script src="/static/js/theme.js"></script>

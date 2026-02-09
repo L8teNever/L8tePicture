@@ -100,4 +100,64 @@ document.addEventListener('DOMContentLoaded', () => {
             header.classList.remove('scrolled');
         }
     }, { passive: true });
+
+    // Mobile Navigation Logic
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const nav = item.dataset.nav;
+            if (nav === 'gallery') window.router.push('#/');
+            else if (nav === 'favorites') window.router.push('#/favorites');
+            else if (nav === 'discovery') window.router.push('#/discovery');
+            else if (nav === 'stats') window.router.push('#/stats');
+        });
+    });
+
+    // Sync Active State on Hash Change
+    window.addEventListener('hashchange', updateActiveNav);
+    updateActiveNav(); // Initial
+
+    function updateActiveNav() {
+        const hash = window.location.hash || '#/';
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            item.querySelector('span').classList.remove('font-bold'); // Reset bold
+        });
+
+        let activeNav = 'gallery';
+        if (hash === '#/favorites') activeNav = 'favorites';
+        else if (hash === '#/discovery') activeNav = 'discovery';
+        else if (hash === '#/stats') activeNav = 'stats';
+        else if (hash.startsWith('#/photo/')) {
+            // Determine based on filter state if possible, or default to gallery
+            // For simplicity, we keep the last known state or default to gallery
+            if (window.galleryManager && window.galleryManager.showOnlyFavorites) {
+                activeNav = 'favorites';
+            } else {
+                activeNav = 'gallery';
+            }
+        }
+
+        const activeBtn = document.querySelector(`.nav-item[data-nav="${activeNav}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+            activeBtn.querySelector('span').classList.add('font-bold');
+        }
+    }
+
+    // Mobile Header Buttons
+    const mobileSearchBtn = document.getElementById('mobileSearchBtn');
+    if (mobileSearchBtn) {
+        mobileSearchBtn.addEventListener('click', () => {
+            // Toggle search/filter bar (if implemented) or just scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    const mobileSettingsBtn = document.getElementById('mobileSettingsBtn');
+    if (mobileSettingsBtn) {
+        mobileSettingsBtn.addEventListener('click', () => {
+            document.getElementById('settingsDialog').classList.add('active');
+        });
+    }
 });
