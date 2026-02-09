@@ -160,8 +160,11 @@ class GalleryManager {
         // Viewer Actions
         const infoBtn = document.getElementById('viewerInfoBtn');
         if (infoBtn) {
-            infoBtn.addEventListener('click', () => {
+            infoBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.showInfo = !this.showInfo;
+                infoBtn.classList.toggle('bg-white/30', this.showInfo);
+                infoBtn.classList.toggle('bg-white/10', !this.showInfo);
                 this.updateViewerInfo();
             });
         }
@@ -274,7 +277,7 @@ class GalleryManager {
         }
 
         if (infoContainer) {
-            infoContainer.style.display = this.showInfo ? 'block' : 'none';
+            infoContainer.classList.toggle('active', this.showInfo);
         }
     }
 

@@ -194,6 +194,7 @@ header.scrolled {
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     padding: 0.75rem 1.5rem;
     border-radius: 20px;
     color: white;
@@ -201,6 +202,14 @@ header.scrolled {
     z-index: 1100;
     max-width: 90vw;
     text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.viewer-info.active {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 @keyframes fadeIn {
