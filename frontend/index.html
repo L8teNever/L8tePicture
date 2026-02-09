@@ -21,100 +21,79 @@
 
 <body class="px-4 sm:px-8 md:px-12 pb-12">
 
-    <!-- Header / Top App Bar -->
-    <header id="mainHeader" class="sticky top-0 z-50 transition-all duration-500 pt-8 pb-4">
-        <div class="max-w-7xl mx-auto flex flex-col gap-6">
-            <!-- Top Row: Actions -->
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <div
-                        class="w-10 h-10 bg-[var(--md-sys-color-primary)] rounded-full flex items-center justify-center text-white shadow-lg">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path
-                                d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                            <circle cx="12" cy="13" r="4" />
-                        </svg>
-                    </div>
-                </div>
+    <!-- Header -->
+    <header id="mainHeader" class="max-w-7xl mx-auto flex flex-row justify-between items-center gap-4">
+        <div class="text-left">
+            <h1 class="text-4xl sm:text-5xl font-black tracking-tighter select-none">P.I.X.I.</h1>
+        </div>
 
-                <div
-                    class="flex items-center gap-2 bg-[var(--md-sys-color-surface-container-high)] p-1 rounded-full shadow-sm">
-                    <!-- Dark Mode Toggle -->
-                    <button id="themeToggle" class="click-feedback p-3 hover:bg-black/5 rounded-full transition-all">
-                        <svg id="themeIcon" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                        </svg>
-                    </button>
+        <!-- Control Bar -->
+        <div
+            class="flex items-center gap-0.5 sm:gap-1 bg-[var(--md-sys-color-surface-container)] p-1 sm:p-1.5 rounded-full shadow-lg relative flex-shrink-0">
 
-                    <div class="w-[1px] h-4 bg-gray-400 mx-1 opacity-20"></div>
+            <!-- Dark Mode Toggle -->
+            <button id="themeToggle" class="click-feedback p-2 sm:p-3 hover:bg-black/5 rounded-full transition-all">
+                <svg id="themeIcon" class="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+            </button>
 
-                    <!-- Grid View -->
-                    <div class="relative">
-                        <button id="viewToggle"
-                            class="click-feedback flex items-center gap-2 hover:bg-black/5 px-4 py-2 rounded-full transition-all">
-                            <span id="currentViewLabel" class="font-bold text-sm">5</span>
-                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2.5">
-                                <rect x="3" y="3" width="7" height="7" />
-                                <rect x="14" y="3" width="7" height="7" />
-                                <rect x="14" y="14" width="7" height="7" />
-                                <rect x="3" y="14" width="7" height="7" />
-                            </svg>
-                        </button>
-                        <div id="viewPopover">
-                            <button class="view-option click-feedback" data-cols="1">1</button>
-                            <button class="view-option click-feedback" data-cols="2">2</button>
-                            <button class="view-option click-feedback" data-cols="3">3</button>
-                            <button class="view-option click-feedback" data-cols="4">4</button>
-                            <button class="view-option click-feedback active" data-cols="5">5</button>
-                        </div>
-                    </div>
+            <div class="w-[1px] h-4 sm:h-6 bg-gray-400 mx-0.5 sm:mx-1 opacity-20"></div>
 
-                    <div class="w-[1px] h-4 bg-gray-400 mx-1 opacity-20"></div>
-
-                    <!-- Settings -->
-                    <button id="settingsBtn" class="click-feedback p-3 hover:bg-black/5 rounded-full transition-all">
-                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="3" />
-                            <path
-                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                        </svg>
-                    </button>
-
-                    <!-- Music Group (Placeholder for logic) -->
-                    <button class="click-feedback p-3 hover:bg-black/5 rounded-full transition-all text-gray-400">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 18V5l12-2v13" />
-                            <circle cx="6" cy="18" r="3" />
-                            <circle cx="18" cy="16" r="3" />
-                        </svg>
-                    </button>
+            <!-- Grid View Selector -->
+            <div class="relative">
+                <button id="viewToggle"
+                    class="click-feedback flex items-center gap-1 sm:gap-2 hover:bg-black/5 px-2 sm:px-4 py-2 sm:py-2.5 rounded-full transition-all">
+                    <svg class="w-[16px] h-[16px] sm:w-[20px] sm:h-[20px]" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                    <span id="currentViewLabel" class="font-bold text-xs sm:text-sm hidden sm:inline">3</span>
+                </button>
+                <div id="viewPopover">
+                    <button class="view-option click-feedback" data-cols="1">1</button>
+                    <button class="view-option click-feedback" data-cols="2">2</button>
+                    <button class="view-option click-feedback active" data-cols="3">3</button>
+                    <button class="view-option click-feedback" data-cols="4">4</button>
+                    <button class="view-option click-feedback" data-cols="5">5</button>
                 </div>
             </div>
 
-            <!-- Bottom Row: Big Title -->
-            <div id="headerTitleContainer" class="flex items-end justify-between transition-all duration-500">
-                <h1 id="mainTitle" class="text-6xl sm:text-7xl font-black tracking-tight select-none">Galerie</h1>
+            <!-- Slideshow Button -->
+            <button id="slideshowBtn"
+                class="click-feedback p-2 sm:p-3 hover:bg-black/5 rounded-full transition-all text-[var(--md-sys-color-primary)]">
+                <svg class="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+            </button>
 
-                <div class="flex items-center gap-3">
-                    <button id="filterBtn"
-                        class="click-feedback p-4 bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] rounded-3xl shadow-sm transition-all hover:shadow-md">
-                        <svg id="filterIcon" class="favorite-icon w-6 h-6" xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path
-                                d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                        </svg>
-                    </button>
-                    <button id="slideshowBtn"
-                        class="click-feedback p-4 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] rounded-3xl shadow-lg transition-all hover:scale-105">
-                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                            <polygon points="5 3 19 12 5 21 5 3" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
+            <!-- Favorites Filter -->
+            <button id="filterBtn" class="click-feedback p-2 sm:p-3 hover:bg-black/5 rounded-full transition-all">
+                <svg id="filterIcon" class="favorite-icon w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]"
+                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
+            </button>
+
+            <!-- Settings Button -->
+            <button id="settingsBtn" class="click-feedback p-2 sm:p-3 hover:bg-black/5 rounded-full transition-all">
+                <svg class="w-[18px] h-[18px] sm:w-[22px] sm:h-[22px]" xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+            </button>
         </div>
     </header>
 
