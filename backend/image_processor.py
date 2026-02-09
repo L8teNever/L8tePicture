@@ -133,6 +133,10 @@ class ImageProcessor:
                 self.metadata_cache[str(rel_path)] = metadata
                 # Update live index
                 async with self._index_lock:
+                    # Ensure index is loaded from disk if empty
+                    if not self.gallery_index:
+                        await self.get_gallery_index()
+                    
                     # Remove old entry if exists (by original_path)
                     self.gallery_index = [item for item in self.gallery_index if item['original_path'] != metadata['original_path']]
                     self.gallery_index.append(metadata)

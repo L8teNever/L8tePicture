@@ -139,6 +139,24 @@ class GalleryManager {
             document.getElementById('settingsDialog').classList.remove('active');
         });
 
+        const rescanBtn = document.getElementById('rescanBtn');
+        if (rescanBtn) {
+            rescanBtn.addEventListener('click', async () => {
+                const originalText = rescanBtn.textContent;
+                rescanBtn.textContent = 'Scan läuft...';
+                rescanBtn.disabled = true;
+                try {
+                    await fetch('/api/scan');
+                    await this.loadPhotos();
+                } catch (err) {
+                    console.error('Scan error:', err);
+                } finally {
+                    rescanBtn.textContent = originalText;
+                    rescanBtn.disabled = false;
+                }
+            });
+        }
+
         // Viewer Menu Toggle
         const menuToggle = document.getElementById('viewerMenuToggle');
         const actionsMenu = document.getElementById('viewerActionsMenu');
