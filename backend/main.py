@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -125,6 +125,60 @@ async def scan_gallery():
     try:
         gallery = await processor.scan_directory()
         return {"status": "success", "images_processed": len(gallery)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/upload")
+async def upload_images(files: List[UploadFile] = File(...)):
+    """Upload multiple images to the gallery"""
+    try:
+        uploaded = []
+        failed = []
+        
+        for file in files:
+            # Validate file type
+            if not file.filename.lower().endswith(tuple(settings.SUPPORTED_FORMATS)):
+                failed.append({
+                    "filename": file.filename,
+                    "error": "Unsupported file format"
+                })
+                continue
+            
+            # Generate unique filename if exists
+            target_path = settings.PICTURES_DIR / file.filename
+            counter = 1
+            while target_path.exists():
+                name_parts = file.filename.rsplit('.', 1)
+                target_path = settings.PICTURES_DIR / f"{name_parts[0]}_{counter}.{name_parts[1]}"
+                counter += 1
+            
+            # Save file
+            try:
+                content = await file.read()
+                target_path.write_bytes(content)
+                
+                # Trigger processing in background
+                asyncio.create_task(processor.process_image(target_path))
+                
+                uploaded.append({
+                    "filename": file.filename,
+                    "saved_as": target_path.name,
+                    "size": len(content)
+                })
+            except Exception as e:
+                failed.append({
+                    "filename": file.filename,
+                    "error": str(e)
+                })
+        
+        return {
+            "status": "success",
+            "uploaded": len(uploaded),
+            "failed": len(failed),
+            "files": uploaded,
+            "errors": failed
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
