@@ -17,6 +17,12 @@ class GalleryManager {
     }
 
     async init() {
+        const savedCols = localStorage.getItem('pixi-cols');
+        const isMobile = window.innerWidth < 768;
+        // Default to 5 on PC, 2 on Mobile if nothing saved
+        const defaultCols = savedCols ? parseInt(savedCols) : (isMobile ? 2 : 5);
+
+        this.setColumns(defaultCols);
         await this.loadPhotos();
         this.attachEventListeners();
     }
@@ -166,21 +172,22 @@ class GalleryManager {
     }
 
     setColumns(cols) {
+        localStorage.setItem('pixi-cols', cols);
         const grid = this.grid;
-        // Reset classes - Use columns-X for masonry
+        // Reset classes
         grid.className = "max-w-7xl mx-auto pb-20 transition-all duration-300";
 
-        // Mobile: always 1 column, Tablet: 2 columns, Desktop: user choice
+        // Logic for "Smart" Responsive Columns
         if (cols === 1) {
             grid.classList.add('columns-1');
         } else if (cols === 2) {
-            grid.classList.add('columns-1', 'sm:columns-2');
+            grid.classList.add('columns-2'); // 2 on Mobile, 2 on PC
         } else if (cols === 3) {
-            grid.classList.add('columns-1', 'sm:columns-2', 'md:columns-3');
+            grid.classList.add('columns-2', 'md:columns-3'); // 2 on Mobile, 3 on PC
         } else if (cols === 4) {
-            grid.classList.add('columns-1', 'sm:columns-2', 'md:columns-3', 'lg:columns-4');
+            grid.classList.add('columns-2', 'sm:columns-3', 'lg:columns-4'); // 2 on Mobile, 3 Tablet, 4 PC
         } else if (cols === 5) {
-            grid.classList.add('columns-1', 'sm:columns-2', 'md:columns-3', 'lg:columns-4', 'xl:columns-5');
+            grid.classList.add('columns-3', 'sm:columns-4', 'lg:columns-5'); // 3 on Mobile, 4 Tablet, 5 PC
         }
 
         document.getElementById('currentViewLabel').textContent = cols;
