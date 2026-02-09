@@ -113,6 +113,10 @@ from pydantic import BaseModel
 class FavoriteRequest(BaseModel):
     original_path: str
 
+class VoteRequest(BaseModel):
+    original_path: str
+    delta: int # +1 for like, -1 for dislike
+
 @app.get("/api/photos")
 async def get_photos() -> List[dict]:
     """Get all images with metadata"""
@@ -128,6 +132,15 @@ async def toggle_favorite(req: FavoriteRequest):
     try:
         is_fav = await processor.toggle_favorite(req.original_path)
         return {"status": "success", "is_fav": is_fav}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/photos/vote")
+async def vote_photo(req: VoteRequest):
+    """Vote (like/dislike) for a photo"""
+    try:
+        new_score = await processor.vote(req.original_path, req.delta)
+        return {"status": "success", "new_score": new_score}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -222,10 +235,14 @@ async def get_stats():
         gallery = await processor.get_gallery_index()
         total_size = sum(img.get('file_size', 0) for img in gallery)
         
+        # Get top 5 photos by score
+        top_photos = sorted(gallery, key=lambda x: x.get('score', 0), reverse=True)[:5]
+        
         return {
             'total_images': len(gallery),
             'total_size_bytes': total_size,
             'total_size_mb': round(total_size / (1024 * 1024), 2),
+            'top_photos': top_photos,
             'cache_dir': str(settings.CACHE_DIR),
             'pictures_dir': str(settings.PICTURES_DIR)
         }

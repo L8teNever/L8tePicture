@@ -69,8 +69,24 @@ class SlideshowEngine {
         if (this.timer) clearInterval(this.timer);
         this.timer = setInterval(() => {
             if (this.shuffleToggle.checked) {
-                const len = window.galleryManager.filteredPhotos.length;
-                const next = Math.floor(Math.random() * len);
+                const photos = window.galleryManager.filteredPhotos;
+                const len = photos.length;
+
+                // Weighted random based on score
+                // Weight = 1 + score (clamped to 0 min)
+                const weights = photos.map(p => Math.max(0.1, 1 + (p.score || 0)));
+                const totalWeight = weights.reduce((a, b) => a + b, 0);
+
+                let random = Math.random() * totalWeight;
+                let next = 0;
+                for (let i = 0; i < len; i++) {
+                    random -= weights[i];
+                    if (random <= 0) {
+                        next = i;
+                        break;
+                    }
+                }
+
                 window.galleryManager.currentIndex = next;
                 window.galleryManager.navigate(0);
             } else {

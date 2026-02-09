@@ -469,4 +469,74 @@ input[type="range"]::-moz-range-thumb {
 
 .upload-drop-zone svg {
     color: var(--md-sys-color-primary);
+    /* test */
+}
+
+/* Discovery Cards */
+.discovery-card {
+    position: absolute;
+    width: 90vw;
+    max-width: 450px;
+    height: 70vh;
+    border-radius: 40px;
+    background: #000;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    user-select: none;
+    touch-action: none;
+    transition: transform 0.1s ease, opacity 0.3s ease;
+    cursor: grab;
+    will-change: transform, opacity;
+}
+
+.discovery-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+.discovery-card:active {
+    cursor: grabbing;
+}
+
+/* Discovery Status Indicators */
+.card-status {
+    position: absolute;
+    top: 40px;
+    font-size: 48px;
+    font-weight: 900;
+    text-transform: uppercase;
+    padding: 10px 40px;
+    border: 8px solid;
+    border-radius: 20px;
+    opacity: 0;
+    transform: rotate(-15deg);
+    transition: opacity 0.2s ease;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.card-status.like {
+    left: 40px;
+    color: #4CAF50;
+    border-color: #4CAF50;
+    transform: rotate(-15deg);
+}
+
+.card-status.dislike {
+    right: 40px;
+    color: #F44336;
+    border-color: #F44336;
+    transform: rotate(15deg);
+}
+
+.card-status.delete {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(0);
+    color: #fff;
+    background: #F44336;
+    border-color: #fff;
+    font-size: 32px;
 }

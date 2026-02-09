@@ -23,6 +23,7 @@ class ImageProcessor:
         self.metadata_cache: Dict[str, dict] = {}
         self.gallery_index: List[Dict] = []
         self.favorites: set[str] = set()
+        self.scores: Dict[str, int] = {}
         self._index_lock = asyncio.Lock()
         
     async def _load_favorites(self):
@@ -41,6 +42,38 @@ class ImageProcessor:
         fav_path = settings.CACHE_DIR / "favorites.json"
         async with aiofiles.open(fav_path, 'w') as f:
             await f.write(json.dumps(list(self.favorites)))
+
+    async def _load_scores(self):
+        score_path = settings.CACHE_DIR / "scores.json"
+        if score_path.exists():
+            try:
+                async with aiofiles.open(score_path, 'r') as f:
+                    content = await f.read()
+                    self.scores = json.loads(content)
+            except Exception as e:
+                print(f"Error loading scores: {e}")
+                self.scores = {}
+
+    async def _save_scores(self):
+        score_path = settings.CACHE_DIR / "scores.json"
+        async with aiofiles.open(score_path, 'w') as f:
+            await f.write(json.dumps(self.scores))
+
+    async def vote(self, original_path: str, delta: int) -> int:
+        """Increment/decrement score for an image"""
+        async with self._index_lock:
+            current = self.scores.get(original_path, 0)
+            new_score = current + delta
+            self.scores[original_path] = new_score
+            
+            for item in self.gallery_index:
+                if item['original_path'] == original_path:
+                    item['score'] = new_score
+                    break
+            
+            await self._save_scores()
+            await self._save_index(self.gallery_index)
+            return new_score
 
     async def toggle_favorite(self, original_path: str) -> bool:
         """Toggle favorite status for an image and save to disk"""
@@ -130,6 +163,7 @@ class ImageProcessor:
             
             if metadata:
                 metadata['isFav'] = str(rel_path) in self.favorites
+                metadata['score'] = self.scores.get(str(rel_path), 0)
                 self.metadata_cache[str(rel_path)] = metadata
                 # Update live index
                 async with self._index_lock:
@@ -189,7 +223,8 @@ class ImageProcessor:
             'blurhash': blurhash_string,
             'file_size': image_path.stat().st_size,
             'modified_at': datetime.fromtimestamp(image_path.stat().st_mtime).isoformat(),
-            'isFav': str(rel_path) in self.favorites
+            'isFav': str(rel_path) in self.favorites,
+            'score': self.scores.get(str(rel_path), 0)
         }
 
     async def scan_directory(self) -> List[Dict]:
@@ -203,6 +238,7 @@ class ImageProcessor:
         self.is_scanning = True
         try:
             await self._load_favorites()
+            await self._load_scores()
             image_files = []
             for ext in settings.SUPPORTED_FORMATS:
                 image_files.extend(settings.PICTURES_DIR.rglob(f"*{ext}"))
@@ -234,6 +270,8 @@ class ImageProcessor:
         """Load or generate gallery index"""
         if not self.favorites:
             await self._load_favorites()
+        if not self.scores:
+            await self._load_scores()
 
         if self.gallery_index:
             return self.gallery_index
@@ -243,9 +281,10 @@ class ImageProcessor:
             async with aiofiles.open(index_path, 'r') as f:
                 content = await f.read()
                 data = json.loads(content)
-                # Ensure favorites are synced
+                # Ensure favorites and scores are synced
                 for item in data:
                     item['isFav'] = item['original_path'] in self.favorites
+                    item['score'] = self.scores.get(item['original_path'], 0)
                 async with self._index_lock:
                     self.gallery_index = data
                 return data
