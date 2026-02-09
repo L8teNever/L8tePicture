@@ -36,7 +36,9 @@ class Router {
         } else if (hash === '#/favorites') {
             if (window.galleryManager) {
                 window.galleryManager.closeViewer(false);
-                window.galleryManager.setFilter(true);
+                if (!window.galleryManager.showOnlyFavorites) {
+                    window.galleryManager.setFilter(true);
+                }
             }
         } else if (hash.startsWith('#/photo/')) {
             const index = parseInt(hash.split('/').pop());
