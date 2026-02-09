@@ -7,9 +7,11 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./volumes/pictures:/pictures
-      - ./volumes/cache:/cache
-      - ./volumes/music:/music:ro
+      - ./uploads:/pictures
+      - ./thumbnails:/cache/grid
+      - ./data:/cache/full
+      - ./cache:/cache
+      - ./music:/music:ro
     environment:
       - PICTURES_DIR=/pictures
       - CACHE_DIR=/cache
