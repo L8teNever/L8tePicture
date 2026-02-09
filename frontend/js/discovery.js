@@ -20,9 +20,10 @@ class DiscoveryManager {
     }
 
     init() {
-        document.getElementById('discoveryBtn').addEventListener('click', () => this.open());
-        document.getElementById('closeDiscovery').addEventListener('click', () => this.close());
-        document.getElementById('restartDiscovery').addEventListener('click', () => this.open());
+        // Buttons use Router now
+        document.getElementById('discoveryBtn').addEventListener('click', () => window.router.push('#/discovery'));
+        document.getElementById('closeDiscovery').addEventListener('click', () => window.router.push('#/'));
+        document.getElementById('restartDiscovery').addEventListener('click', () => this.open(true));
 
         // Global mouse/touch release
         window.addEventListener('mouseup', () => this.handleDragEnd());
@@ -30,14 +31,14 @@ class DiscoveryManager {
         window.addEventListener('mousemove', (e) => this.handleDragMove(e));
         window.addEventListener('touchmove', (e) => this.handleDragMove(e), { passive: false });
 
-        // Stats
-        document.getElementById('statsBtn').addEventListener('click', () => this.openStats());
-        document.getElementById('closeStatsBtn').addEventListener('click', () => {
-            document.getElementById('statsDialog').classList.remove('active');
-        });
+        // Stats uses Router
+        document.getElementById('statsBtn').addEventListener('click', () => window.router.push('#/stats'));
+        document.getElementById('closeStatsBtn').addEventListener('click', () => window.router.push('#/'));
     }
 
-    async open() {
+    async open(updateHash = true) {
+        if (updateHash) window.router.push('#/discovery');
+
         this.overlay.classList.add('active');
         this.emptyState.classList.add('hidden');
         this.currentIndex = 0;
@@ -49,15 +50,14 @@ class DiscoveryManager {
         }
 
         this.photos = [...window.galleryManager.photos];
-        this.photos.sort(() => Math.random() - 0.5);
+        // Weighted shuffle: higher score = earlier in pile (discovery)
+        this.photos.sort((a, b) => (b.score + Math.random() * 2) - (a.score + Math.random() * 2));
 
-        // Start preloading immediately
         this.preloadImages(0);
         this.render();
     }
 
     preloadImages(startAt) {
-        // Preload next 10 images
         for (let i = startAt; i < Math.min(this.photos.length, startAt + 10); i++) {
             const url = this.photos[i].full_preview;
             if (!this.preloadedImages.has(url)) {
@@ -68,15 +68,14 @@ class DiscoveryManager {
         }
     }
 
-    close() {
+    close(updateHash = true) {
+        if (updateHash) window.router.push('#/');
         this.overlay.classList.remove('active');
         window.galleryManager.loadPhotos();
     }
 
     render() {
-        // Clear previous cards
         this.cardContainer.querySelectorAll('.discovery-card').forEach(c => c.remove());
-
         const loader = document.getElementById('discoveryLoader');
         if (loader) loader.remove();
 
@@ -93,16 +92,15 @@ class DiscoveryManager {
 
         this.emptyState.classList.add('hidden');
 
-        // Render 3 cards ahead
-        for (let i = Math.min(this.photos.length - 1, this.currentIndex + 2); i >= this.currentIndex; i--) {
-            this.createCard(this.photos[i], i === this.currentIndex);
+        // Render 5 cards ahead for mobile stack feel
+        for (let i = Math.min(this.photos.length - 1, this.currentIndex + 4); i >= this.currentIndex; i--) {
+            this.createCard(this.photos[i], i === this.currentIndex, i - this.currentIndex);
         }
 
-        // Preload ahead
-        this.preloadImages(this.currentIndex + 3);
+        this.preloadImages(this.currentIndex + 5);
     }
 
-    createCard(photo, isTop) {
+    createCard(photo, isTop, depth) {
         const card = document.createElement('div');
         card.className = 'discovery-card';
         card.innerHTML = `
@@ -110,19 +108,25 @@ class DiscoveryManager {
             <div class="card-status like">LIKE</div>
             <div class="card-status dislike">NOPE</div>
             <div class="card-status delete">DELETE</div>
+            <div class="card-info absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-black/80 to-transparent text-white text-left pointer-events-none">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-black opacity-50 uppercase tracking-widest">${photo.score} Points</span>
+                </div>
+            </div>
         `;
 
         if (isTop) {
             this.currentCard = card;
             card.addEventListener('mousedown', (e) => this.handleDragStart(e));
             card.addEventListener('touchstart', (e) => this.handleDragStart(e));
-            card.style.zIndex = 10;
+            card.style.zIndex = 100;
         } else {
-            // Stack effect
-            const offset = (this.cardContainer.querySelectorAll('.discovery-card').length + 1) * 10;
-            card.style.transform = `scale(0.95) translateY(${offset}px)`;
-            card.style.opacity = '0.5';
-            card.style.zIndex = -1;
+            // Stack offset for mobile
+            const scale = 1 - (depth * 0.05);
+            const translateY = depth * 15;
+            card.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+            card.style.opacity = 1 - (depth * 0.2);
+            card.style.zIndex = 10 - depth;
         }
 
         this.cardContainer.appendChild(card);
@@ -145,7 +149,7 @@ class DiscoveryManager {
 
         const moveX = clientX - this.startX;
         const moveY = clientY - this.startY;
-        const rotate = moveX / 10;
+        const rotate = moveX / 15;
 
         this.currentCard.style.transform = `translate(${moveX}px, ${moveY}px) rotate(${rotate}deg)`;
 
@@ -153,9 +157,9 @@ class DiscoveryManager {
         const dislike = this.currentCard.querySelector('.card-status.dislike');
         const del = this.currentCard.querySelector('.card-status.delete');
 
-        like.style.opacity = Math.max(0, moveX / 100);
-        dislike.style.opacity = Math.max(0, -moveX / 100);
-        del.style.opacity = Math.max(0, -moveY / 150);
+        like.style.opacity = Math.max(0, moveX / 80);
+        dislike.style.opacity = Math.max(0, -moveX / 80);
+        del.style.opacity = Math.max(0, -moveY / 120);
 
         if (e.type === 'touchmove') e.preventDefault();
     }
@@ -172,9 +176,9 @@ class DiscoveryManager {
         const moveX = parseFloat(match[1]);
         const moveY = parseFloat(match[2]);
 
-        if (moveX > 100) this.swipe('right');
-        else if (moveX < -100) this.swipe('left');
-        else if (moveY < -150) this.swipe('up');
+        if (moveX > 80) this.swipe('right');
+        else if (moveX < -80) this.swipe('left');
+        else if (moveY < -120) this.swipe('up');
         else {
             this.currentCard.style.transition = 'transform 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
             this.currentCard.style.transform = '';
@@ -199,12 +203,11 @@ class DiscoveryManager {
         card.style.transition = 'transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.5s ease';
         card.style.transform = `translate(${x}px, ${y}px) rotate(${rotate}deg)`;
         card.style.opacity = '0';
-        card.style.pointerEvents = 'none';
 
         setTimeout(() => {
             card.remove();
             this.render();
-        }, 500);
+        }, 400);
     }
 
     async vote(photo, delta) {
@@ -225,7 +228,8 @@ class DiscoveryManager {
         }
     }
 
-    async openStats() {
+    async openStats(updateHash = true) {
+        if (updateHash) window.router.push('#/stats');
         const dialog = document.getElementById('statsDialog');
         dialog.classList.add('active');
 
@@ -236,7 +240,6 @@ class DiscoveryManager {
             document.getElementById('statTotalImages').textContent = data.total_images;
             document.getElementById('statTotalSize').textContent = data.total_size_mb;
 
-            // Hall of Fame Highlight
             const topOne = document.getElementById('topRankOne');
             if (data.top_photos && data.top_photos.length > 0) {
                 const first = data.top_photos[0];
@@ -247,11 +250,10 @@ class DiscoveryManager {
                 topOne.classList.add('hidden');
             }
 
-            // Leaderboard List
             const list = document.getElementById('topPhotosList');
             list.innerHTML = '';
 
-            const remaining = data.top_photos.slice(1, 9);
+            const remaining = data.top_photos.slice(1, 13); // Show up to 12 more
             remaining.forEach((photo, idx) => {
                 const item = document.createElement('div');
                 item.className = 'relative group aspect-square rounded-[24px] overflow-hidden shadow-lg bg-black/5';

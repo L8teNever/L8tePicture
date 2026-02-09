@@ -36,6 +36,7 @@ body.dark {
 
 * {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -46,7 +47,6 @@ body {
     color: var(--md-sys-color-on-surface);
     transition: background-color 0.3s ease, color 0.3s ease;
     overflow-x: hidden;
-    -webkit-tap-highlight-color: transparent;
 }
 
 /* Buttons & Interactive Elements */
@@ -136,12 +136,6 @@ header.scrolled {
     transition: opacity 0.3s ease;
 }
 
-.viewer-controls-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-/* Top Controls (Close Button) */
 .viewer-top-controls {
     position: fixed;
     top: 0;
@@ -152,32 +146,6 @@ header.scrolled {
     justify-content: flex-end;
     z-index: 1100;
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
-}
-
-/* Image Info Overlay */
-.viewer-info {
-    position: fixed;
-    bottom: 6rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    padding: 0.75rem 1.5rem;
-    border-radius: 20px;
-    color: white;
-    font-size: 0.875rem;
-    z-index: 1100;
-    max-width: 90vw;
-    text-align: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-
-.viewer-info.active {
-    opacity: 1;
-    pointer-events: auto;
 }
 
 @keyframes fadeIn {
@@ -246,15 +214,6 @@ header.scrolled {
     background: var(--md-sys-color-primary);
 }
 
-/* Empty State */
-.empty-state {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 80px 20px;
-    color: var(--md-sys-color-on-surface-variant);
-    opacity: 0.5;
-}
-
 /* Range Input */
 input[type="range"] {
     width: 100%;
@@ -266,10 +225,6 @@ input[type="range"] {
     transition: opacity 0.2s;
 }
 
-input[type="range"]:hover {
-    opacity: 1;
-}
-
 input[type="range"]::-webkit-slider-thumb {
     appearance: none;
     width: 20px;
@@ -279,31 +234,45 @@ input[type="range"]::-webkit-slider-thumb {
     cursor: pointer;
 }
 
-/* Upload Drop Zone */
-.upload-drop-zone {
-    border: 3px dashed var(--md-sys-color-outline);
-    border-radius: 24px;
-    padding: 3rem 2rem;
-    text-align: center;
-    transition: all 0.3s ease;
-    background: var(--md-sys-color-surface-container);
+/* Discovery Mode Overlay */
+#discoveryOverlay {
+    background: #000;
+    overflow: hidden;
+    touch-action: none;
+}
+
+#cardContainer {
+    perspective: 1000px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Discovery Cards */
 .discovery-card {
     position: absolute;
-    width: 90vw;
-    max-width: 450px;
-    height: 70vh;
-    border-radius: 40px;
-    background: #000;
+    width: 85vw;
+    max-width: 400px;
+    height: 65vh;
+    border-radius: 32px;
+    background: #1a1a1a;
     overflow: hidden;
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     user-select: none;
     touch-action: none;
-    transition: transform 0.1s ease, opacity 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
     cursor: grab;
     will-change: transform, opacity;
+}
+
+@media (max-width: 600px) {
+    .discovery-card {
+        width: 92vw;
+        height: 75vh;
+        border-radius: 40px;
+    }
 }
 
 .discovery-card img {
@@ -311,50 +280,55 @@ input[type="range"]::-webkit-slider-thumb {
     height: 100%;
     object-fit: cover;
     pointer-events: none;
+    user-drag: none;
+}
+
+.discovery-card:active {
+    cursor: grabbing;
 }
 
 /* Discovery Status Indicators */
 .card-status {
     position: absolute;
     top: 40px;
-    font-size: 40px;
-    font-weight: 900;
+    font-size: 32px;
+    font-weight: 950;
     text-transform: uppercase;
-    padding: 10px 30px;
+    padding: 8px 24px;
     border: 6px solid;
-    border-radius: 16px;
+    border-radius: 12px;
     opacity: 0;
-    transition: opacity 0.2s ease;
-    z-index: 100;
+    transition: opacity 0.1s ease;
+    z-index: 150;
     pointer-events: none;
 }
 
 .card-status.like {
-    left: 40px;
+    left: 30px;
     color: #4CAF50;
     border-color: #4CAF50;
     transform: rotate(-15deg);
 }
 
 .card-status.dislike {
-    right: 40px;
+    right: 30px;
     color: #F44336;
     border-color: #F44336;
     transform: rotate(15deg);
 }
 
 .card-status.delete {
-    bottom: 120px;
+    bottom: 80px;
     top: auto;
     left: 50%;
     transform: translateX(-50%);
     color: #FFF;
     border-color: #FFF;
     background: #F44336;
-    font-size: 24px;
+    font-size: 20px;
 }
 
-/* Hall of Fame List & Hover */
+/* Hall of Fame List */
 #topPhotosList div {
     transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
     cursor: pointer;

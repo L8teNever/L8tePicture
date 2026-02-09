@@ -1,27 +1,75 @@
 /**
- * P.I.X.I. Main Application
+ * P.I.X.I. Main Application & Router
  */
+
+class Router {
+    constructor() {
+        this.currentHash = '';
+        this.isNavigating = false;
+        window.addEventListener('hashchange', () => this.handleRoute());
+        // Handle route on load after a short delay to ensure managers are ready
+        setTimeout(() => this.handleRoute(), 100);
+    }
+
+    handleRoute() {
+        if (this.isNavigating) return;
+        this.isNavigating = true;
+
+        const hash = window.location.hash || '#/';
+        this.currentHash = hash;
+
+        console.log('🔗 Routing to:', hash);
+
+        // Close all overlays/dialogs for a clean state
+        const dialogs = document.querySelectorAll('.dialog-container, .overlay');
+        dialogs.forEach(d => d.classList.remove('active'));
+
+        // Reset specific manager states
+        if (window.galleryManager) window.galleryManager.closeViewer(false);
+        if (window.discoveryManager) window.discoveryManager.close(false);
+
+        // Routing
+        if (hash === '#/discovery') {
+            if (window.discoveryManager) window.discoveryManager.open(false);
+        } else if (hash === '#/stats') {
+            if (window.discoveryManager) window.discoveryManager.openStats(false);
+        } else if (hash.startsWith('#/photo/')) {
+            const index = parseInt(hash.split('/').pop());
+            if (window.galleryManager) window.galleryManager.openViewer(index, false);
+        } else {
+            // Default: Gallery
+            if (window.galleryManager) window.galleryManager.closeViewer(false);
+        }
+
+        this.isNavigating = false;
+    }
+
+    push(route) {
+        if (window.location.hash === route) return;
+        window.location.hash = route;
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 P.I.X.I. Material You Design UI Initialized');
+
+    window.router = new Router();
 
     // Rescan Button Logic
     const rescanBtn = document.getElementById('rescanBtn');
     if (rescanBtn) {
         rescanBtn.addEventListener('click', async () => {
+            const originalText = rescanBtn.innerHTML;
             rescanBtn.disabled = true;
-            rescanBtn.textContent = 'Scanning...';
+            rescanBtn.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
             try {
                 await fetch('/api/scan', { method: 'POST' });
-                // Reload gallery after scan
-                if (window.galleryManager) {
-                    await window.galleryManager.loadPhotos();
-                }
+                if (window.galleryManager) await window.galleryManager.loadPhotos();
             } catch (err) {
                 console.error('Scan failed:', err);
             } finally {
                 rescanBtn.disabled = false;
-                rescanBtn.textContent = 'Scan';
+                rescanBtn.innerHTML = originalText;
             }
         });
     }
