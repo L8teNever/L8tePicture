@@ -36,8 +36,26 @@ class GalleryManager {
             // Add favorite property locally if not exists
             this.photos = this.photos.map(p => ({ ...p, isFav: false }));
 
+            // Preserve current image if viewer is open
+            let currentPath = null;
+            if (this.viewer.classList.contains('active') && this.filteredPhotos[this.currentIndex]) {
+                currentPath = this.filteredPhotos[this.currentIndex].original_path;
+            }
+
             this.updateFilteredPhotos();
             this.render();
+
+            if (this.viewer.classList.contains('active')) {
+                // Find new index of the same image
+                if (currentPath) {
+                    const newIndex = this.filteredPhotos.findIndex(p => p.original_path === currentPath);
+                    if (newIndex !== -1) {
+                        this.currentIndex = newIndex;
+                    }
+                }
+                this.updateViewerUI();
+                this.updateViewerInfo();
+            }
         } catch (error) {
             console.error('Error loading photos:', error);
             this.grid.innerHTML = '<div class="empty-state"><p class="text-2xl font-bold">Ladefehler</p></div>';
